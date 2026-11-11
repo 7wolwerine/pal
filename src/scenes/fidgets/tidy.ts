@@ -2,9 +2,14 @@ import { FIDGETS } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
 import { h, sleep } from '../../ui/dom.ts';
 import { livingSprite, sprite } from '../../ui/sprites.ts';
-import { DIAL_STEPS, FidgetModel, SLIDER_TARGET, isAligned, type Control } from './model.ts';
+import { DIAL_STEPS, FidgetModel, SLIDER_TARGET, isAligned, type Control, type ControlKind } from './model.ts';
 
 const SCENE = 'fidgets';
+
+/** The value at which a control of each kind counts as aligned. */
+function alignedValue(kind: ControlKind): number {
+  return kind === 'slider' ? SLIDER_TARGET : kind === 'toggle' ? 1 : 0;
+}
 
 interface Cell {
   readonly el: HTMLElement;
@@ -107,6 +112,10 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       });
 
       if (model.finished) {
+        // Last stand: the beetle clamps onto one control and the player has to
+        // shove it off with a burst of clicks before it finally gives up.
+        await lastStand();
+        if (signal.aborted) return;
         panel.inert = true;
         panel.classList.add('fidgets--done');
         beetle.say(FIDGETS.bugResigns);
@@ -148,6 +157,62 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       busy = false;
       // A fast player may have fixed everything again while BUG was still at it.
       if (model.allAligned) void tidied();
+    }
+
+    /** The beetle grabs one control; the player shoves it off by clicking. */
+    function lastStand(): Promise<void> {
+      return new Promise((done) => {
+        const victim = model.controls.find(isAligned) ?? model.controls[0];
+        if (!victim) {
+          done();
+          return;
+        }
+        // Knock the grabbed control out and sit the beetle on it.
+        model.set(victim.id, victim.kind === 'slider' ? 12 : victim.kind === 'toggle' ? 0 : 3);
+        const cell = cells.get(victim.id);
+        cell?.sync();
+        perch(victim.id);
+        beetle.setPose('panic');
+        beetle.say(FIDGETS.bugGrab);
+
+        const need = FIDGETS.bugShove.length;
+        let shoves = 0;
+        const startedShoveAt = performance.now();
+        const overlay = h('button', {
+          class: 'shove',
+          attrs: { type: 'button', 'aria-label': 'Odstrč brouka' },
+        });
+        const finish = (): void => {
+          overlay.remove();
+          witness.record({
+            scene: SCENE,
+            kind: 'beetle-overcome',
+            trick: 'sunk-cost',
+            data: { shoves, ms: Math.round(performance.now() - startedShoveAt) },
+          });
+          // Flung off: dizzy in the corner, the grabbed control snaps right.
+          beetle.say(FIDGETS.bugFlung);
+          perch(null);
+          beetle.el.classList.remove('bug--flung');
+          void beetle.el.offsetWidth;
+          beetle.el.classList.add('bug--flung');
+          model.set(victim.id, alignedValue(victim.kind));
+          cell?.sync();
+          done();
+        };
+        overlay.addEventListener('click', () => {
+          if (signal.aborted) return;
+          shoves++;
+          witness.tally('shove');
+          beetle.say(FIDGETS.bugShove[Math.min(shoves, need) - 1] ?? '');
+          cell?.el.classList.remove('cell--kicked');
+          void cell?.el.offsetWidth;
+          cell?.el.classList.add('cell--kicked');
+          if (shoves >= need) finish();
+        });
+        cell?.el.append(overlay);
+        overlay.focus();
+      });
     }
   });
 }

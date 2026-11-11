@@ -11,6 +11,10 @@ export const FIDGETS = {
   ],
   /** Shown while the beetle clutches its head and undoes the player's work. */
   bugPanic: ['Néé!', 'Nesahej!', 'Pusť to!', 'Au!'],
+  /** The beetle's last stand: it sits on a control and the player clicks it off. */
+  bugGrab: 'Tak dost! Tohle si vzít nenecháš!',
+  bugShove: ['Nepustím!', 'Au! Ne!', 'Přestaň!', 'Grr!', 'Já… ', 'Nóóó!'],
+  bugFlung: 'Jau…',
   bugResigns: 'Fajn. Dělej si, co chceš. Já tě varoval.',
 
   quizIntro: 'Jé, něco se otevřelo! Vypadá to jako zámek. Ty to určitě zvládneš líp než já.',

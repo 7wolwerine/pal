@@ -565,7 +565,7 @@ body {
   color: var(--ink);
   font-size: 12px;
   font-weight: 700;
-  white-space: nowrap;
+  text-align: center;
   animation: pop 160ms ease-out both;
 }
 
@@ -586,6 +586,43 @@ body {
 .bug--gone {
   opacity: 0;
   transform: translateY(8px) scale(0.6) !important;
+}
+
+.bug--flung .bug__body {
+  animation: flung 550ms ease-out;
+}
+
+/* A transparent catch-all over the grabbed control, clicked to shove the beetle. */
+.cell {
+  position: relative;
+}
+
+.shove {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+
+.shove:focus-visible {
+  outline: 3px solid var(--ink-soft);
+  outline-offset: -3px;
+}
+
+@keyframes flung {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  45% {
+    transform: translateY(-22px) rotate(220deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
 }
 
 @keyframes tremble {
