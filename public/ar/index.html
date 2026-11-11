@@ -50,8 +50,8 @@ function boxIn(frame, object) {
 /* ---- lesklá konfetová srdíčka ----
    Padají kolem medvěda (ne na něj), třepotají se, dopadnou na zem, chvíli tam
    leží a pak se zmenší a zmizí. Lesk dělá kovový materiál, ve kterém se zrcadlí
-   malé nakreslené „studio“ se světly, a lehce vypouklý povrch, po kterém
-   odlesky při otáčení přejíždějí. Všechna se kreslí najednou jako jedna síť. */
+   malé nakreslené „studio“ se světly: jak se plochá konfeta otáčí, střídavě
+   se zablýskne a ztmavne. Všechna se kreslí najednou jako jedna síť. */
 AFRAME.registerComponent('hearts', {
   schema: {
     count:  { type: 'int',    default: 130 },
@@ -148,8 +148,9 @@ AFRAME.registerComponent('hearts', {
     });
     this.mesh.instanceMatrix.needsUpdate = true;
   },
-  /* Srdce podle klasické křivky: dva oblé laloky a špička. Plocha je rovná,
-     ale kolmice jsou u okraje vykloněné ven, takže se leskne jako vypouklé. */
+  /* Srdce podle klasické křivky: dva oblé laloky a špička. Je ploché a tenké
+     jako fóliová konfeta. Kolmice jsou u okraje jen nepatrně vykloněné, jako
+     u lehce prohnutého plíšku, aby po něm odlesk při otáčení přejel. */
   _heart: function (size) {
     const N = 48, outline = [];
     for (let i = 0; i < N; i++) {
@@ -160,22 +161,13 @@ AFRAME.registerComponent('hearts', {
       ]);
     }
     outline.reverse();   /* proti směru hodin, aby přední strana mířila k +Z */
-    const k = size / 32, rings = [[0.55, 0.38], [1, 1.05]];   /* [podíl poloměru, náklon kolmice v radiánech] */
+    const k = size / 32, bend = 0.1;   /* náklon kolmice na okraji v radiánech */
     const position = [0, 0, 0], normal = [0, 0, 1], index = [];
-    for (const [share, tilt] of rings) {
-      for (let i = 0; i < N; i++) {
-        const [x, y] = outline[i], a = outline[(i + N - 1) % N], b = outline[(i + 1) % N];
-        let nx = b[1] - a[1], ny = -(b[0] - a[0]);
-        const len = Math.hypot(nx, ny) || 1; nx /= len; ny /= len;
-        if (nx * x + ny * y < 0) { nx = -nx; ny = -ny; }
-        position.push(x * share * k, y * share * k, 0);
-        normal.push(nx * Math.sin(tilt), ny * Math.sin(tilt), Math.cos(tilt));
-      }
-    }
     for (let i = 0; i < N; i++) {
-      const j = (i + 1) % N, inner = 1, outer = 1 + N;
-      index.push(0, inner + i, inner + j);
-      index.push(inner + i, outer + i, outer + j, inner + i, outer + j, inner + j);
+      const [x, y] = outline[i], len = Math.hypot(x, y) || 1;
+      position.push(x * k, y * k, 0);
+      normal.push((x / len) * Math.sin(bend), (y / len) * Math.sin(bend), Math.cos(bend));
+      index.push(0, 1 + i, 1 + (i + 1) % N);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
