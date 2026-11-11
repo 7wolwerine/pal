@@ -158,6 +158,39 @@ function paintFinder(target: Raster, cx: number, cy: number, module: number, col
   paint(target, cx, cy, 1.5 * module, roundSquare(cx, cy, 1.5 * module, 0.9 * module), colours.code);
 }
 
+/**
+ * Where the small alignment squares sit, as module indexes of their centres.
+ * A scanner uses them to straighten the grid, so they are drawn whole, not as
+ * loose dots. Codes of 21 modules have none.
+ */
+export function alignmentCentres(moduleCount: number): Array<readonly [number, number]> {
+  const version = (moduleCount - 17) / 4;
+  if (version < 2) return [];
+  const intervals = Math.floor(version / 7) + 1;
+  const distance = 4 * version + 4;
+  let step = Math.round(distance / intervals);
+  step += step & 1;
+  const along = [6];
+  for (let i = 1; i <= intervals; i++) along.push(6 + distance - step * (intervals - i));
+  const last = along.length - 1;
+  const centres: Array<readonly [number, number]> = [];
+  along.forEach((row, r) => {
+    along.forEach((col, c) => {
+      // The three corners that hold the big squares have no small one.
+      if ((r === 0 && c === 0) || (r === 0 && c === last) || (r === last && c === 0)) return;
+      centres.push([row, col]);
+    });
+  });
+  return centres;
+}
+
+/** An alignment square: a small rounded ring with a dot in it. */
+function paintAlignment(target: Raster, cx: number, cy: number, module: number, colours: FramedColours): void {
+  const ring = without(roundSquare(cx, cy, 2.5 * module, 1.2 * module), roundSquare(cx, cy, 1.5 * module, 0.6 * module));
+  paint(target, cx, cy, 2.5 * module, ring, colours.code);
+  paint(target, cx, cy, 0.5 * module, disc(cx, cy, 0.5 * module), colours.code);
+}
+
 /** The bear's face. `unit` is a fifth of the radius of the cleared area. */
 function paintBear(target: Raster, cx: number, cy: number, unit: number, colours: FramedColours): void {
   const at = (x: number): number => cx + x * unit;
@@ -198,9 +231,12 @@ export function frameQr(modules: QrModules, options: FramedOptions): Raster {
   const centreOf = (index: number): number => layout.qrAt + (index + 0.5) * ppm;
   const inFinder = (row: number, col: number): boolean =>
     (row < FINDER && col < FINDER) || (row < FINDER && col >= n - FINDER) || (row >= n - FINDER && col < FINDER);
+  const squares = alignmentCentres(n);
+  const inAlignment = (row: number, col: number): boolean =>
+    squares.some(([r, c]) => Math.abs(row - r) <= 2 && Math.abs(col - c) <= 2);
   for (let row = 0; row < n; row++) {
     for (let col = 0; col < n; col++) {
-      if (!modules.get(row, col) || inFinder(row, col)) continue;
+      if (!modules.get(row, col) || inFinder(row, col) || inAlignment(row, col)) continue;
       const x = centreOf(col);
       const y = centreOf(row);
       // A dot that would touch the bear is left out; the scanner repairs it.
@@ -213,6 +249,7 @@ export function frameQr(modules: QrModules, options: FramedOptions): Raster {
   paintFinder(out, near, near, ppm, colours);
   paintFinder(out, far, near, ppm, colours);
   paintFinder(out, near, far, ppm, colours);
+  for (const [row, col] of squares) paintAlignment(out, centreOf(col), centreOf(row), ppm, colours);
 
   if (layout.badgeRadius > 0) paintBear(out, middle, middle, layout.badgeRadius / 5, colours);
   return out;

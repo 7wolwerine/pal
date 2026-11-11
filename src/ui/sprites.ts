@@ -107,35 +107,35 @@ export const SPRITES = {
     '....bbbb....',
     '............',
   ],
-  // Tesařík: a longhorn beetle with long swept antennae and a glossy shell.
+  // Anthrobug: an upright little beetle with a face, arms and feet.
   bug: [
-    '.k........k.',
-    '..k......k..',
     '...k....k...',
+    '....k..k....',
     '....dkkd....',
-    '...dkwwkd...',
-    '..dbhbbhbd..',
-    '.dbbbkkbbbd.',
-    '.dbbbbbbbbd.',
-    '.dbhbbbbhbd.',
+    '...dkkkkd...',
+    '..dkwbbwkd..',
+    '..dkbbbbkd..',
+    '..dkbkkbkd..',
+    'k.dbbbbbbd.k',
+    'k.dbbbbbbd.k',
     '..dbbbbbbd..',
-    '...dd..dd...',
-    '..k......k..',
+    '...dkbbkd...',
+    '...kk..kk...',
   ],
-  // The same beetle with its antennae clapped to its head in despair.
+  // Arms thrown up to its head, antennae splayed, mouth open in alarm.
   bugPanic: [
-    '............',
-    '...k....k...',
-    '..k......k..',
-    '..k.dkkd.k..',
-    '..kdkwwkdk..',
-    '..kdbhhbdk..',
-    '...dbkkbd...',
-    '..dbbbbbbd..',
-    '..dbbbbbbd..',
-    '...dbbbbd...',
-    '..k.d..d.k..',
     '.k........k.',
+    '..k......k..',
+    '..kdkkkkdk..',
+    '.kkdkkkkdkk.',
+    '..dkkbbkkd..',
+    '..dkbbbbkd..',
+    '..dkboobkd..',
+    '...dboobd...',
+    '..dbbbbbbd..',
+    '..dbbbbbbd..',
+    '...dkbbkd...',
+    '...kk..kk...',
   ],
 } as const satisfies Record<string, readonly string[]>;
 
@@ -161,10 +161,10 @@ export const FRAMES: Readonly<Record<SpriteId, { blink: Patch; quirk: Patch }>> 
   cat: { blink: { 5: '.oooooooooo.' }, quirk: { 0: '..........o.', 1: '.o.......oo.' } },
   // Tongue out.
   dog: { blink: { 4: 'ddbbbbbbbbdd' }, quirk: { 10: '....brrb....' } },
-  // Antennae wave.
-  bug: { blink: { 4: '...dkkkkd...' }, quirk: { 0: 'k..........k', 1: '.k......k...' } },
-  // Trembling.
-  bugPanic: { blink: { 4: '..kdkkkkdk..' }, quirk: { 6: '..dbkkbd....' } },
+  // Blinks, and waves its antennae.
+  bug: { blink: { 4: '..dkkbbkkd..' }, quirk: { 0: '..k......k..', 1: '...k....k...' } },
+  // Squints harder, antennae quiver.
+  bugPanic: { blink: { 4: '..dkkkkkkd..' }, quirk: { 0: '..k......k..' } },
 };
 
 /** The rows of one frame of a sprite. */
