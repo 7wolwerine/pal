@@ -68,6 +68,8 @@ export interface FramedLayout {
 
 /** Corner squares of a QR code are seven modules wide. */
 const FINDER = 7;
+/** How round the inside corners of the frame are, in modules. */
+const INNER_RADIUS = 3;
 
 export function framedLayout(moduleCount: number, options: FramedOptions): FramedLayout {
   const { pixelsPerModule: ppm, patternRatio = 0.75, quietModules = 3, marginModules = 4, badgeModules = 10 } = options;
@@ -189,7 +191,7 @@ export function frameQr(modules: QrModules, options: FramedOptions): Raster {
   // outside what it measures. The inside can be as round as we like.
   const frame = without(
     roundSquare(middle, middle, layout.frameSize / 2, 1.5 * ppm),
-    roundSquare(middle, middle, layout.innerSize / 2, 3 * ppm),
+    roundSquare(middle, middle, layout.innerSize / 2, INNER_RADIUS * ppm),
   );
   paint(out, middle, middle, layout.frameSize / 2, frame, colours.frame);
 

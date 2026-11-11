@@ -87,11 +87,11 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     for (const cell of cells.values()) cell.sync();
     requestAnimationFrame(() => perch(null));
 
-    /** Moves the beetle onto a control, or back to its corner. */
+    /** Moves the beetle onto a control, or back to its corner. Half of .bug is 28px. */
     function perch(id: string | null): void {
       const target = id ? cells.get(id)?.el : null;
-      const x = target ? target.offsetLeft + target.offsetWidth / 2 - 18 : panel.clientWidth - 40;
-      const y = target ? target.offsetTop - 16 : -20;
+      const x = target ? target.offsetLeft + target.offsetWidth / 2 - 28 : panel.clientWidth - 58;
+      const y = target ? target.offsetTop - 24 : -26;
       beetle.el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     }
 

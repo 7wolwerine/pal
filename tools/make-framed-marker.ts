@@ -15,13 +15,13 @@ import { encodePatt, rotateCcw } from '../src/ar/marker.ts';
 import { crop, finderAsFramedPattern, frameQr, framedLayout } from '../src/ar/framed.ts';
 import { similarity } from '../src/ar/nested.ts';
 
-/** With three quiet modules this makes the frame a whole number of pixels thick. */
-const PIXELS_PER_MODULE = 36;
+/** Any multiple of six makes the frame a whole number of pixels thick. */
+const PIXELS_PER_MODULE = 24;
 const PATTERN_RATIO = 0.75;
 /** AR.js accepts a match from 0.6 up; stay well under it for anything that is not our marker. */
 const MAX_LOOKALIKE = 0.4;
 /** The four rotations have to look different, or the model would face the wrong way. */
-const MAX_ROTATION_LIKENESS = 0.8;
+const MAX_ROTATION_LIKENESS = 0.9;
 
 function configuredUrl(): unknown {
   try {
