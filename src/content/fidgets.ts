@@ -3,13 +3,15 @@ export const FIDGETS = {
   remark: 'Jé. Tady to někdo pěkně rozházel.',
   controlLabels: { slider: 'Posuvník', toggle: 'Přepínač', dial: 'Kolečko' },
 
-  /** BUG tells the truth the whole time. Nobody listens to a bug. */
+  /** The beetle tells the truth the whole time. Nobody listens to a beetle. */
   bug: [
-    { before: 'BUG: Hej! Co to děláš?', after: 'BUG: Tak. A nesahej na to.' },
-    { before: 'BUG: Jsi normální? Nech to být!', after: 'BUG: Řekl ti vůbec někdo, ať to rovnáš?' },
-    { before: 'BUG: Vážně? Víš aspoň, proč to děláš?', after: 'BUG: Naposledy. Prosím.' },
+    { before: 'Hej! Co to děláš?!', after: 'Tak… a nesahej na to.' },
+    { before: 'Přestaň, prosím tě!', after: 'Řekl ti vůbec někdo, ať to rovnáš?' },
+    { before: 'Ne! To fakt nedělej!', after: 'Naposledy. Prosím.' },
   ],
-  bugResigns: 'BUG: Fajn. Dělej si, co chceš. Já tě varoval.',
+  /** Shown while the beetle clutches its head and undoes the player's work. */
+  bugPanic: ['Néé!', 'Nesahej!', 'Pusť to!', 'Au!'],
+  bugResigns: 'Fajn. Dělej si, co chceš. Já tě varoval.',
 
   quizIntro: 'Jé, něco se otevřelo! Vypadá to jako zámek. Ty to určitě zvládneš líp než já.',
   quizSubmit: 'Odeslat vše',

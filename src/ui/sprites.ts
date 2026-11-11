@@ -107,19 +107,35 @@ export const SPRITES = {
     '....bbbb....',
     '............',
   ],
+  // Tesařík: a longhorn beetle with long swept antennae and a glossy shell.
   bug: [
-    '............',
     '.k........k.',
     '..k......k..',
-    '...kkkkkk...',
-    '..keeeeeek..',
-    '.kewkeewkek.',
-    '.keeeeeeeek.',
-    'kkeeeeeeeekk',
-    '.keekeekeek.',
-    '.keeeeeeeek.',
-    '..kkkkkkkk..',
-    '.k..k..k..k.',
+    '...k....k...',
+    '....dkkd....',
+    '...dkwwkd...',
+    '..dbhbbhbd..',
+    '.dbbbkkbbbd.',
+    '.dbbbbbbbbd.',
+    '.dbhbbbbhbd.',
+    '..dbbbbbbd..',
+    '...dd..dd...',
+    '..k......k..',
+  ],
+  // The same beetle with its antennae clapped to its head in despair.
+  bugPanic: [
+    '............',
+    '...k....k...',
+    '..k......k..',
+    '..k.dkkd.k..',
+    '..kdkwwkdk..',
+    '..kdbhhbdk..',
+    '...dbkkbd...',
+    '..dbbbbbbd..',
+    '..dbbbbbbd..',
+    '...dbbbbd...',
+    '..k.d..d.k..',
+    '.k........k.',
   ],
 } as const satisfies Record<string, readonly string[]>;
 
@@ -145,8 +161,10 @@ export const FRAMES: Readonly<Record<SpriteId, { blink: Patch; quirk: Patch }>> 
   cat: { blink: { 5: '.oooooooooo.' }, quirk: { 0: '..........o.', 1: '.o.......oo.' } },
   // Tongue out.
   dog: { blink: { 4: 'ddbbbbbbbbdd' }, quirk: { 10: '....brrb....' } },
-  // Feelers wiggle.
-  bug: { blink: { 5: '.keeeeeeeek.' }, quirk: { 1: 'k..........k', 2: '.k........k.' } },
+  // Antennae wave.
+  bug: { blink: { 4: '...dkkkkd...' }, quirk: { 0: 'k..........k', 1: '.k......k...' } },
+  // Trembling.
+  bugPanic: { blink: { 4: '..kdkkkkdk..' }, quirk: { 6: '..dbkkbd....' } },
 };
 
 /** The rows of one frame of a sprite. */

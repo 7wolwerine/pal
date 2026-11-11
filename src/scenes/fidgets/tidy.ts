@@ -1,7 +1,7 @@
 import { FIDGETS } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
 import { h, sleep } from '../../ui/dom.ts';
-import { sprite } from '../../ui/sprites.ts';
+import { livingSprite, sprite } from '../../ui/sprites.ts';
 import { DIAL_STEPS, FidgetModel, SLIDER_TARGET, isAligned, type Control } from './model.ts';
 
 const SCENE = 'fidgets';
@@ -10,6 +10,37 @@ interface Cell {
   readonly el: HTMLElement;
   /** Makes the control on screen match the model. */
   sync(): void;
+}
+
+/** The beetle: a sprite that can swap between calm and panic, with a speech bubble above it. */
+class Beetle {
+  readonly el: HTMLElement;
+  readonly #body: HTMLElement;
+  readonly #bubble: HTMLElement;
+
+  constructor() {
+    this.#body = h('div', { class: 'bug__body' }, livingSprite('bug'));
+    this.#bubble = h('div', { class: 'bug__bubble', attrs: { 'aria-live': 'assertive' } });
+    this.#bubble.hidden = true;
+    this.el = h('div', { class: 'bug' }, this.#bubble, this.#body);
+  }
+
+  /** Shows a short line in the bubble above the beetle, or clears it when empty. */
+  say(line: string): void {
+    this.#bubble.textContent = line;
+    this.#bubble.hidden = !line;
+  }
+
+  /** calm = normal pose; panic = antennae clutched to its head, trembling. */
+  setPose(pose: 'calm' | 'panic'): void {
+    this.#body.classList.toggle('bug__body--panic', pose === 'panic');
+    this.#body.replaceChildren(pose === 'panic' ? sprite('bugPanic') : livingSprite('bug'));
+  }
+
+  gone(): void {
+    this.say('');
+    this.el.classList.add('bug--gone');
+  }
 }
 
 /**
@@ -27,8 +58,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     let touched = false;
     let busy = false;
 
-    const bug = h('div', { class: 'bug' }, sprite('bug'));
-    const bugLine = h('p', { class: 'bug-line', attrs: { 'aria-live': 'polite' } });
+    const beetle = new Beetle();
     const panel = h('div', { class: 'fidgets' });
 
     const change = (id: string, value: number): void => {
@@ -52,17 +82,17 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       cells.set(control.id, cell);
       panel.append(cell.el);
     });
-    panel.append(bug);
-    stage.replaceChildren(panel, bugLine);
+    panel.append(beetle.el);
+    stage.replaceChildren(panel);
     for (const cell of cells.values()) cell.sync();
     requestAnimationFrame(() => perch(null));
 
-    /** Moves BUG onto a control, or back to its corner. */
+    /** Moves the beetle onto a control, or back to its corner. */
     function perch(id: string | null): void {
       const target = id ? cells.get(id)?.el : null;
       const x = target ? target.offsetLeft + target.offsetWidth / 2 - 18 : panel.clientWidth - 40;
       const y = target ? target.offsetTop - 16 : -20;
-      bug.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+      beetle.el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
     }
 
     async function tidied(): Promise<void> {
@@ -79,9 +109,11 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       if (model.finished) {
         panel.inert = true;
         panel.classList.add('fidgets--done');
-        bugLine.textContent = FIDGETS.bugResigns;
-        bug.classList.add('bug--gone');
-        await sleep(1900);
+        beetle.say(FIDGETS.bugResigns);
+        await sleep(1400);
+        if (signal.aborted) return;
+        beetle.gone();
+        await sleep(1500);
         if (!signal.aborted) resolve();
         return;
       }
@@ -89,9 +121,15 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       const lines = FIDGETS.bug[round - 1];
       await sleep(450);
       if (signal.aborted) return;
-      bugLine.textContent = lines?.before ?? '';
+      beetle.say(lines?.before ?? '');
+      // The beetle scurries onto each control it is about to undo, clutches its
+      // head and knocks the control back out, with a yelp right at its mouth.
+      let hitIndex = 0;
       for (const hit of model.planSabotage()) {
         perch(hit.id);
+        beetle.setPose('panic');
+        beetle.say(FIDGETS.bugPanic[hitIndex % FIDGETS.bugPanic.length] ?? '');
+        hitIndex++;
         await sleep(700);
         if (signal.aborted) return;
         model.set(hit.id, hit.value);
@@ -103,8 +141,9 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         await sleep(350);
         if (signal.aborted) return;
       }
+      beetle.setPose('calm');
       perch(null);
-      bugLine.textContent = lines?.after ?? '';
+      beetle.say(lines?.after ?? '');
       roundStartedAt = performance.now();
       busy = false;
       // A fast player may have fixed everything again while BUG was still at it.
