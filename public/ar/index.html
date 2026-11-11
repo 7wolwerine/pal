@@ -275,8 +275,8 @@ AFRAME.registerComponent('sign', {
 
 /* ---- ťuknutí na model otevře stránku ----
    Paprsek se počítá tady, ne přes A-Frame kurzor: AR.js přepisuje projekci
-   kamery napřímo a kurzor pak míří vedle. Cílem je kvádr kolem modelu
-   i cedulky, o kousek větší, aby se dal trefit prstem. */
+   kamery napřímo a kurzor pak míří vedle. Cílem jsou kvádry kolem modelu
+   a kolem cedulky, o kousek větší, aby se daly trefit prstem. */
 AFRAME.registerComponent('tap-opens', {
   schema: { url: { type: 'string' }, marker: { type: 'selector' }, padding: { type: 'number', default: 0.15 } },
   init: function () {
@@ -285,20 +285,73 @@ AFRAME.registerComponent('tap-opens', {
     this.onTap = (event) => {
       const scene = this.el.sceneEl, marker = this.data.marker;
       if (!scene.canvas || !scene.camera || (marker && !marker.object3D.visible)) return;
-      box.setFromObject(this.el.object3D);
-      if (box.isEmpty()) return;
-      box.expandByVector(box.getSize(size).multiplyScalar(this.data.padding));
+      /* Ťuknutí na tlačítko v okně s dotazem (iPhone se ptá na pohyb) není ťuknutí na medvěda. */
+      if (event.target && event.target.closest && event.target.closest('.a-modal')) return;
       const rect = scene.canvas.getBoundingClientRect();
       point.set(((event.clientX-rect.left)/rect.width)*2-1, -((event.clientY-rect.top)/rect.height)*2+1);
       scene.camera.projectionMatrixInverse.copy(scene.camera.projectionMatrix).invert();
       ray.setFromCamera(point, scene.camera);
-      /* Než AR.js značku poprvé umístí, sedí model přímo v kameře a trefil by ho každý dotyk. */
-      if (box.containsPoint(ray.ray.origin)) return;
-      if (ray.ray.intersectsBox(box)) window.location.href = this.data.url;
+      /* Každá část má vlastní kvádr; jeden společný by kvůli široké cedulce
+         a hlubokému medvědovi zabral skoro celý obraz. */
+      for (const part of this.el.object3D.children) {
+        box.setFromObject(part);
+        if (box.isEmpty()) continue;
+        box.expandByVector(box.getSize(size).multiplyScalar(this.data.padding));
+        /* Než AR.js značku poprvé umístí, sedí model přímo v kameře a trefil by ho každý dotyk. */
+        if (box.containsPoint(ray.ray.origin)) continue;
+        if (ray.ray.intersectsBox(box)) { window.location.href = this.data.url; return; }
+      }
     };
     window.addEventListener('click', this.onTap);
   },
   remove: function () { window.removeEventListener('click', this.onTap); }
+});
+
+/* ---- scéna stojí rovně, i když značka visí na svislé obrazovce ----
+   Značka sama neříká, kde je dole: karta na stole a karta na monitoru vypadají
+   při pohledu zpříma stejně. Řekne to až senzor náklonu v telefonu. Scéna se
+   podle něj natočí tak, aby její osa Y mířila vzhůru. Dokud senzor mlčí
+   (počítač, nepovolený přístup na iPhonu), stojí medvěd kolmo na značku. */
+AFRAME.registerComponent('upright', {
+  schema: {
+    ease: { type: 'number', default: 8 },   /* jak rychle se dorovnává */
+    drop: { type: 'number', default: 2 }    /* o kolik šířek značky sjede dolů na svislé značce; kód je široký asi 4 */
+  },
+  init: function () {
+    this.up = null;   /* směr vzhůru v souřadnicích obrazu kamery; null, dokud senzor mlčí */
+    this.settled = false;
+    this.axis = new THREE.Vector3(0, 1, 0); this.v = new THREE.Vector3();
+    this.target = new THREE.Quaternion(); this.frame = new THREE.Quaternion();
+    this.onTilt = (event) => {
+      if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') return;
+      const rad = Math.PI / 180, b = event.beta * rad, g = event.gamma * rad;
+      /* vzhůru v souřadnicích telefonu: x doprava, y k hornímu okraji, z z displeje ven */
+      const x = -Math.cos(b) * Math.sin(g), y = Math.sin(b), z = Math.cos(b) * Math.cos(g);
+      /* obraz kamery se otáčí s displejem, telefon naležato má osy pootočené */
+      const turned = typeof window.orientation === 'number' ? window.orientation
+        : (screen.orientation && screen.orientation.angle) || 0;
+      const c = Math.cos(turned * rad), s = Math.sin(turned * rad);
+      if (!this.up) this.up = new THREE.Vector3();
+      this.up.set(x * c - y * s, x * s + y * c, z);
+    };
+    window.addEventListener('deviceorientation', this.onTilt);
+  },
+  tick: function (time, dt) {
+    const o = this.el.object3D, camera = this.el.sceneEl.camera;
+    if (!this.up || !camera || !o.parent || !o.parent.visible) { this.settled = false; return; }
+    /* směr vzhůru převedený z kamery do souřadnic značky */
+    this.v.copy(this.up).applyQuaternion(camera.getWorldQuaternion(this.frame));
+    this.v.applyQuaternion(o.parent.getWorldQuaternion(this.frame).invert()).normalize();
+    this.target.setFromUnitVectors(this.axis, this.v);
+    /* Po nalezení značky se scéna postaví hned, potom se dorovnává plynule. */
+    if (this.settled) o.quaternion.slerp(this.target, Math.min(1, (dt / 1000) * this.data.ease));
+    else { o.quaternion.copy(this.target); this.settled = true; }
+    /* Čím svisleji značka visí, tím níž po ní scéna sjede, až medvěd sedí
+       u spodního okraje kódu a nad ním zbude místo na hlavu a cedulku. */
+    this.v.copy(this.axis).applyQuaternion(o.quaternion);
+    o.position.set(-this.v.x * this.data.drop, 0, -this.v.z * this.data.drop);
+  },
+  remove: function () { window.removeEventListener('deviceorientation', this.onTilt); }
 });
 
 /* ---- nápověda podle toho, jestli je značka vidět ---- */
@@ -315,6 +368,7 @@ AFRAME.registerComponent('hint-text', {
 <a-scene
   embedded
   vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="deviceMotionMessage: Povol prosím snímání pohybu telefonu, ať medvěd stojí rovně i na obrazovce.; allowButtonText: Povolit; denyButtonText: Teď ne"
   renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
   arjs="sourceType: webcam; detectionMode: mono; debugUIEnabled: false">
 
@@ -336,7 +390,7 @@ AFRAME.registerComponent('hint-text', {
 
     <!-- Jednotkou je šířka černého čtverce, a ten je asi čtvrtina celého kódu.
          Tohle jedno číslo zvětší medvěda, srdíčka i cedulku dohromady. -->
-    <a-entity scale="3 3 3">
+    <a-entity scale="3 3 3" upright>
 
       <!-- Na co se dá ťuknout: medvěd a cedulka. -->
       <a-entity id="tapTarget" tap-opens="marker: #palMarker">
