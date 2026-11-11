@@ -331,7 +331,7 @@ AFRAME.registerComponent('hint-text', {
     type="pattern"
     url="pal-marker.patt"
     emitevents="true"
-    smooth="true" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"
+    smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2"
     hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
 
     <!-- Jednotkou je šířka černého čtverce, a ten je asi čtvrtina celého kódu.
@@ -340,14 +340,15 @@ AFRAME.registerComponent('hint-text', {
 
       <!-- Na co se dá ťuknout: medvěd a cedulka. -->
       <a-entity id="tapTarget" tap-opens="marker: #palMarker">
-        <!-- Velikost samotného medvěda je scale (bylo 0.7). -->
+        <!-- Velikost samotného medvěda je scale (bylo 0.7). Posun v position ho usazuje
+             středem na střed značky: model sám je v souboru kousek mimo střed. -->
         <a-entity
           id="bear"
           gltf-model="#bearModel"
-          position="0 0 0"
+          position="0.02 0 0.09"
           rotation="0 0 0"
           scale="1.1 1.1 1.1"
-          animation__bob="property: position; dir: alternate; to: 0 0.06 0; loop: true; dur: 1600; easing: easeInOutSine">
+          animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
         </a-entity>
 
         <a-entity sign="text: Klikni na mě; above: #bear"></a-entity>
