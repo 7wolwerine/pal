@@ -53,10 +53,10 @@ function boxIn(frame, object) {
    malá nakreslená obloha se světlými okny. */
 AFRAME.registerComponent('hearts', {
   schema: {
-    count: { type: 'int',    default: 44 },
-    area:  { type: 'number', default: 2.6 },   /* šířka čtverce, do kterého padají */
-    top:   { type: 'number', default: 2.8 },   /* odkud padají */
-    size:  { type: 'number', default: 0.2 },
+    count: { type: 'int',    default: 50 },
+    area:  { type: 'number', default: 1.9 },   /* šířka čtverce, do kterého padají */
+    top:   { type: 'number', default: 2.2 },   /* odkud padají */
+    size:  { type: 'number', default: 0.11 },
     speed: { type: 'number', default: 0.7 },
     rest:  { type: 'number', default: 3.5 },   /* kolik sekund leží, než zmizí */
     on:    { type: 'selector' }                /* model, na který mohou dopadnout */
@@ -70,9 +70,11 @@ AFRAME.registerComponent('hearts', {
       metalness: shine ? 0.9 : 0.3, roughness: 0.2,
       envMap: shine, envMapIntensity: 1.5, side: THREE.DoubleSide
     }));
-    this.ray = new THREE.Raycaster();
-    this.origin = new THREE.Vector3(); this.down = new THREE.Vector3();
-    this.toLocal = new THREE.Matrix4();
+    this.map = null;
+    if (this.data.on) {
+      this.data.on.addEventListener('model-loaded', () => this._scan());
+      this._scan();
+    }
     this.items = [];
     for (let i = 0; i < this.data.count; i++) {
       const mesh = new THREE.Mesh(geometry, this.materials[i % this.materials.length]);
@@ -94,8 +96,8 @@ AFRAME.registerComponent('hearts', {
     }
     h.onModel = !!hit;
     /* Kousek nad povrchem a každé jinak vysoko, aby se nakloněná srdíčka nezařezávala do sebe ani do modelu. */
-    h.landY = (hit ? hit.y : 0) + 0.025 + Math.random() * 0.03;
-    h.bobAtDrop = d.on ? d.on.object3D.position.y : 0;
+    h.landY = (hit ? hit.y : 0) + 0.014 + Math.random() * 0.02;
+    h.bobAtDrop = hit ? hit.bob : 0;
     const normal = hit ? hit.normal : new THREE.Vector3(0, 1, 0);
     /* Leží naplocho na povrchu, natočené náhodně a lehce nakloněné, aby se každé lesklo jinak. */
     h.restQ.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
@@ -111,22 +113,44 @@ AFRAME.registerComponent('hearts', {
   },
   /* Kde nad bodem (x, z) leží povrch modelu: výška a sklon, nebo null, když tam model není. */
   _surface: function (x, z) {
-    const target = this.data.on && this.data.on.getObject3D('mesh');
-    if (!target) return null;
+    const map = this.map;
+    if (!map) return null;
+    const cx = Math.floor((x - map.minX) / map.stepX), cz = Math.floor((z - map.minZ) / map.stepZ);
+    if (cx < 0 || cz < 0 || cx >= map.n || cz >= map.n) return null;
+    const k = cz * map.n + cx;
+    if (map.heights[k] < 0.03) return null;
+    return { y: map.heights[k], normal: new THREE.Vector3().fromArray(map.normals, k * 3), bob: map.bob };
+  },
+  /* Jednou po načtení si model „osahá“ shora: do mřížky uloží, jak vysoko a jak
+     šikmo je v každém políčku jeho povrch. Hledat dopad paprskem při každém
+     srdíčku by na telefonu trhalo obraz. */
+  _scan: function () {
+    const target = this.data.on.getObject3D('mesh');
+    if (!target) return;
     const root = this.el.object3D;
-    root.updateWorldMatrix(true, false);
-    target.updateWorldMatrix(true, true);
-    this.origin.set(x, this.data.top + 1, z).applyMatrix4(root.matrixWorld);
-    this.down.set(0, -1, 0).transformDirection(root.matrixWorld);
-    this.ray.set(this.origin, this.down);
-    const first = this.ray.intersectObject(target, true)[0];
-    if (!first || !first.face) return null;
-    this.toLocal.copy(root.matrixWorld).invert();
-    const point = first.point.clone().applyMatrix4(this.toLocal);
-    if (point.y < 0.03) return null;
-    const normal = first.face.normal.clone().transformDirection(first.object.matrixWorld).transformDirection(this.toLocal);
-    if (normal.y < 0) normal.negate();
-    return { y: point.y, normal };
+    const box = boxIn(root, target);
+    if (box.isEmpty()) return;
+    const n = 28, heights = new Float32Array(n * n).fill(-1), normals = new Float32Array(n * n * 3);
+    const stepX = (box.max.x - box.min.x) / n || 1, stepZ = (box.max.z - box.min.z) / n || 1;
+    const toRoot = new THREE.Matrix4().copy(root.matrixWorld).invert();
+    const m = new THREE.Matrix4(), turn = new THREE.Matrix3(), p = new THREE.Vector3(), up = new THREE.Vector3();
+    target.traverse((o) => {
+      if (!o.isMesh) return;
+      const position = o.geometry.attributes.position, normal = o.geometry.attributes.normal;
+      m.multiplyMatrices(toRoot, o.matrixWorld); turn.getNormalMatrix(m);
+      for (let i = 0; i < position.count; i++) {
+        p.fromBufferAttribute(position, i).applyMatrix4(m);
+        const cx = Math.min(n - 1, Math.floor((p.x - box.min.x) / stepX));
+        const cz = Math.min(n - 1, Math.floor((p.z - box.min.z) / stepZ));
+        const k = cz * n + cx;
+        if (p.y <= heights[k]) continue;
+        heights[k] = p.y;
+        if (normal) up.fromBufferAttribute(normal, i).applyMatrix3(turn).normalize(); else up.set(0, 1, 0);
+        if (up.y < 0) up.negate();
+        up.toArray(normals, k * 3);
+      }
+    });
+    this.map = { n, heights, normals, minX: box.min.x, minZ: box.min.z, stepX, stepZ, bob: this.data.on.object3D.position.y };
   },
   tick: function (time, dt) {
     const s = dt / 1000; if (!s || s > 0.1) return;
@@ -196,9 +220,9 @@ AFRAME.registerComponent('sign', {
   schema: {
     text:  { type: 'string', default: 'Klikni na mě' },
     above: { type: 'selector' },
-    width: { type: 'number', default: 1.5 },
-    gap:   { type: 'number', default: 0.2 },
-    y:     { type: 'number', default: 1.9 }    /* výška, dokud se model nenačte */
+    width: { type: 'number', default: 1.05 },
+    gap:   { type: 'number', default: 0.14 },
+    y:     { type: 'number', default: 1.3 }    /* výška, dokud se model nenačte */
   },
   init: function () {
     const canvas = this._draw(this.data.text);
