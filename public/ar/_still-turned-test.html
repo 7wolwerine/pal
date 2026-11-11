@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>PAL · medvěd AR</title>
+<script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; }
+  .hint {
+    position: fixed; left: 0; right: 0; bottom: 22px; z-index: 10;
+    text-align: center; pointer-events: none;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    color: #fff; font-size: 13px; letter-spacing: .3px;
+  }
+  .hint span {
+    background: rgba(20,10,24,.72); padding: 8px 14px; border-radius: 999px;
+    border: 1px solid rgba(255,120,170,.5);
+  }
+</style>
+</head>
+<body>
+<div class="hint"><span id="hint">Namiř foťák na značku s medvědem 🐻</span></div>
+
+<script>
+/* Kam vede ťuknutí na medvěda. Stránka leží ve složce ar/ vedle hry, takže hra je o složku výš. */
+const GAME_URL = '#opened';
+
+/* Obal všech sítí objektu v souřadnicích jiného objektu (rámce). */
+function boxIn(frame, object) {
+  frame.updateWorldMatrix(true, false);
+  object.updateWorldMatrix(true, true);
+  const toFrame = new THREE.Matrix4().copy(frame.matrixWorld).invert();
+  const m = new THREE.Matrix4(), corner = new THREE.Vector3(), box = new THREE.Box3();
+  object.traverse((o) => {
+    if (!o.isMesh) return;
+    if (!o.geometry.boundingBox) o.geometry.computeBoundingBox();
+    const b = o.geometry.boundingBox;
+    m.multiplyMatrices(toFrame, o.matrixWorld);
+    for (let i = 0; i < 8; i++) {
+      corner.set(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).applyMatrix4(m);
+      box.expandByPoint(corner);
+    }
+  });
+  return box;
+}
+
+/* ---- lesklá konfetová srdíčka ----
+   Padají, třepotají se, dopadnou na medvěda nebo na zem kolem něj, chvíli tam
+   leží a pak se zmenší a zmizí. Lesk dělá kovový materiál, ve kterém se zrcadlí
+   malá nakreslená obloha se světlými okny. */
+AFRAME.registerComponent('hearts', {
+  schema: {
+    count: { type: 'int',    default: 44 },
+    area:  { type: 'number', default: 2.6 },   /* šířka čtverce, do kterého padají */
+    top:   { type: 'number', default: 2.8 },   /* odkud padají */
+    size:  { type: 'number', default: 0.15 },
+    speed: { type: 'number', default: 0.7 },
+    rest:  { type: 'number', default: 3.5 },   /* kolik sekund leží, než zmizí */
+    on:    { type: 'selector' }                /* model, na který mohou dopadnout */
+  },
+  init: function () {
+    const colors = ['#ff5a8a','#ff8fb3','#ffd23f','#5ad1ff','#a77bff','#5be3b4','#ff7a45'];
+    const geometry = this._heart(this.data.size);
+    const shine = this._shine();
+    this.materials = colors.map((c) => new THREE.MeshStandardMaterial({
+      color: new THREE.Color(c).convertSRGBToLinear(),
+      metalness: shine ? 0.9 : 0.3, roughness: 0.2,
+      envMap: shine, envMapIntensity: 1.5, side: THREE.DoubleSide
+    }));
+    this.ray = new THREE.Raycaster();
+    this.origin = new THREE.Vector3(); this.down = new THREE.Vector3();
+    this.toLocal = new THREE.Matrix4();
+    this.items = [];
+    for (let i = 0; i < this.data.count; i++) {
+      const mesh = new THREE.Mesh(geometry, this.materials[i % this.materials.length]);
+      this.el.object3D.add(mesh);
+      const h = { mesh, restQ: new THREE.Quaternion(), spin: new THREE.Vector3() };
+      this._drop(h, true);
+      this.items.push(h);
+    }
+  },
+  /* Vybere místo dopadu a pustí srdíčko shora. */
+  _drop: function (h, spread) {
+    const d = this.data;
+    let hit = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      h.x = (Math.random() + Math.random() - 1) * d.area / 2;
+      h.z = (Math.random() + Math.random() - 1) * d.area / 2;
+      hit = this._surface(h.x, h.z);
+      if (!hit || hit.normal.y > 0.35) break;   /* na strmém boku by viselo ve vzduchu, zkus jinde */
+    }
+    h.onModel = !!hit;
+    h.landY = hit ? hit.y + 0.01 : 0.005 + Math.random() * 0.03;
+    h.bobAtDrop = d.on ? d.on.object3D.position.y : 0;
+    const normal = hit ? hit.normal : new THREE.Vector3(0, 1, 0);
+    h.restQ.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal)
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.random() * Math.PI * 2));
+    h.y = spread ? h.landY + Math.random() * (d.top - h.landY) : d.top + Math.random() * 0.8;
+    h.vy = d.speed * (0.7 + Math.random() * 0.6);
+    h.amp = 0.08 + Math.random() * 0.14; h.freq = 0.6 + Math.random() * 1.2; h.ph = Math.random() * Math.PI * 2;
+    h.spin.set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(5);
+    h.resting = false; h.timer = 0;
+    h.mesh.scale.setScalar(1);
+    h.mesh.rotation.set(Math.random() * 6.28, Math.random() * 6.28, Math.random() * 6.28);
+  },
+  /* Kde nad bodem (x, z) leží povrch modelu: výška a sklon, nebo null, když tam model není. */
+  _surface: function (x, z) {
+    const target = this.data.on && this.data.on.getObject3D('mesh');
+    if (!target) return null;
+    const root = this.el.object3D;
+    root.updateWorldMatrix(true, false);
+    target.updateWorldMatrix(true, true);
+    this.origin.set(x, this.data.top + 1, z).applyMatrix4(root.matrixWorld);
+    this.down.set(0, -1, 0).transformDirection(root.matrixWorld);
+    this.ray.set(this.origin, this.down);
+    const first = this.ray.intersectObject(target, true)[0];
+    if (!first || !first.face) return null;
+    this.toLocal.copy(root.matrixWorld).invert();
+    const point = first.point.clone().applyMatrix4(this.toLocal);
+    if (point.y < 0.03) return null;
+    const normal = first.face.normal.clone().transformDirection(first.object.matrixWorld).transformDirection(this.toLocal);
+    if (normal.y < 0) normal.negate();
+    return { y: point.y, normal };
+  },
+  tick: function (time, dt) {
+    const s = dt / 1000; if (!s || s > 0.1) return;
+    const t = time / 1000, d = this.data;
+    const bob = d.on ? d.on.object3D.position.y : 0;
+    for (const h of this.items) {
+      /* Medvěd se pohupuje; srdíčka, která na něm leží, se vezou s ním. */
+      const floor = h.landY + (h.onModel ? bob - h.bobAtDrop : 0);
+      if (!h.resting) {
+        h.y -= h.vy * s;
+        const sway = Math.sin(t * h.freq + h.ph) * h.amp * THREE.MathUtils.clamp((h.y - floor) / 0.5, 0, 1);
+        h.mesh.position.set(h.x + sway, Math.max(h.y, floor), h.z + sway * 0.5);
+        h.mesh.rotation.x += h.spin.x * s; h.mesh.rotation.y += h.spin.y * s; h.mesh.rotation.z += h.spin.z * s;
+        if (h.y <= floor) { h.resting = true; h.timer = d.rest * (0.7 + Math.random() * 0.6); }
+      } else {
+        h.mesh.position.set(h.x, floor, h.z);
+        h.mesh.quaternion.slerp(h.restQ, Math.min(1, s * 10));
+        h.timer -= s;
+        if (h.timer < 0) {
+          const left = 1 + h.timer / 0.6;   /* poslední půlvteřinu se zmenšuje */
+          if (left <= 0) this._drop(h, false); else h.mesh.scale.setScalar(left);
+        }
+      }
+    }
+  },
+  _heart: function (size) {
+    const w = 0.42, h = 0.46, y = (o) => (0.45 - o) * h;
+    const shape = new THREE.Shape();
+    shape.moveTo(0, y(0.25));
+    shape.bezierCurveTo(-w, y(-0.5), -w * 1.1, y(0.6), 0, y(1));
+    shape.bezierCurveTo(w * 1.1, y(0.6), w, y(-0.5), 0, y(0.25));
+    const g = new THREE.ShapeGeometry(shape, 10);
+    g.center(); g.computeBoundingBox();
+    const k = size / (g.boundingBox.max.x - g.boundingBox.min.x);
+    g.scale(k, k, k);
+    return g;
+  },
+  /* Malá „obloha“, která se v konfetách zrcadlí. Světlá okna dělají záblesky. */
+  _shine: function () {
+    const renderer = this.el.sceneEl.renderer;
+    if (!renderer) return null;
+    try {
+      const cv = document.createElement('canvas'); cv.width = 256; cv.height = 128;
+      const g = cv.getContext('2d');
+      const sky = g.createLinearGradient(0, 0, 0, 128);
+      sky.addColorStop(0, '#ffffff'); sky.addColorStop(0.35, '#ffd9e8');
+      sky.addColorStop(0.6, '#8fa8ff'); sky.addColorStop(1, '#2a1838');
+      g.fillStyle = sky; g.fillRect(0, 0, 256, 128);
+      g.fillStyle = '#ffffff';
+      for (const [x, y, w, h] of [[20, 30, 36, 22], [110, 46, 22, 30], [190, 24, 40, 18]]) g.fillRect(x, y, w, h);
+      const sheet = new THREE.CanvasTexture(cv);
+      sheet.mapping = THREE.EquirectangularReflectionMapping; sheet.encoding = THREE.sRGBEncoding;
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const env = pmrem.fromEquirectangular(sheet).texture;
+      pmrem.dispose(); sheet.dispose();
+      return env;
+    } catch (e) {
+      return null;   /* bez zrcadlení zůstanou srdíčka barevná, jen méně lesklá */
+    }
+  }
+});
+
+/* ---- cedulka nad modelem ----
+   Bublina s nápisem a srdíčkem, otočená vždy ke kameře. Když se model načte,
+   posadí se kousek nad jeho hlavu. */
+AFRAME.registerComponent('sign', {
+  schema: {
+    text:  { type: 'string', default: 'Klikni na mě' },
+    above: { type: 'selector' },
+    width: { type: 'number', default: 1.5 },
+    gap:   { type: 'number', default: 0.2 },
+    y:     { type: 'number', default: 1.9 }    /* výška, dokud se model nenačte */
+  },
+  init: function () {
+    const canvas = this._draw(this.data.text);
+    const map = new THREE.CanvasTexture(canvas); map.encoding = THREE.sRGBEncoding;
+    this.height = this.data.width * canvas.height / canvas.width;
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(this.data.width, this.height),
+      new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })
+    );
+    this.el.setObject3D('mesh', mesh);
+    this.baseY = this.data.y;
+    this.parentQ = new THREE.Quaternion(); this.cameraQ = new THREE.Quaternion();
+    if (this.data.above) {
+      this.data.above.addEventListener('model-loaded', () => {
+        const box = boxIn(this.el.object3D.parent, this.data.above.object3D);
+        if (!box.isEmpty()) this.baseY = box.max.y + this.data.gap + this.height / 2;
+      });
+    }
+  },
+  tick: function (time) {
+    const o = this.el.object3D, camera = this.el.sceneEl.camera;
+    o.position.y = this.baseY + Math.sin(time / 700) * 0.04;
+    if (!camera || !o.parent) return;
+    o.parent.getWorldQuaternion(this.parentQ).invert();
+    o.quaternion.copy(this.parentQ.multiply(camera.getWorldQuaternion(this.cameraQ)));
+  },
+  _draw: function (text) {
+    const font = '700 88px "Arial Rounded MT Bold", "Nunito", "Baloo 2", "Trebuchet MS", system-ui, sans-serif';
+    const probe = document.createElement('canvas').getContext('2d'); probe.font = font;
+    const textW = Math.ceil(probe.measureText(text).width);
+    const heart = 84, space = 26, padX = 56, border = 10, tail = 44, bodyH = 176;
+    const W = textW + space + heart + padX * 2 + border * 2, H = bodyH + tail + border * 2;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const g = cv.getContext('2d');
+    /* bublina se špičkou dolů */
+    const x0 = border, y0 = border, x1 = W - border, y1 = border + bodyH, r = bodyH / 2, cx = W / 2;
+    g.beginPath();
+    g.moveTo(x0 + r, y0); g.lineTo(x1 - r, y0); g.arcTo(x1, y0, x1, y0 + r, r);
+    g.arcTo(x1, y1, x1 - r, y1, r);
+    g.lineTo(cx + 34, y1); g.lineTo(cx, y1 + tail); g.lineTo(cx - 34, y1);
+    g.lineTo(x0 + r, y1); g.arcTo(x0, y1, x0, y1 - r, r); g.arcTo(x0, y0, x0 + r, y0, r);
+    g.closePath();
+    g.fillStyle = '#fffafc'; g.fill();
+    g.lineWidth = border; g.lineJoin = 'round'; g.strokeStyle = '#ff8fb3'; g.stroke();
+    /* nápis */
+    g.font = font; g.fillStyle = '#4a1e54'; g.textBaseline = 'middle'; g.textAlign = 'left';
+    const midY = y0 + bodyH / 2 + 4;
+    g.fillText(text, border + padX, midY);
+    /* srdíčko místo <3 */
+    const hx = border + padX + textW + space + heart / 2, top = midY - heart * 0.42, w = heart * 0.5, h = heart * 0.86;
+    g.beginPath();
+    g.moveTo(hx, top + h * 0.25);
+    g.bezierCurveTo(hx - w, top - h * 0.5, hx - w * 1.1, top + h * 0.6, hx, top + h);
+    g.bezierCurveTo(hx + w * 1.1, top + h * 0.6, hx + w, top - h * 0.5, hx, top + h * 0.25);
+    g.closePath(); g.fillStyle = '#ff5a8a'; g.fill();
+    return cv;
+  }
+});
+
+/* ---- ťuknutí na model otevře stránku ----
+   Paprsek se počítá tady, ne přes A-Frame kurzor: AR.js přepisuje projekci
+   kamery napřímo a kurzor pak míří vedle. Cílem je kvádr kolem modelu
+   i cedulky, o kousek větší, aby se dal trefit prstem. */
+AFRAME.registerComponent('tap-opens', {
+  schema: { url: { type: 'string' }, marker: { type: 'selector' }, padding: { type: 'number', default: 0.15 } },
+  init: function () {
+    const ray = new THREE.Raycaster(), point = new THREE.Vector2();
+    const box = new THREE.Box3(), size = new THREE.Vector3();
+    this.onTap = (event) => {
+      const scene = this.el.sceneEl, marker = this.data.marker;
+      if (!scene.canvas || !scene.camera || (marker && !marker.object3D.visible)) return;
+      box.setFromObject(this.el.object3D);
+      if (box.isEmpty()) return;
+      box.expandByVector(box.getSize(size).multiplyScalar(this.data.padding));
+      const rect = scene.canvas.getBoundingClientRect();
+      point.set(((event.clientX-rect.left)/rect.width)*2-1, -((event.clientY-rect.top)/rect.height)*2+1);
+      scene.camera.projectionMatrixInverse.copy(scene.camera.projectionMatrix).invert();
+      ray.setFromCamera(point, scene.camera);
+      /* Než AR.js značku poprvé umístí, sedí model přímo v kameře a trefil by ho každý dotyk. */
+      if (box.containsPoint(ray.ray.origin)) return;
+      if (ray.ray.intersectsBox(box)) window.location.href = this.data.url;
+    };
+    window.addEventListener('click', this.onTap);
+  },
+  remove: function () { window.removeEventListener('click', this.onTap); }
+});
+
+/* ---- nápověda podle toho, jestli je značka vidět ---- */
+AFRAME.registerComponent('hint-text', {
+  schema: { found: { type: 'string' }, lost: { type: 'string' } },
+  init: function () {
+    const hint = document.getElementById('hint');
+    this.el.addEventListener('markerFound', () => { hint.textContent = this.data.found; });
+    this.el.addEventListener('markerLost', () => { hint.textContent = this.data.lost; });
+  }
+});
+</script>
+
+<a-scene
+  embedded
+  vr-mode-ui="enabled: false"
+  renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
+  arjs="sourceType: image; sourceUrl: _still-turned.png; detectionMode: mono; debugUIEnabled: false">
+
+  <a-assets>
+    <a-asset-item id="bearModel" src="bear.glb"></a-asset-item>
+  </a-assets>
+
+  <a-entity light="type: ambient; color: #fff; intensity: 0.9"></a-entity>
+  <a-entity light="type: directional; color: #fff; intensity: 0.9" position="1 3 2"></a-entity>
+
+  <!-- Značka je černý čtverec s medvídkem uprostřed QR kódu; její vzhled popisuje pal-marker.patt. -->
+  <a-marker
+    id="palMarker"
+    type="pattern"
+    url="pal-marker.patt"
+    emitevents="true"
+    smooth="false" smoothCount="5" smoothTolerance="0.01" smoothThreshold="2"
+    hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
+
+    <!-- Jednotkou je šířka černého čtverce, a ten je asi čtvrtina celého kódu.
+         Tohle jedno číslo zvětší medvěda, srdíčka i cedulku dohromady. -->
+    <a-entity scale="3 3 3">
+
+      <!-- Na co se dá ťuknout: medvěd a cedulka. -->
+      <a-entity id="tapTarget" tap-opens="marker: #palMarker">
+        <!-- Velikost samotného medvěda je scale (bylo 0.7). -->
+        <a-entity
+          id="bear"
+          geometry="primitive: box; width: 1; height: 1.2; depth: 1" material="color: #8a5a3c"
+          position="0 0 0"
+          rotation="0 0 0"
+          scale="1.1 1.1 1.1"
+          animation__bob="property: position; dir: alternate; to: 0 0.06 0; loop: true; dur: 1600; easing: easeInOutSine">
+        </a-entity>
+
+        <a-entity sign="text: Klikni na mě; above: #bear"></a-entity>
+      </a-entity>
+
+      <!-- srdíčka prší na něj a kolem něj -->
+      <a-entity hearts="on: #bear"></a-entity>
+    </a-entity>
+  </a-marker>
+
+  <a-entity camera></a-entity>
+</a-scene>
+
+<script>
+  document.getElementById('tapTarget').setAttribute('tap-opens', 'url', GAME_URL);
+</script>
+</body>
+</html>

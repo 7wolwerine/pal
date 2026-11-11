@@ -1,0 +1,24 @@
+{
+  "name": "pal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PAL (Play and Learn): a harmless browser game about social engineering.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "marker": "node tools/make-marker.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/pngjs": "^6.0.5",
+    "@types/qrcode": "^1.5.6",
+    "pngjs": "^7.0.0",
+    "qrcode": "^1.5.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.7",
+    "vitest": "^5.1.0"
+  }
+}

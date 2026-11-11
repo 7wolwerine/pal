@@ -1,0 +1,60 @@
+/*
+ * Two skins over one set of components.
+ * "harmless" is what the player trusts. "revealed" is the same UI after the
+ * reveal. Trust was only ever a set of tokens.
+ */
+
+:root,
+:root[data-theme='harmless'] {
+  color-scheme: light;
+  --desk: #fbeaf0;
+  --desk-dot: #f4c0d1;
+  --win: #fffdfb;
+  --bar: #f4c0d1;
+  --ink: #4b1528;
+  --ink-soft: #993556;
+  --line: #ed93b1;
+  --btn: #d4537e;
+  --btn-edge: #993556;
+  --btn-ink: #ffffff;
+  --field: #ffffff;
+  --bubble: #faeeda;
+  --bubble-ink: #412402;
+  --chip: #e1f5ee;
+  --chip-ink: #085041;
+  --pick: #fbeaf0;
+  --danger: #a32d2d;
+  --ok: #1d9e75;
+  --ok-edge: #0f6e56;
+  --font-ui: ui-rounded, 'Nunito', 'Segoe UI', system-ui, sans-serif;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --edge: 5px;
+}
+
+:root[data-theme='revealed'] {
+  color-scheme: dark;
+  --desk: #060806;
+  --desk-dot: #0b1a12;
+  --win: #04140c;
+  --bar: #04342c;
+  --ink: #5dcaa5;
+  --ink-soft: #1d9e75;
+  --line: #0f6e56;
+  --btn: #04342c;
+  --btn-edge: #0f6e56;
+  --btn-ink: #9fe1cb;
+  --field: #020a06;
+  --bubble: #04342c;
+  --bubble-ink: #9fe1cb;
+  --chip: #501313;
+  --chip-ink: #f7c1c1;
+  --pick: #04342c;
+  --danger: #f09595;
+  --ok: #1d9e75;
+  --ok-edge: #0f6e56;
+  --font-ui: ui-monospace, 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --edge: 0px;
+}
