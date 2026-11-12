@@ -9,7 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "marker": "node tools/make-marker.ts"
+    "marker": "node tools/make-marker.ts",
+    "single": "node tools/single-file.mjs dist"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
