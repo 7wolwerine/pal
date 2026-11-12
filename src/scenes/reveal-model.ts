@@ -80,6 +80,10 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const spotted = ads > 0 ? `Odhalil jsi ${ads} falešných tlačítek. ` : '';
     return `${spotted}Na adresu ve stavovém řádku ses nepodíval${ran ? ' a soubor jsi i spustil' : ''}.`;
   },
+  'tech-support': (evidence) => {
+    const ms = number(evidence[0], 'ms');
+    return ms === undefined ? undefined : `Zavolal jsi za ${Math.max(1, Math.round(ms / 1000))} s od chvíle, kdy obrazovka zmodrala.`;
+  },
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -176,6 +180,8 @@ const ONCE: Record<string, string> = {
   'ran-download': 'Spustil jsi soubor z neznámého zdroje.',
   'download-cancelled': 'Spuštění jsi na poslední chvíli zrušil.',
   'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
+  'called-support': 'Zavolal jsi na číslo z modré obrazovky.',
+  'bsod-restart': 'Modrou obrazovku jsi nebral vážně. Správně.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

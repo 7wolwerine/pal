@@ -2490,3 +2490,135 @@ body {
     padding-left: 0;
   }
 }
+
+/* ---------- BUG's end and the blue screen ---------- */
+
+.crash {
+  position: relative;
+  height: 170px;
+}
+
+.crash__rain {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+}
+
+.win--crash {
+  animation: win-crash 900ms steps(9) forwards;
+}
+
+@keyframes win-crash {
+  0% {
+    filter: none;
+    transform: none;
+  }
+  20% {
+    filter: drop-shadow(4px 0 0 #ff2bd6) drop-shadow(-4px 0 0 #2bfff0);
+    transform: translateX(-6px) skewX(4deg);
+  }
+  40% {
+    transform: translateX(8px) skewX(-6deg);
+  }
+  60% {
+    filter: drop-shadow(-6px 0 0 #ff2bd6) drop-shadow(6px 0 0 #2bfff0) invert(1);
+    transform: scaleY(0.6);
+  }
+  85% {
+    transform: scaleY(0.04) scaleX(1.1);
+  }
+  100% {
+    filter: brightness(3);
+    transform: scaleY(0.01) scaleX(0.01);
+    opacity: 0;
+  }
+}
+
+.bsod {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: max(24px, 8vh) max(20px, 10vw);
+  background: #0067c0;
+  color: #fff;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: clamp(14px, 2.2vw, 19px);
+  line-height: 1.45;
+}
+
+.bsod p {
+  margin: 0 0 8px;
+  max-width: 46em;
+}
+
+.bsod__sad {
+  font-size: clamp(64px, 12vw, 120px);
+  line-height: 1;
+}
+
+.bsod__title {
+  font-size: clamp(18px, 3vw, 26px);
+}
+
+.bsod__phone {
+  font-size: clamp(24px, 5vw, 42px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.bsod__code {
+  opacity: 0.8;
+  font-size: 0.85em;
+}
+
+.bsod__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.bsod__btn {
+  padding: 8px 18px;
+  border: 2px solid #fff;
+  border-radius: 2px;
+  background: #fff;
+  color: #0067c0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bsod__btn--quiet {
+  background: transparent;
+  color: #fff;
+  opacity: 0.75;
+}
+
+.bsod__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.bsod__line {
+  min-height: 2.5em;
+  margin-top: 14px;
+  font-style: italic;
+}
+
+.bsod__line .bsod__btn {
+  margin-left: 12px;
+  font-style: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .win--crash {
+    animation: none;
+    opacity: 0;
+  }
+}
