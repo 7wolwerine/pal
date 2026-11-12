@@ -2,6 +2,7 @@ export const MAILBOX = {
   sceneLabel: 'Domek se zahrádkou a poštovní schránkou',
   mailboxLabel: 'Poštovní schránka',
   arrived: 'Cink! Něco přišlo.',
+  wow: 'Wooow, co to asi je?',
   found: 'Flashka? A žádná zpáteční adresa.',
   go: 'Honem k počítači',
   /** Little comments the character makes about the garden when the player pokes around. */

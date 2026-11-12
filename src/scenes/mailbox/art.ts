@@ -226,6 +226,18 @@ export function paintAlert(g: G, x: number, y: number, t: number): void {
   px(g, INK, x, y + 8 + bob, 3, 2);
 }
 
+/** A bobbing "?" shown over the character before the surprise sinks in. */
+export function paintQuestion(g: G, x: number, y: number, t: number): void {
+  const bob = Math.round(Math.sin(t / 220) * 1.5);
+  const yy = y + bob;
+  px(g, C.white, x - 3, y - 3 + bob, 9, 15);
+  px(g, INK, x, yy, 4, 1);
+  px(g, INK, x + 3, yy + 1, 1, 2);
+  px(g, INK, x + 1, yy + 3, 3, 1);
+  px(g, INK, x + 1, yy + 4, 1, 2);
+  px(g, INK, x + 1, yy + 8, 1, 2);
+}
+
 export function paintSmallEnvelope(g: G, x: number, y: number): void {
   px(g, C.paperLine, x - 1, y - 1, 10, 8);
   px(g, C.paper, x, y, 8, 6);

@@ -16,6 +16,7 @@ import {
   paintCloseUp,
   paintMailbox,
   paintPlant,
+  paintQuestion,
   paintSmallEnvelope,
 } from './art.ts';
 
@@ -87,11 +88,14 @@ export const mailbox: GameScene = {
       now = t;
       const p = t - phaseAt;
 
-      if (phase === 'quiet' && p >= QUIET_MS) enter('arriving');
+      if (phase === 'quiet' && p >= QUIET_MS) {
+        enter('arriving');
+        caption.textContent = MAILBOX.arrived;
+      }
       if (phase === 'arriving' && p >= ARRIVING_MS) {
         enter('waiting');
         arrivedAt = t;
-        caption.textContent = MAILBOX.arrived;
+        caption.textContent = MAILBOX.wow;
         hotspot.hidden = false;
       }
       if (phase === 'walking' && p >= WALKING_MS) enter('opening');
@@ -107,14 +111,27 @@ export const mailbox: GameScene = {
       paintBackdrop(g, t, motion);
       paintPlant(g);
       if (motion) paintBirds(g, t);
+
+      // When the letter lands the mailbox rattles for a moment.
+      const sinceArrived = now - arrivedAt;
+      const rattle = motion && phase === 'waiting' && sinceArrived < 600 ? Math.round(Math.sin(now / 45) * 2) : 0;
+      g.save();
+      g.translate(rattle, 0);
       paintMailbox(g, phase !== 'quiet' && phase !== 'arriving');
+      g.restore();
 
       if (phase === 'arriving') {
         // The letter sails in from the right in an arc and drops into the slot.
         const u = progress(since, 0, ARRIVING_MS);
         paintSmallEnvelope(g, 170 + (MAIL_SLOT.x - 170) * u, 20 + (MAIL_SLOT.y - 20) * u - Math.sin(u * Math.PI) * 18);
       }
-      if (phase === 'waiting') paintAlert(g, 123, 40, motion ? t : 0);
+      // A "?" over the character turns into a "!" as the surprise sinks in.
+      if (phase === 'waiting') {
+        const mx = CHARACTER_HOME.x + 2;
+        const my = CHARACTER_HOME.y - 15;
+        if (sinceArrived < 900) paintQuestion(g, mx, my, motion ? t : 0);
+        else paintAlert(g, mx, my, motion ? t : 0);
+      }
 
       // The character.
       if (phase === 'walking') {
