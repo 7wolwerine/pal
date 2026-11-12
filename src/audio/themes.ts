@@ -118,6 +118,7 @@ export const SCENE_THEME: Record<string, ThemeId> = {
   desk: 'desk',
   welcome: 'window',
   fidgets: 'window',
+  paint: 'cozy',
   rescue: 'tense',
   restore: 'cozy',
   dontclick: 'window',

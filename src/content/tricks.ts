@@ -79,6 +79,11 @@ export const TRICKS = {
     inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
+  irreversible: {
+    name: 'Jedno nevratné kliknutí',
+    inGame: 'Díra v obloze byla návnada, umístěná přesně tam, kam perfekcionista musí sáhnout. Kýblík nešel vrátit zpět. Klikl jsi, protože to vypadalo správně.',
+    realWorld: '„Povolit", „Nainstalovat", „Potvrdit platbu", „Smazat vše". Jedno kliknutí, které vypadá jako úklid, a zpátky už to nejde.',
+  },
   reactance: {
     name: 'Zakázané ovoce (reaktance)',
     inGame: 'Na tlačítku stálo „Neklikej na mě". Tak jsi klikl. A pak znovu.',

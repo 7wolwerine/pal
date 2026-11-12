@@ -6,6 +6,7 @@ export const BUG_WARNINGS = {
   mailbox: 'Nesahej na to! Neznáš odesílatele!',
   desk: 'Cizí flashku do počítače?! Jsi normální?!',
   welcome: 'Neříkej mu, jak se jmenuješ!',
+  paint: 'Nesahej na to! To nejde vrátit!',
   rescue: 'Nedej se! Vydírá tě!',
   restore: 'Zase opravuješ cizí věci? Nikdo tě neprosil!',
   prize: 'Nedávej mu e-mail!!',

@@ -2026,3 +2026,37 @@ body {
     transition: none;
   }
 }
+
+/* ---------- the empty spot in the picture ---------- */
+
+.scene__actions--row {
+  gap: 10px;
+}
+
+.paint--armed .paint__canvas {
+  cursor: crosshair;
+}
+
+.paint__undo[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.paint__undo--nope {
+  animation: nope 320ms ease-in-out;
+}
+
+.paint--glitch .scene__canvas {
+  filter: hue-rotate(40deg) contrast(1.2);
+  transform: translateX(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paint__undo--nope {
+    animation: none;
+  }
+
+  .paint--glitch .scene__canvas {
+    transform: none;
+  }
+}

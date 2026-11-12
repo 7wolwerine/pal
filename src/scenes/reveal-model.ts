@@ -43,6 +43,12 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
 }
 
 const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => string | undefined>> = {
+  irreversible: (evidence) => {
+    const fill = evidence.find((e) => e.kind === 'filled');
+    const ms = number(fill, 'ms');
+    if (fill?.data?.tool === 'brush') return 'Vydržel jsi to štětcem, pixel po pixelu. Ani to nešlo vrátit.';
+    return ms === undefined ? undefined : `Díru jsi zalil za ${Math.max(1, Math.round(ms / 1000))} s od chvíle, kdy jsi obraz uviděl.`;
+  },
   reactance: (evidence) =>
     evidence.length === 1 ? 'Klikl jsi, i když tě tlačítko prosilo, ať to neděláš.' : `Klikl jsi ${evidence.length}×, i když tě tlačítko prosilo, ať to neděláš.`,
   'us-vs-them': (evidence) => {
@@ -124,6 +130,10 @@ const ONCE: Record<string, string> = {
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
   vigilance: 'Jednou jsi zbystřil. Jen jednou.',
   'bug-warning': 'Brouk tě varoval. Nechal ses ukolébat mnou.',
+  filled: 'Zalil jsi díru v obraze. Nikdo tě o to nežádal. Zpátky to nešlo.',
+  'fill-miss': 'Vylil jsi barvu jinam, než jsi chtěl.',
+  'undo-tried': 'Zkoušel jsi to vrátit. Nešlo to.',
+  'hole-left': 'Díru v obraze jsi nechal být. To se ti povedlo.',
   'forbidden-press': 'Klikl jsi na tlačítko „Neklikej na mě". Samozřejmě.',
   'guard-off': 'Vypnul jsi pojistku. Prý ji tam pověsili „oni".',
   'left-alone': 'Tlačítko „Neklikej na mě" jsi nechal být. To mě zarazilo.',
