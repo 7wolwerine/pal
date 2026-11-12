@@ -59,11 +59,19 @@ function boot(): void {
     },
   };
 
+  let winWasHidden = true;
   director = new Director(SCENES, ctx, (scene) => {
     // Pixel scenes take the whole view; everything else happens in PAL's window.
     const onScenery = scene.surface === 'scenery';
     scenery.hidden = !onScenery;
     win.el.hidden = onScenery;
+    // Power the window on with a boot animation each time it reappears.
+    if (!onScenery && winWasHidden) {
+      win.el.classList.remove('win--boot');
+      void win.el.offsetWidth;
+      win.el.classList.add('win--boot');
+    }
+    winWasHidden = onScenery;
   });
 
   // `?scene=reveal` jumps straight to a scene while developing. Stripped from the build.
