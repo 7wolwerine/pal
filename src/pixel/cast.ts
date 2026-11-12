@@ -4,62 +4,140 @@ import { paintGrid } from './stage.ts';
 export const INK = '#3b2a3a';
 
 const CAST_PALETTE: Record<string, string> = {
-  k: INK,
-  h: '#6b4a2b', // hair, boots
-  s: '#f5c4b3', // skin
-  c: '#f29bb0', // cheeks
-  t: '#5dcaa5', // jumper
-  d: '#3c9b80', // jumper shade
-  p: '#5b6bb5', // trousers
-  q: '#45539a', // trouser seam
-  g: '#c9c9d1', // metal
-  r: '#ed93b1', // drive body
+  k: '#3b2a3a',
+  H: '#5a3a22',
+  h: '#7a5232',
+  y: '#a87447',
+  s: '#f8d6c0',
+  S: '#e9b39c',
+  e: '#2b1d24',
   w: '#ffffff',
-  b: '#7fb2e5', // tear
+  c: '#f4a3b4',
+  m: '#9a3f52',
+  t: '#5dcaa5',
+  T: '#3c9b80',
+  l: '#95e3c8',
+  p: '#5b6bb5',
+  P: '#45539a',
+  o: '#4a3426',
+  g: '#c9c9d1',
+  r: '#ed93b1',
+  b: '#7fb2e5',
 };
 
-// 14 x 20: big enough to sit right next to the mailbox and read as a person.
-const HEAD = [
-  '....hhhhhh....',
-  '...hhhhhhhh...',
-  '..hhhhhhhhhh..',
-  '..hhsssssshh..',
-  '..hskssssksh..',
-  '..hssssssssh..',
-  '...csskkssc...',
-  '....ssssss....',
-];
-
-const BODY = ['...tttttttt...', '..tttttttttt..', '.sttdttttdtts.', '.stttttttttts.', '..tttttttttt..', '..pppppppppp..'];
-
-const LEGS_STAND = ['..ppppqqpppp..', '..pppp..pppp..', '..ppp....ppp..', '..ppp....ppp..', '..hhh....hhh..', '.hhhh....hhhh.'];
-const LEGS_STRIDE = ['..pppppppppp..', '.pppp....ppp..', '.ppp......ppp.', 'ppp........ppp', 'hhh........hhh', 'hhh........hhh'];
-const LEGS_PASS = ['..pppppppppp..', '...pppppppp...', '....pppppp....', '....ppp.ppp...', '....hhh.hhh...', '...hhhh.hhhh..'];
-
+// 16 x 24 chibi with an outline and two-tone shading: hair with a highlight,
+// eyes with a glint, rosy cheeks. walkA/walkB lift one foot and then the other.
 const POSES = {
-  stand: [...HEAD, ...BODY, ...LEGS_STAND],
-  walkA: [...HEAD, ...BODY, ...LEGS_STRIDE],
-  walkB: [...HEAD, ...BODY, ...LEGS_PASS],
+  stand: [
+    '......kkkk......',
+    '....kkhhhhkk....',
+    '...khhyyhhhhk...',
+    '..khhyhhhhhhhk..',
+    '..khhhhhhhhhhk..',
+    '.khHhsshhsshHhk.',
+    '.khHssssssssHhk.',
+    '.khsswesswesshk.',
+    '.khsseesseesshk.',
+    '.kSccssssssccSk.',
+    '..kSsssmmsssSk..',
+    '...kkSSSSSSkk...',
+    '....ktTTTTtk....',
+    '...klttttttTk...',
+    '..kklttttttTkk..',
+    '..kslttttttTsk..',
+    '..kSktttttTkSk..',
+    '...kppppppppk...',
+    '...kpppPPpppk...',
+    '...kpppkkpppk...',
+    '...kpppkkpppk...',
+    '...kPPPkkPPPk...',
+    '..kooookkooook..',
+    '..kkkkkkkkkkkk..',
+  ],
+  walkA: [
+    '......kkkk......',
+    '....kkhhhhkk....',
+    '...khhyyhhhhk...',
+    '..khhyhhhhhhhk..',
+    '..khhhhhhhhhhk..',
+    '.khHhsshhsshHhk.',
+    '.khHssssssssHhk.',
+    '.khsswesswesshk.',
+    '.khsseesseesshk.',
+    '.kSccssssssccSk.',
+    '..kSsssmmsssSk..',
+    '...kkSSSSSSkk...',
+    '....ktTTTTtk....',
+    '...klttttttTk...',
+    '..kklttttttTkk..',
+    '..kslttttttTsk..',
+    '..kSktttttTkSk..',
+    '...kppppppppk...',
+    '...kpppPPpppk...',
+    '...kpppkkpppk...',
+    '...kPPPkkpppk...',
+    '..kooookkPPPk...',
+    '..kkkkkkkooook..',
+    '........kkkkkk..',
+  ],
+  walkB: [
+    '......kkkk......',
+    '....kkhhhhkk....',
+    '...khhyyhhhhk...',
+    '..khhyhhhhhhhk..',
+    '..khhhhhhhhhhk..',
+    '.khHhsshhsshHhk.',
+    '.khHssssssssHhk.',
+    '.khsswesswesshk.',
+    '.khsseesseesshk.',
+    '.kSccssssssccSk.',
+    '..kSsssmmsssSk..',
+    '...kkSSSSSSkk...',
+    '....ktTTTTtk....',
+    '...klttttttTk...',
+    '..kklttttttTkk..',
+    '..kslttttttTsk..',
+    '..kSktttttTkSk..',
+    '...kppppppppk...',
+    '...kpppPPpppk...',
+    '...kpppkkpppk...',
+    '...kpppkkPPPk...',
+    '...kPPPkkooook..',
+    '..kooookkkkkkk..',
+    '..kkkkkk........',
+  ],
   amazed: [
-    ...HEAD.slice(0, 4),
-    's.hskssssksh.s',
-    's.hssssssssh.s',
-    '.s.csskkssc.s.',
-    '..s.ssssss.s..',
-    '...tttttttt...',
-    '..tttttttttt..',
-    '..tttdttdttt..',
-    '..tttttttttt..',
-    '..tttttttttt..',
-    '..pppppppppp..',
-    ...LEGS_STAND,
+    '......kkkk......',
+    '....kkhhhhkk....',
+    '...khhyyhhhhk...',
+    '..khhyhhhhhhhk..',
+    '..khhhhhhhhhhk..',
+    '.khHhsshhsshHhk.',
+    '.khHssssssssHhk.',
+    '.khsswesswesshk.',
+    '.khsseesseesshk.',
+    'ksSccssssssccSsk',
+    'kskSssskksssSksk',
+    '.kkkkSSSSSSkkkk.',
+    '....ktTTTTtk....',
+    '...klttttttTk...',
+    '..kklttttttTkk..',
+    '..kklttttttTkk..',
+    '...kktttttTkk...',
+    '...kppppppppk...',
+    '...kpppPPpppk...',
+    '...kpppkkpppk...',
+    '...kpppkkpppk...',
+    '...kPPPkkPPPk...',
+    '..kooookkooook..',
+    '..kkkkkkkkkkkk..',
   ],
 } as const;
 
 export type Pose = keyof typeof POSES;
 
-export const CHARACTER_WIDTH = 14;
-export const CHARACTER_HEIGHT = 20;
+export const CHARACTER_WIDTH = 16;
+export const CHARACTER_HEIGHT = 24;
 
 /** The player's character. Deliberately plain: it is whoever is playing. */
 export function paintCharacter(g: CanvasRenderingContext2D, pose: Pose, x: number, y: number): void {

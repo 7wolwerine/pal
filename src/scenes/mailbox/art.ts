@@ -7,10 +7,10 @@ export const STAGE_WIDTH = 160;
 export const STAGE_HEIGHT = 100;
 
 /** Where things are, in picture pixels. */
-export const MAILBOX_RECT = { x: 110, y: 40, w: 34, h: 44 };
-export const MAIL_SLOT = { x: 120, y: 58 };
-export const CHARACTER_HOME = { x: 62, y: 69 };
-export const CHARACTER_AT_MAILBOX = { x: 98, y: 69 };
+export const MAILBOX_RECT = { x: 112, y: 64, w: 28, h: 26 };
+export const MAIL_SLOT = { x: 121, y: 74 };
+export const CHARACTER_HOME = { x: 60, y: 65 };
+export const CHARACTER_AT_MAILBOX = { x: 99, y: 65 };
 /** The strip of path the character can be sent along by clicking it. */
 export const PATH_RECT = { x: 44, y: 84, w: 86, h: 9 };
 /** Where the closed letter sits in the close-up, lower so the drive shows. */
@@ -177,18 +177,24 @@ export function paintBackdrop(g: G, t: number, motion: boolean): void {
   px(g, C.pink, 50, 45, 1, 1);
 }
 
+/** A small mailbox on a post, its box at the character's chest height. */
 export function paintMailbox(g: G, flagUp: boolean): void {
-  px(g, C.door, 124, 67, 3, 20);
-  px(g, C.boxDark, 115, 57, 20, 11);
-  px(g, C.box, 116, 58, 18, 9);
-  px(g, C.box, 117, 56, 16, 2);
-  px(g, C.boxDark, 131, 58, 1, 9);
-  px(g, INK, 119, 61, 8, 1);
+  // post
+  px(g, C.doorDark, 123, 80, 4, 12);
+  px(g, C.door, 124, 80, 2, 12);
+  // box with a rounded top and a darker rim
+  px(g, INK, 116, 71, 16, 10);
+  px(g, C.boxDark, 117, 72, 14, 8);
+  px(g, C.box, 117, 72, 13, 7);
+  px(g, '#7fb2e5', 118, 72, 11, 1);
+  px(g, INK, 119, 75, 7, 1);
+  // flag
   if (flagUp) {
-    px(g, C.red, 135, 54, 2, 9);
-    px(g, C.red, 137, 54, 4, 3);
+    px(g, INK, 132, 66, 2, 10);
+    px(g, C.red, 134, 66, 4, 3);
   } else {
-    px(g, C.red, 135, 62, 6, 2);
+    px(g, INK, 132, 76, 6, 2);
+    px(g, C.red, 133, 76, 4, 1);
   }
 }
 

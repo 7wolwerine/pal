@@ -182,7 +182,7 @@ export const mailbox: GameScene = {
         const jump = motion && since < 700 ? Math.round(Math.abs(Math.sin(since / 110)) * 3) : 0;
         paintCharacter(g, 'amazed', charX, y - jump);
         paintDrive(g, charX + (CHARACTER_WIDTH - 6) / 2, y - 12 - jump);
-        paintAlert(g, charX + CHARACTER_WIDTH + 2, y - 10, motion ? t : 0);
+        paintAlert(g, charX + CHARACTER_WIDTH + 1, y + 2, motion ? t : 0);
       } else {
         const frame: Pose = walking ? (Math.floor(t / 150) % 2 ? 'walkA' : 'walkB') : 'stand';
         const bob = walking && motion && Math.floor(t / 150) % 2 ? -1 : 0;
@@ -191,8 +191,8 @@ export const mailbox: GameScene = {
 
       // A "?" over the character turns into a "!" as the surprise sinks in.
       if (phase === 'waiting') {
-        const mx = charX + 6;
-        const my = y - 10;
+        const mx = charX + 7;
+        const my = y - 9;
         if (sinceArrived < 900) paintQuestion(g, mx, my, motion ? t : 0);
         else paintAlert(g, mx, my, motion ? t : 0);
       }
