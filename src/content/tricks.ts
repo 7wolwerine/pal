@@ -79,6 +79,16 @@ export const TRICKS = {
     inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
+  'romance-scam': {
+    name: 'Romance scam (vztah jako páka)',
+    inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',
+    realWorld: 'Námořník, doktor na misi, nová láska z aplikace: nejdřív vztah, pak nouze. Věta „po tobě peníze nikdy nechci" je součást scénáře.',
+  },
+  'otp-scam': {
+    name: 'Přepsaný ověřovací kód',
+    inGame: 'Přepsal jsi mi kód z SMS, i když v ní stálo, ať ho nikomu neříkáš.',
+    realWorld: 'Takhle se kradou účty v bance, WhatsAppu i e-mailu. Kód z SMS nepotřebuje nikdo jiný než ty — ani banka, ani blízký člověk.',
+  },
   'real-email': {
     name: 'Skutečný e-mail za odměnu',
     inGame: 'Za hezký obrázek jsi mi dal skutečnou e-mailovou adresu. Nic jsem neodeslal — ale mohl jsem.',

@@ -1798,3 +1798,87 @@ body {
   padding: 8px 14px;
   text-align: left;
 }
+
+/* ---------- the plea and the fake text message ---------- */
+
+.plea__choices {
+  display: grid;
+  gap: 8px;
+}
+
+.plea__choice {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  text-align: left;
+}
+
+.sms {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 60;
+  width: min(320px, calc(100vw - 24px));
+  padding: 10px 14px 12px;
+  border-radius: 16px;
+  background: rgba(30, 32, 40, 0.94);
+  color: #f2f2f5;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  animation: sms-in 420ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.sms--gone {
+  animation: sms-out 360ms ease-in forwards;
+}
+
+.sms__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #a8acb8;
+}
+
+.sms__app::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: #3ee08a;
+  vertical-align: -1px;
+}
+
+.sms__from {
+  display: block;
+  font-size: 14px;
+}
+
+.sms__text {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+@keyframes sms-in {
+  from {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+}
+
+@keyframes sms-out {
+  to {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sms,
+  .sms--gone {
+    animation: none;
+  }
+}

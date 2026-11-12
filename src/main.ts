@@ -7,6 +7,7 @@ import type { GameContext, GameScene, Profile, Theme } from './game.ts';
 import { desk } from './scenes/desk/index.ts';
 import { fidgets } from './scenes/fidgets/index.ts';
 import { mailbox } from './scenes/mailbox/index.ts';
+import { plea } from './scenes/plea.ts';
 import { prize } from './scenes/prize.ts';
 import { rescue } from './scenes/rescue/index.ts';
 import { restore } from './scenes/restore/index.ts';
@@ -17,7 +18,7 @@ import { h } from './ui/dom.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
-const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, rescue, restore, prize, reveal];
+const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, rescue, restore, plea, prize, reveal];
 
 const THEME_COLOURS: Record<Theme, string> = { harmless: '#FBEAF0', revealed: '#060806' };
 

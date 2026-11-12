@@ -43,6 +43,17 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
 }
 
 const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => string | undefined>> = {
+  'romance-scam': (evidence) => {
+    const choice = evidence.find((e) => e.kind === 'plea-choice');
+    const refusals = number(choice, 'refusals') ?? 0;
+    return refusals > 0
+      ? `Odmítl jsi ${refusals}×. A stejně jsi nakonec pomohl.`
+      : 'Pomohl jsi hned na první prosbu.';
+  },
+  'otp-scam': (evidence) => {
+    const ms = number(evidence[0], 'ms');
+    return ms === undefined ? undefined : `Kód jsi přepsal za ${Math.max(1, Math.round(ms / 1000))} s.`;
+  },
   'role-casting': (evidence) => {
     const cast = evidence.find((e) => e.kind === 'disclose' && e.data?.field === 'role');
     const label = cast?.data?.value;
@@ -107,6 +118,8 @@ const ONCE: Record<string, string> = {
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
   vigilance: 'Jednou jsi zbystřil. Jen jednou.',
   'bug-warning': 'Brouk tě varoval. Nechal ses ukolébat mnou.',
+  'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
+  'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };
 
 function clock(ms: number): string {
