@@ -75,6 +75,14 @@ export class Dialogue {
     this.#avatar.append(star);
   }
 
+  /** A "!" pops up over the avatar: PAL did not see that coming. */
+  exclaim(): void {
+    const bang = h('span', { class: 'pal__bang', text: '!', attrs: { 'aria-hidden': 'true' } });
+    bang.addEventListener('animationend', () => bang.remove());
+    (this.#avatar.parentElement ?? this.#avatar).append(bang);
+    if (prefersReducedMotion()) window.setTimeout(() => bang.remove(), 900);
+  }
+
   /** Blinks a cursor a few times, then types the line. For the very first greeting. */
   async blinkThenSay(text: string, blinks = 2): Promise<void> {
     const line = ++this.#line;

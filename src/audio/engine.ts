@@ -109,6 +109,19 @@ class AudioEngine {
     this.#pluck(out, midiToHz(pitch + 7), t0 + 0.09, 0.4, 'sine', 0.3);
   }
 
+  /** A lock clicking open: two metal clacks and a spring. */
+  latch(): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.01;
+    this.#pluck(out, midiToHz(88), t0, 0.04, 'square', 0.5);
+    this.#pluck(out, midiToHz(55), t0, 0.08, 'triangle', 0.8);
+    this.#pluck(out, midiToHz(91), t0 + 0.12, 0.05, 'square', 0.45);
+    this.#pluck(out, midiToHz(50), t0 + 0.12, 0.1, 'triangle', 0.8);
+    this.#pluck(out, midiToHz(96), t0 + 0.2, 0.25, 'sine', 0.25);
+  }
+
   /** A hammer tap on wood. */
   knock(): void {
     const ctx = this.#ctx;

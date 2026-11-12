@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { QUIZ, plain } from '../src/content/fidgets.ts';
+import { SIZE, isSolved, press, startState } from '../src/scenes/fidgets/lights.ts';
 import {
-  CHECK_COUNT,
   FidgetModel,
-  LED_COUNT,
   SABOTAGE_PLAN,
+  TILT_MAX,
   alignedValue,
   isAligned,
   poke,
+  settle,
   type ControlKind,
 } from '../src/scenes/fidgets/model.ts';
 
-const KINDS: ControlKind[] = ['progress', 'badge', 'checks', 'tilt', 'leds', 'plug'];
+const KINDS: ControlKind[] = ['tilt', 'screw', 'drawer', 'book', 'plug', 'mail'];
 
 function alignAll(model: FidgetModel): void {
   for (const c of model.controls) model.set(c.id, alignedValue(c.kind));
@@ -22,16 +24,31 @@ function sequenceOf(...values: number[]): () => number {
 }
 
 describe('poke', () => {
-  it('fills the bar, clears notifications one by one, ticks boxes, levels the frame', () => {
-    expect(poke('progress', 99)).toBe(100);
-    expect(poke('badge', 3)).toBe(2);
-    expect(poke('badge', 0)).toBe(0);
-    expect(poke('checks', 0b1011, 2)).toBe(0b1111);
-    expect(poke('tilt', 3)).toBe(2);
-    expect(poke('tilt', -1)).toBe(0);
+  it('nudges the picture towards level and snaps it at the end', () => {
+    expect(poke('tilt', 7)).toBe(5);
+    expect(poke('tilt', -7)).toBe(-5);
+    expect(poke('tilt', 3)).toBe(0);
     expect(poke('tilt', 0)).toBe(0);
-    expect(poke('leds', 0b110111, 3)).toBe(0b111111);
+  });
+
+  it('turns the screw in, pushes the book back, reads mail, shuts the drawer, plugs the lamp in', () => {
+    expect(poke('screw', 4)).toBe(3);
+    expect(poke('screw', 0)).toBe(0);
+    expect(poke('book', 2)).toBe(1);
+    expect(poke('mail', 1)).toBe(0);
+    expect(poke('drawer', 8)).toBe(0);
     expect(poke('plug', 0)).toBe(1);
+  });
+});
+
+describe('settle (dragging)', () => {
+  it('clamps and snaps', () => {
+    expect(settle('tilt', 40)).toBe(TILT_MAX);
+    expect(settle('tilt', 0.8)).toBe(0);
+    expect(settle('tilt', -4.4)).toBe(-4);
+    expect(settle('drawer', 1.2)).toBe(0);
+    expect(settle('drawer', -5)).toBe(0);
+    expect(settle('plug', 0.7)).toBe(1);
   });
 });
 
@@ -40,60 +57,96 @@ describe('FidgetModel', () => {
     const m = new FidgetModel();
     expect(m.controls.map((c) => c.kind).sort()).toEqual([...KINDS].sort());
     for (const c of m.controls) expect(isAligned(c), c.id).toBe(false);
-    expect(m.get('progress').value).toBe(99);
-    // exactly one unticked box and one dark LED
-    expect(CHECK_COUNT - m.get('checks').value.toString(2).replace(/0/g, '').length).toBe(1);
-    expect(LED_COUNT - m.get('leds').value.toString(2).replace(/0/g, '').length).toBe(1);
   });
 
   it('reports the click that finishes a control, and only that one', () => {
     const m = new FidgetModel();
-    expect(m.poke('badge')).toBe(false);
-    expect(m.poke('badge')).toBe(false);
-    expect(m.poke('badge')).toBe(true);
-    expect(m.poke('badge')).toBe(false);
-    expect(m.poke('progress')).toBe(true);
+    expect(m.poke('mail')).toBe(false);
+    expect(m.poke('mail')).toBe(false);
+    expect(m.poke('mail')).toBe(true);
+    expect(m.poke('mail')).toBe(false);
+    expect(m.poke('plug')).toBe(true);
+  });
+
+  it('reports a drag that finishes a control', () => {
+    const m = new FidgetModel();
+    expect(m.drag('tilt', 3)).toBe(false);
+    expect(m.drag('tilt', 0.5)).toBe(true);
   });
 
   it('can be fully tidied by clicking alone', () => {
     const m = new FidgetModel();
-    for (let i = 0; i < 3; i++) m.poke('badge');
-    m.poke('progress');
-    m.poke('checks', 2);
-    m.poke('tilt');
-    m.poke('tilt');
-    m.poke('leds', 3);
-    m.poke('plug');
+    for (let i = 0; i < 20 && !m.allAligned; i++) for (const c of m.controls) m.poke(c.id);
     expect(m.allAligned).toBe(true);
   });
 
-  it('lets BUG knock out 3, 2 and 1 controls with really-broken values, then gives up', () => {
+  it('lets BUG knock out 3, then 2, then 1 control, and then the player has won', () => {
     const m = new FidgetModel();
-    const sizes: number[] = [];
-    for (let round = 1; round <= SABOTAGE_PLAN.length; round++) {
+    for (const count of SABOTAGE_PLAN) {
       alignAll(m);
-      expect(m.completeRound()).toBe(round);
-      const hits = m.planSabotage(sequenceOf(0.1, 0.9, 0.5, 0.3, 0.7));
-      sizes.push(hits.length);
-      expect(new Set(hits.map((h) => h.id)).size).toBe(hits.length);
-      for (const h of hits) {
-        expect(isAligned({ id: h.id, kind: m.get(h.id).kind, value: h.value })).toBe(false);
-        m.set(h.id, h.value);
+      m.completeRound();
+      const hits = m.planSabotage(sequenceOf(0.1, 0.6, 0.3, 0.9));
+      expect(hits).toHaveLength(count);
+      expect(new Set(hits.map((h) => h.id)).size).toBe(count);
+      for (const hit of hits) {
+        m.set(hit.id, hit.value);
+        expect(isAligned(m.get(hit.id)), hit.id).toBe(false);
       }
+      expect(m.finished).toBe(false);
     }
-    expect(sizes).toEqual([...SABOTAGE_PLAN]);
     alignAll(m);
     m.completeRound();
     expect(m.finished).toBe(true);
-    expect(m.planSabotage()).toEqual([]);
   });
 
-  it('refuses to complete a round while something is off, and planning changes nothing', () => {
-    const m = new FidgetModel();
-    expect(() => m.completeRound()).toThrow();
-    alignAll(m);
-    m.completeRound();
-    m.planSabotage();
-    expect(m.allAligned).toBe(true);
+  it('will not complete a round while something is still out of place', () => {
+    expect(() => new FidgetModel().completeRound()).toThrow();
+  });
+});
+
+describe('light puzzle', () => {
+  it('flips a light and its neighbours', () => {
+    const centre = press(0, 4);
+    expect(centre).toBe((1 << 4) | (1 << 1) | (1 << 7) | (1 << 3) | (1 << 5));
+    expect(press(0, 0)).toBe((1 << 0) | (1 << 1) | (1 << SIZE));
+    expect(press(press(123, 5), 5)).toBe(123);
+  });
+
+  it('starts unsolved and can always be solved by undoing the presses', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      let n = seed;
+      const random = (): number => ((n = (n * 9301 + 49297) % 233280) / 233280);
+      const start = startState(random);
+      expect(isSolved(start)).toBe(false);
+      // brute force: some set of presses solves it
+      let found = false;
+      for (let mask = 0; mask < 1 << 9 && !found; mask++) {
+        let s = start;
+        for (let i = 0; i < 9; i++) if (mask & (1 << i)) s = press(s, i);
+        found = isSolved(s);
+      }
+      expect(found).toBe(true);
+    }
+  });
+});
+
+describe('quiz answers', () => {
+  const right = (id: string, answer: string): boolean => QUIZ.find((q) => q.id === id)?.right?.(answer) ?? false;
+  it('accepts the answers in any case and with or without accents', () => {
+    expect(right('zebra', 'Zebra')).toBe(true);
+    expect(right('stars', ' 50 ')).toBe(true);
+    expect(right('stars', 'padesát')).toBe(true);
+    expect(right('water', 'H₂O')).toBe(true);
+    expect(right('water', 'h2o')).toBe(true);
+    expect(right('whale', 'Kytovci')).toBe(true);
+    expect(right('whale', 'kytovců')).toBe(true);
+    expect(right('whale', 'ryby')).toBe(false);
+    expect(plain(' Ďábelský Kůň ')).toBe('dabelskykun');
+  });
+
+  it('asks one personal question, which takes anything', () => {
+    const personal = QUIZ.filter((q) => q.personal);
+    expect(personal).toHaveLength(1);
+    expect(personal[0]?.right).toBeUndefined();
   });
 });

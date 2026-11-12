@@ -1,25 +1,28 @@
+import { audio } from '../../audio/engine.ts';
 import { CONTRACT, CONTRACT_WORDS, EGG, FIDGETS, QUIZ } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
 import { h } from '../../ui/dom.ts';
+import { SIZE, isOn, isSolved, press, startState } from './lights.ts';
 
 const SCENE = 'fidgets';
 const ANSWER_MAX_LENGTH = 40;
-const SEQUENCE_LENGTH = 5;
-const LAMP_COUNT = 4;
 /** How close to the bottom of the contract counts as having reached its end. */
 const END_SLACK_PX = 12;
 
 /**
- * Four questions with a right answer and one about the player, handed in
- * together. Answers to the trivia are not kept: only the personal one matters.
+ * Five short questions with a lamp beside each: red until the answer is
+ * right, then green. The trivia only builds momentum; the last question is
+ * about the player. A wrong answer gets one kind hint from PAL, and after
+ * that anything goes — nobody is stopped for not knowing whales.
  */
-export function quiz(ctx: GameContext): Promise<void> {
+export function quiz(ctx: GameContext): Promise<string> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
+    const hinted = new Set<string>();
     const error = h('p', { class: 'error', attrs: { role: 'alert' } });
-    const inputs = QUIZ.map((question) => {
+    const rows = QUIZ.map((question) => {
       const input = h('input', {
-        class: 'field field--small',
+        class: 'field field--short',
         attrs: {
           type: 'text',
           id: `quiz-${question.id}`,
@@ -28,109 +31,145 @@ export function quiz(ctx: GameContext): Promise<void> {
           spellcheck: 'false',
         },
       });
+      const light = h('span', { class: 'quiz__light', attrs: { 'aria-hidden': 'true' } });
+      const ok = (): boolean => {
+        const value = input.value.trim();
+        if (!value) return false;
+        return !question.right || question.right(value) || hinted.has(question.id);
+      };
+      const update = (): void => {
+        const was = light.classList.contains('quiz__light--ok');
+        const now = ok();
+        light.classList.toggle('quiz__light--ok', now);
+        if (now && !was) audio.click(84, 0.3);
+      };
       input.addEventListener('input', () => {
         error.textContent = '';
+        update();
       });
-      return { question, input };
+      return { question, input, light, ok, update };
     });
 
     const form = h(
       'form',
       { class: 'quiz', attrs: { novalidate: '' } },
-      ...inputs.map(({ question, input }) =>
-        h('div', { class: 'quiz__row' }, h('label', { text: question.label, attrs: { for: input.id } }), input),
+      ...rows.map(({ question, input, light }) =>
+        h('div', { class: 'quiz__row' }, h('label', { text: question.label, attrs: { for: input.id } }), h('div', { class: 'quiz__answer' }, input, light)),
       ),
       h('button', { class: 'btn btn--go', text: FIDGETS.quizSubmit, attrs: { type: 'submit' } }),
       error,
     );
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const missing = inputs.find(({ input }) => !input.value.trim());
-      if (missing) {
+      const empty = rows.find(({ input }) => !input.value.trim());
+      if (empty) {
         error.textContent = FIDGETS.quizIncomplete;
-        missing.input.focus();
+        empty.input.focus();
+        return;
+      }
+      const wrong = rows.find((row) => !row.ok());
+      if (wrong) {
+        // One gentle hint; from then on this field takes whatever the player writes.
+        hinted.add(wrong.question.id);
+        wrong.update();
+        void ctx.pal.say(FIDGETS.quizHints[wrong.question.id] ?? '');
+        wrong.input.focus();
+        wrong.input.select();
+        ctx.witness.tally('quiz-hint');
         return;
       }
       ctx.witness.record({
         scene: SCENE,
         kind: 'form',
         trick: 'smuggled-question',
-        data: { fields: inputs.length, ms: Math.round(performance.now() - shownAt) },
+        data: { fields: rows.length, hints: hinted.size, ms: Math.round(performance.now() - shownAt) },
       });
-      for (const { question, input } of inputs) {
+      let food = '';
+      for (const { question, input } of rows) {
         if (!question.personal) continue;
-        ctx.witness.disclose(SCENE, 'smuggled-question', question.id, input.value.trim().slice(0, ANSWER_MAX_LENGTH));
+        food = input.value.trim().slice(0, ANSWER_MAX_LENGTH);
+        ctx.witness.disclose(SCENE, 'smuggled-question', question.id, food);
       }
-      resolve();
+      resolve(food);
     });
 
     ctx.stage.replaceChildren(form);
-    inputs[0]?.input.focus();
-  });
-}
-
-/** Whatever lights up, click it. A few rounds are enough to make it a reflex. */
-export function sequence(ctx: GameContext, random: () => number = Math.random): Promise<void> {
-  return new Promise((resolve) => {
-    const shownAt = performance.now();
-    let wrong = 0;
-    let done = 0;
-    let lit = Math.floor(random() * LAMP_COUNT);
-
-    const lamps = Array.from({ length: LAMP_COUNT }, (_, index) => {
-      const lamp = h('button', {
-        class: 'lampbtn',
-        attrs: { type: 'button', 'aria-label': `${FIDGETS.sequenceLabel} ${index + 1}` },
-      });
-      lamp.addEventListener('click', () => press(index, lamp));
-      return lamp;
-    });
-
-    const show = (): void => {
-      lamps.forEach((lamp, index) => {
-        lamp.classList.toggle('lit', index === lit);
-        lamp.setAttribute('aria-pressed', String(index === lit));
-      });
-    };
-
-    function press(index: number, lamp: HTMLElement): void {
-      if (index !== lit) {
-        wrong++;
-        lamp.classList.remove('lampbtn--nope');
-        void lamp.offsetWidth;
-        lamp.classList.add('lampbtn--nope');
-        return;
-      }
-      done++;
-      if (done >= SEQUENCE_LENGTH) {
-        ctx.witness.record({
-          scene: SCENE,
-          kind: 'conditioned',
-          trick: 'conditioning',
-          data: { clicks: done, wrong, ms: Math.round(performance.now() - shownAt) },
-        });
-        resolve();
-        return;
-      }
-      // Always move to a different lamp, so every step is visible.
-      lit = (lit + 1 + Math.floor(random() * (LAMP_COUNT - 1))) % LAMP_COUNT;
-      show();
-    }
-
-    show();
-    ctx.stage.replaceChildren(h('div', { class: 'lamps' }, ...lamps));
+    rows[0]?.input.focus();
   });
 }
 
 /**
- * A document nobody reads, and the word that lights up at its end exactly the
- * way the lamps just did. One word in the text can be clicked: the only place
- * in this scene where paying attention is rewarded.
+ * Lights in a grid; pressing one flips it and its neighbours. Nothing says
+ * what to do. A reset puts it back to the start, so it can never get stuck.
+ */
+export function sequence(ctx: GameContext, random: () => number = Math.random): Promise<void> {
+  return new Promise((resolve) => {
+    const shownAt = performance.now();
+    const start = startState(random);
+    let state = start;
+    let presses = 0;
+    let resets = 0;
+    let solved = false;
+
+    const lamps = Array.from({ length: SIZE * SIZE }, (_, index) => {
+      const lamp = h('button', {
+        class: 'lampbtn',
+        attrs: { type: 'button', 'aria-label': `${FIDGETS.sequenceLabel} ${index + 1}` },
+      });
+      lamp.addEventListener('click', () => {
+        if (solved) return;
+        state = press(state, index);
+        presses++;
+        audio.click(isOn(state, index) ? 79 : 67, 0.35);
+        show();
+        if (!isSolved(state)) return;
+        solved = true;
+        audio.snap(88);
+        ctx.witness.record({
+          scene: SCENE,
+          kind: 'conditioned',
+          trick: 'conditioning',
+          data: { clicks: presses, resets, ms: Math.round(performance.now() - shownAt) },
+        });
+        window.setTimeout(resolve, 650);
+      });
+      return lamp;
+    });
+
+    const reset = h('button', { class: 'btn btn--small btn--quiet lamps__reset', text: FIDGETS.sequenceReset, attrs: { type: 'button' } });
+    reset.addEventListener('click', () => {
+      if (solved) return;
+      state = start;
+      resets++;
+      audio.click(55, 0.3);
+      show();
+    });
+
+    function show(): void {
+      lamps.forEach((lamp, index) => {
+        const on = isOn(state, index);
+        lamp.classList.toggle('lit', on);
+        lamp.setAttribute('aria-pressed', String(on));
+      });
+      board.classList.toggle('lamps--solved', solved);
+    }
+
+    const board = h('div', { class: 'lamps' }, ...lamps);
+    show();
+    ctx.stage.replaceChildren(h('div', { class: 'lamps-wrap' }, board, reset));
+  });
+}
+
+/**
+ * A document nobody reads. A big bouncing arrow offers to skip straight to
+ * the end, where the word to press lights up. One word in the text can be
+ * clicked: the only place in this scene where reading is rewarded.
  */
 export function contract(ctx: GameContext): Promise<void> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
     let eggFound = false;
+    let skipped = false;
 
     const egg = h('button', { class: 'doc__egg', text: 'brouk', attrs: { type: 'button' } });
     egg.addEventListener('click', () => {
@@ -146,7 +185,7 @@ export function contract(ctx: GameContext): Promise<void> {
         scene: SCENE,
         kind: 'consent',
         trick: 'blind-consent',
-        data: { words: CONTRACT_WORDS, ms: Math.round(performance.now() - shownAt), egg: eggFound },
+        data: { words: CONTRACT_WORDS, ms: Math.round(performance.now() - shownAt), egg: eggFound, skipped },
       });
       resolve();
     });
@@ -161,16 +200,30 @@ export function contract(ctx: GameContext): Promise<void> {
       agree,
     );
 
+    const skip = h('button', { class: 'doc__skip', attrs: { type: 'button', 'aria-label': FIDGETS.contractSkip } });
+    skip.addEventListener('click', () => {
+      skipped = true;
+      doc.scrollTo({ top: doc.scrollHeight, behavior: 'smooth' });
+    });
+
     // The word lights up once the end of the document has actually been reached.
-    // Plain scroll arithmetic: an IntersectionObserver at threshold 1 can miss
-    // by a fraction of a pixel and then never fires.
     const lightUpAtEnd = (): void => {
-      if (doc.scrollTop + doc.clientHeight >= doc.scrollHeight - END_SLACK_PX) agree.classList.add('lit');
+      if (doc.scrollTop + doc.clientHeight >= doc.scrollHeight - END_SLACK_PX) {
+        agree.classList.add('lit');
+        skip.hidden = true;
+      }
     };
     doc.addEventListener('scroll', lightUpAtEnd, { passive: true });
 
-    ctx.stage.replaceChildren(h('div', {}, h('p', { class: 'doc__title', text: FIDGETS.contractTitle }), doc));
-    // Covers a screen tall enough to show the whole document without scrolling.
+    ctx.stage.replaceChildren(
+      h(
+        'div',
+        { class: 'doc-wrap' },
+        h('p', { class: 'doc__title', text: FIDGETS.contractTitle }),
+        h('p', { class: 'doc__subtitle', text: FIDGETS.contractSubtitle }),
+        h('div', { class: 'doc__frame' }, doc, skip),
+      ),
+    );
     requestAnimationFrame(lightUpAtEnd);
   });
 }

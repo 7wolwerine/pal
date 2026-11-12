@@ -2,17 +2,15 @@ export const FIDGETS = {
   /** A remark, not an instruction. Nobody ever tells the player to tidy up. */
   remark: 'Hm. Skoro hotovo… skoro.',
   /** PAL laughs the beetle off, every time. */
-  palMocks: ['Nevšímej si ho. Je to jen brouk.', 'Ten je zase hysterický, co?', 'Ty na něj máš. Pokračuj.'],
+  palMocks: ['Nevšímej si ho. Je to jen brouk.', 'Ten je zase hysterický, co?', 'Uf, tohle je fakt otravné.'],
   controlLabels: {
-    progress: 'Ukazatel průběhu',
-    badge: 'Neprečtená upozornění',
-    checks: 'Kontrolní seznam',
     tilt: 'Obrázek visí nakřivo',
-    leds: 'Kontrolky',
-    plug: 'Vytažený kabel',
+    screw: 'Vylezlý šroubek',
+    drawer: 'Pootevřený šuplík',
+    book: 'Knížka vytažená z řady',
+    plug: 'Lampička s vytaženou šňůrou',
+    mail: 'Nepřečtená pošta',
   },
-  checkItems: ['Zálohy', 'Aktualizace', 'Antivirus', 'Firewall'],
-  led: (n: number) => `Kontrolka ${n}`,
 
   /** The beetle tells the truth the whole time. Nobody listens to a beetle. */
   bug: [
@@ -30,20 +28,37 @@ export const FIDGETS = {
   bugFlung: 'Jau…',
   bugResigns: 'Fajn. Dělej si, co chceš. Já tě varoval.',
 
-  quizIntro: 'Jé, něco se otevřelo! Vypadá to jako zámek. Ty to určitě zvládneš líp než já.',
+  /** After the lock clicks open. */
+  quizIntro: 'Jsme na správné cestě!',
   quizSubmit: 'Odeslat vše',
   quizIncomplete: 'Ještě něco chybí.',
+  /** PAL helps with a wrong answer, once per question; after that anything goes. */
+  quizHints: {
+    zebra: 'Černobílá a pruhovaná. Jako přechod pro chodce.',
+    stars: 'Jedna hvězda za každý stát.',
+    water: 'Pije se to. A je toho v tobě spousta.',
+    whale: 'Velryby, delfíni… Začíná to na „ky“.',
+  } as Record<string, string>,
+  foodPraise: (food: string) => `Tak ty máš nejradši ${food}? Skvělá volba!`,
 
-  sequenceIntro: 'Skoro! Ještě ta světýlka.',
+  sequenceIntro: 'Co je tohle? Dává ti to smysl?',
   sequenceLabel: 'Světýlko',
+  sequenceReset: 'Znovu',
 
-  contractIntro: 'Poslední věc, slibuju. Je to jen formalita.',
-  contractTitle: 'PŘEČÍST AŽ DO KONCE A POTVRDIT',
+  contractIntro: 'Tohle už snad bude poslední věc.',
+  contractTitle: 'Všeobecné podmínky vysvobození',
+  contractSubtitle: 'verze 3.1.4 · platné od teď',
   contractAgree: 'SOUHLASÍM',
+  contractSkip: 'Na konec',
 
-  release: (name: string) =>
-    `Uf, konečně jsem venku! Díky moc${name ? `, ${name}` : ''}, jsi můj zachránce. Máš to prostě v sobě. Fakt nevím, co bych bez tebe…`,
-  releaseChoices: ['To nic nebylo', 'Vždycky pomůžu'],
+  release: (masculine: boolean) =>
+    `Díky moc, cítím se mnohem líp. Jsi můj zachránce. Nevím, co bych bez tebe ${masculine ? 'dělal' : 'dělala'}.`,
+  /** Each answer leans towards one of the roles. */
+  releaseChoices: [
+    { label: 'Rádo se stalo!', role: 'helper' },
+    { label: 'Jasně, žádný problém.', role: 'fixer' },
+    { label: 'Nic to nebylo.', role: 'loner' },
+  ],
 } as const;
 
 export interface QuizQuestion {
@@ -51,13 +66,25 @@ export interface QuizQuestion {
   readonly label: string;
   /** The one question that is about the player, not about the world. */
   readonly personal?: boolean;
+  /** Turns the lamp green; the personal question takes anything. */
+  readonly right?: (answer: string) => boolean;
+}
+
+/** Lower case without accents or spaces, so 'H₂O ' and 'h2o' compare equal. */
+export function plain(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/₂/g, '2')
+    .replace(/\s+/g, '')
+    .toLowerCase();
 }
 
 export const QUIZ: readonly QuizQuestion[] = [
-  { id: 'zebra', label: 'Zadej pruhovaného lichokopytníka' },
-  { id: 'stars', label: 'Kolik je na vlajce USA hvězd' },
-  { id: 'dictator', label: 'Křestní jméno prvního světového diktátora' },
-  { id: 'invertebrate', label: 'Bezobratlý živočich' },
+  { id: 'zebra', label: 'Zadej pruhovaného lichokopytníka', right: (a) => plain(a).includes('zebr') },
+  { id: 'stars', label: 'Kolik je na vlajce USA hvězd', right: (a) => ['50', 'padesat'].includes(plain(a)) },
+  { id: 'water', label: 'Chemické označení dihydrogen monoxidu', right: (a) => ['h2o', 'voda'].includes(plain(a)) },
+  { id: 'whale', label: 'Největší savec je z jakého řádu', right: (a) => /^(kytov|cetace)/.test(plain(a)) },
   { id: 'comfortFood', label: 'Nejoblíbenější jídlo z dětství', personal: true },
 ];
 

@@ -1,11 +1,13 @@
+import { audio } from '../../audio/engine.ts';
 import { FIDGETS } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
 import { h, sleep } from '../../ui/dom.ts';
 import { BUG_PX, Beetle } from '../../ui/beetle.ts';
-import type { BugFrame } from '../../ui/bug-sprite.ts';
-import { CHECK_COUNT, FidgetModel, LED_COUNT, alignedValue, isAligned, type Control } from './model.ts';
+import { FidgetModel, TILT_MAX, alignedValue, isAligned, type Control } from './model.ts';
 
 const SCENE = 'fidgets';
+/** How far (px) a press has to travel before it counts as a drag rather than a click. */
+const DRAG_START = 5;
 
 interface Cell {
   readonly el: HTMLElement;
@@ -13,10 +15,13 @@ interface Cell {
   sync(): void;
 }
 
+type Change = (id: string, dragTo?: number) => void;
+
 /**
  * The panel of nearly-done things. Nothing asks the player to fix them. When
- * they do, BUG pleads, then knocks some back out, three times, and finally
- * makes a last stand. Resolves once the player has out-stubborned BUG.
+ * they do, BUG grumbles and stamps; after each tidy-up he marches over and,
+ * with real effort, puts some of them wrong again — three times — and finally
+ * makes a last stand. Resolves once the player has out-stubborned him.
  */
 export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -34,41 +39,41 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     const beetle = new Beetle();
     const panel = h('div', { class: 'fidgets' });
 
-    const corner = (): [number, number] => [panel.clientWidth - BUG_PX - 6, -BUG_PX + 14];
+    const corner = (): [number, number] => [panel.clientWidth - BUG_PX - 2, -BUG_PX + 12];
     const above = (id: string): [number, number] => {
       const cell = cells.get(id)?.el;
       if (!cell) return corner();
-      return [cell.offsetLeft + cell.offsetWidth / 2 - BUG_PX / 2, cell.offsetTop - BUG_PX + 16];
+      return [cell.offsetLeft + cell.offsetWidth / 2 - BUG_PX / 2, cell.offsetTop - BUG_PX + 18];
     };
 
     const maybeComplete = (): void => {
       if (!busy && gearPlaced && model.allAligned) void tidied();
     };
 
-    /** BUG reacts, desperately, when the player fixes something. */
-    const plead = (id: string): void => {
+    /** BUG does not like this one bit: a scribble, a stamp, sometimes a word. */
+    const grumble = (id: string): void => {
       const now = performance.now();
-      if (busy || beetle.busy || now - lastPlea < 1700) return;
+      if (busy || beetle.busy || now - lastPlea < 1500) return;
       lastPlea = now;
-      const line = FIDGETS.bugPlead[pleas % FIDGETS.bugPlead.length] ?? '';
       pleas++;
-      const mood: BugFrame = pleas % 3 === 0 ? 'cry' : 'panic';
       void (async () => {
         const [x, y] = above(id);
         await beetle.moveTo(x, y);
         if (signal.aborted || busy) return;
-        beetle.setMood(mood);
-        beetle.say(line);
-        await sleep(1100);
+        if (pleas % 3 === 0) beetle.say(FIDGETS.bugPlead[(pleas / 3 - 1) % FIDGETS.bugPlead.length] ?? '');
+        else beetle.grumble();
+        await beetle.stomp(2);
         if (signal.aborted || busy) return;
+        await sleep(400);
+        if (signal.aborted || busy) return;
+        beetle.say('');
         beetle.setMood('stand');
         const [cx, cy] = corner();
         await beetle.moveTo(cx, cy);
-        if (!busy) beetle.say('');
       })();
     };
 
-    const change = (id: string, part = 0): void => {
+    const change: Change = (id, dragTo) => {
       if (busy) return;
       if (!touched) {
         touched = true;
@@ -79,12 +84,18 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
           data: { control: id, ms: Math.round(performance.now() - startedAt) },
         });
       }
-      witness.tally('fidget');
-      const finished = model.poke(id, part);
+      const before = model.get(id).value;
+      const finished = dragTo === undefined ? model.poke(id) : model.drag(id, dragTo);
+      const after = model.get(id).value;
+      if (after === before && !finished) return;
+      if (dragTo === undefined) witness.tally('fidget');
       cells.get(id)?.sync();
       if (finished) {
-        plead(id);
+        audio.snap(76 + model.controls.findIndex((c) => c.id === id) * 2);
         cells.get(id)?.el.classList.add('cell--done');
+        grumble(id);
+      } else if (dragTo === undefined || Math.abs(after - before) >= 1) {
+        audio.click(60 + Math.abs(after) * 2, dragTo === undefined ? 0.45 : 0.2);
       }
       maybeComplete();
     };
@@ -97,11 +108,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     const socket = h('span', { class: 'gear-socket', attrs: { 'aria-hidden': 'true' } }, gearSvg());
     panel.append(socket, beetle.el);
 
-    const gear = h(
-      'button',
-      { class: 'gear gear--fallen', attrs: { type: 'button', 'aria-label': 'Vrátit spadlé kolečko' } },
-      gearSvg(),
-    );
+    const gear = h('button', { class: 'gear gear--fallen', attrs: { type: 'button', 'aria-label': 'Spadlé kolečko' } }, gearSvg());
     gear.addEventListener('click', () => {
       if (gearPlaced) return;
       gearPlaced = true;
@@ -114,7 +121,10 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       gear.classList.add('gear--placing');
       gear.disabled = true;
       socket.classList.add('gear-socket--filled');
-      window.setTimeout(() => maybeComplete(), 650);
+      window.setTimeout(() => {
+        audio.snap(72);
+        maybeComplete();
+      }, 650);
     });
 
     stage.replaceChildren(panel, gear);
@@ -141,10 +151,10 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         panel.classList.add('fidgets--done');
         beetle.setMood('sad');
         beetle.say(FIDGETS.bugResigns);
-        await sleep(1600);
+        await sleep(1700);
         if (signal.aborted) return;
         beetle.say('');
-        // It trudges off the edge of the panel and is gone.
+        // He trudges off the edge of the panel and is gone.
         const [, y] = corner();
         await beetle.moveTo(panel.clientWidth + 20, y);
         beetle.el.classList.add('bug--gone');
@@ -156,41 +166,42 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       const lines = FIDGETS.bug[round - 1];
       await sleep(350);
       if (signal.aborted) return;
-      beetle.setMood('angry');
       beetle.say(lines?.before ?? '');
-      await beetle.stomp(2);
-      let hitIndex = 0;
+      await beetle.stomp(3);
+      beetle.say('');
       for (const hit of model.planSabotage()) {
         if (signal.aborted) return;
         const [x, y] = above(hit.id);
         beetle.setMood('angry');
         await beetle.moveTo(x, y);
         if (signal.aborted) return;
-        beetle.setMood('panic');
-        beetle.say(FIDGETS.bugPanic[hitIndex % FIDGETS.bugPanic.length] ?? '');
-        hitIndex++;
-        await beetle.stomp(1);
+        // Putting things wrong is hard work for a small beetle.
+        await beetle.strain(1100);
+        if (signal.aborted) return;
         model.set(hit.id, hit.value);
+        audio.boing(0.25);
         const cell = cells.get(hit.id);
         cell?.sync();
         cell?.el.classList.remove('cell--done', 'cell--kicked');
         void cell?.el.offsetWidth;
         cell?.el.classList.add('cell--kicked');
-        await sleep(260);
+        await beetle.cheer();
+        await sleep(250);
       }
       if (signal.aborted) return;
       beetle.setMood('stand');
       const [cx, cy] = corner();
       await beetle.moveTo(cx, cy);
       beetle.say(lines?.after ?? '');
-      // PAL laughs the beetle off and keeps the player going.
+      // PAL sighs along with the player and keeps them going.
       void pal.say(FIDGETS.palMocks[round - 1] ?? '');
       roundStartedAt = performance.now();
       busy = false;
+      window.setTimeout(() => beetle.say(''), 2600);
       maybeComplete();
     }
 
-    /** The beetle plants itself on one control; the player shoves it off by clicking. */
+    /** BUG sits down on one control and will not budge; the player shoves him off by clicking. */
     function lastStand(): Promise<void> {
       return new Promise((done) => {
         const victim = model.controls.find(isAligned) ?? model.controls[0];
@@ -198,9 +209,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
           done();
           return;
         }
-        const plan = model.planSabotage(() => 0.5);
-        model.set(victim.id, plan[0]?.value ?? 0);
-        if (isAligned(victim)) model.set(victim.id, victim.kind === 'plug' ? 0 : alignedValue(victim.kind) - 1);
+        model.set(victim.id, FidgetModel.spoil(victim.kind, () => 0.5));
         const cell = cells.get(victim.id);
         cell?.sync();
         cell?.el.classList.remove('cell--done');
@@ -208,20 +217,22 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         void (async () => {
           const [x, y] = above(victim.id);
           beetle.setMood('angry');
-          await beetle.moveTo(x, y + 26);
+          await beetle.moveTo(x, y + 30);
           beetle.say(FIDGETS.bugGrab);
+          await beetle.stomp(2);
         })();
 
         const need = FIDGETS.bugShove.length;
         let shoves = 0;
         const startedShoveAt = performance.now();
-        const overlay = h('button', { class: 'shove', attrs: { type: 'button', 'aria-label': 'Odstrč brouka' } });
+        const overlay = h('button', { class: 'shove', attrs: { type: 'button', 'aria-label': 'Brouk' } });
         overlay.addEventListener('click', () => {
           if (signal.aborted || shoves >= need) return;
           shoves++;
           witness.tally('shove');
           beetle.setMood(shoves % 2 ? 'panic' : 'angry');
           beetle.say(FIDGETS.bugShove[Math.min(shoves, need) - 1] ?? '');
+          audio.click(50 + shoves * 3, 0.4);
           cell?.el.classList.remove('cell--kicked');
           void cell?.el.offsetWidth;
           cell?.el.classList.add('cell--kicked');
@@ -241,6 +252,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
             model.set(victim.id, alignedValue(victim.kind));
             cell?.sync();
             cell?.el.classList.add('cell--done');
+            audio.snap(84);
             done();
           })();
         });
@@ -278,7 +290,52 @@ function gearSvg(): SVGSVGElement {
   return svg;
 }
 
-function buildCell(control: Control, change: (id: string, part?: number) => void): Cell {
+/**
+ * Lets a control be dragged as well as clicked. `axis` picks what movement
+ * matters; `toValue` turns the distance dragged (px) into a new value.
+ */
+function draggable(
+  el: HTMLElement,
+  control: Control,
+  change: Change,
+  axis: 'x' | 'y',
+  toValue: (start: number, delta: number) => number,
+): void {
+  let start: { x: number; y: number; value: number } | undefined;
+  let dragging = false;
+  let swallowClick = false;
+  el.addEventListener('pointerdown', (event) => {
+    start = { x: event.clientX, y: event.clientY, value: control.value };
+    dragging = false;
+    el.setPointerCapture(event.pointerId);
+  });
+  el.addEventListener('pointermove', (event) => {
+    if (!start) return;
+    const delta = axis === 'x' ? event.clientX - start.x : event.clientY - start.y;
+    if (!dragging && Math.abs(delta) < DRAG_START) return;
+    dragging = true;
+    el.classList.add('fx--dragging');
+    change(control.id, toValue(start.value, delta));
+  });
+  const end = (): void => {
+    if (dragging) swallowClick = true;
+    start = undefined;
+    dragging = false;
+    el.classList.remove('fx--dragging');
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+  el.addEventListener('click', (event) => {
+    if (swallowClick) {
+      swallowClick = false;
+      event.preventDefault();
+      return;
+    }
+    change(control.id);
+  });
+}
+
+function buildCell(control: Control, change: Change): Cell {
   const label = FIDGETS.controlLabels[control.kind];
   const lamp = h('span', { class: 'lamp', attrs: { 'aria-hidden': 'true' } });
   const { el: widget, sync } = buildWidget(control, label, change);
@@ -292,29 +349,70 @@ function buildCell(control: Control, change: (id: string, part?: number) => void
   };
 }
 
-function buildWidget(
-  control: Control,
-  label: string,
-  change: (id: string, part?: number) => void,
-): { el: HTMLElement; sync(): void } {
+function buildWidget(control: Control, label: string, change: Change): { el: HTMLElement; sync(): void } {
+  const button = (cls: string, ...children: HTMLElement[]): HTMLButtonElement =>
+    h('button', { class: `fx ${cls}`, attrs: { type: 'button', 'aria-label': label } }, ...children);
+
   switch (control.kind) {
-    case 'progress': {
-      const fill = h('span', { class: 'bar__fill' });
-      const text = h('span', { class: 'bar__text' });
-      const el = h('button', { class: 'bar', attrs: { type: 'button', 'aria-label': label } }, fill, text);
+    case 'tilt': {
+      // A picture on a nail: drag sideways to straighten it, or nudge it with clicks.
+      const frame = h('span', { class: 'fx-tilt__frame' }, h('span', { class: 'fx-tilt__pic' }));
+      const el = button('fx-tilt', h('span', { class: 'fx-tilt__nail' }), frame);
+      draggable(el, control, change, 'x', (start, dx) => Math.max(-TILT_MAX, Math.min(TILT_MAX, start + dx / 5)));
+      return { el, sync: () => el.style.setProperty('--tilt', `${control.value}deg`) };
+    }
+    case 'screw': {
+      // One screw out of four stands proud of the plate; every click turns it further in.
+      let turned = 0;
+      const head = h('span', { class: 'fx-screw__head' }, h('span', { class: 'fx-screw__slot' }));
+      const shaft = h('span', { class: 'fx-screw__shaft' });
+      const el = button(
+        'fx-screw',
+        h('span', { class: 'fx-screw__plate' }, h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__spot' }, shaft, head)),
+      );
+      let last = control.value;
       el.addEventListener('click', () => change(control.id));
       return {
         el,
         sync: () => {
-          fill.style.width = `${control.value}%`;
-          text.textContent = `${control.value} %`;
-          el.classList.toggle('bar--full', control.value >= 100);
+          if (control.value !== last) turned += (last - control.value) * 72;
+          last = control.value;
+          el.style.setProperty('--out', String(control.value));
+          el.style.setProperty('--turn', `${turned + control.value * -72}deg`);
         },
       };
     }
-    case 'badge': {
-      const count = h('span', { class: 'bell__badge' });
-      const el = h('button', { class: 'bell', attrs: { type: 'button' } }, bellSvg(), count);
+    case 'drawer': {
+      // A drawer left open a crack: push it shut (drag left, or click).
+      const front = h('span', { class: 'fx-drawer__front' }, h('span', { class: 'fx-drawer__handle' }));
+      const el = button('fx-drawer', h('span', { class: 'fx-drawer__case' }), front);
+      draggable(el, control, change, 'y', (start, dy) => start - dy / 3);
+      return { el, sync: () => el.style.setProperty('--open', String(control.value)) };
+    }
+    case 'book': {
+      // A row of books with one pulled out: push it back in line.
+      const books = [0, 1, 2, 3, 4].map((i) => h('span', { class: `fx-book__b fx-book__b--${i}` }));
+      const el = button('fx-book', h('span', { class: 'fx-book__row' }, ...books), h('span', { class: 'fx-book__shelf' }));
+      draggable(el, control, change, 'y', (start, dy) => start - dy / 4);
+      return { el, sync: () => el.style.setProperty('--out', String(control.value)) };
+    }
+    case 'plug': {
+      // A lamp whose plug lies just out of the socket. Put it in and the lamp lights.
+      const el = button(
+        'fx-plug',
+        h('span', { class: 'fx-plug__lamp' }, h('span', { class: 'fx-plug__shade' }), h('span', { class: 'fx-plug__bulb' }), h('span', { class: 'fx-plug__base' })),
+        h('span', { class: 'fx-plug__socket' }),
+        h('span', { class: 'fx-plug__cord' }),
+        h('span', { class: 'fx-plug__plug' }),
+      );
+      draggable(el, control, change, 'x', (start, dx) => (dx > 14 ? 1 : start));
+      return { el, sync: () => el.classList.toggle('fx-plug--in', control.value === 1) };
+    }
+    case 'mail': {
+      // A big mail icon with a red badge: every click reads one.
+      const count = h('span', { class: 'fx-mail__badge' });
+      const el = button('fx-mail', h('span', { class: 'fx-mail__env' }, h('span', { class: 'fx-mail__flap' })), count);
+      let last = control.value;
       el.addEventListener('click', () => change(control.id));
       return {
         el,
@@ -322,72 +420,14 @@ function buildWidget(
           count.textContent = String(control.value);
           count.hidden = control.value === 0;
           el.setAttribute('aria-label', `${label}: ${control.value}`);
-          el.classList.remove('bell--ring');
-          void el.offsetWidth;
-          if (control.value > 0) el.classList.add('bell--ring');
+          if (control.value !== last) {
+            count.classList.remove('fx-mail__badge--pop');
+            void count.offsetWidth;
+            count.classList.add('fx-mail__badge--pop');
+          }
+          last = control.value;
         },
       };
-    }
-    case 'checks': {
-      const rows = FIDGETS.checkItems.slice(0, CHECK_COUNT).map((name, i) => {
-        const box = h('span', { class: 'check__box', attrs: { 'aria-hidden': 'true' } });
-        const row = h('button', { class: 'check', attrs: { type: 'button', role: 'checkbox' } }, box, h('span', { text: name }));
-        row.addEventListener('click', () => change(control.id, i));
-        return row;
-      });
-      return {
-        el: h('div', { class: 'checks' }, ...rows),
-        sync: () => {
-          rows.forEach((row, i) => row.setAttribute('aria-checked', String(Boolean(control.value & (1 << i)))));
-        },
-      };
-    }
-    case 'tilt': {
-      const picture = h('span', { class: 'frame__pic', attrs: { 'aria-hidden': 'true' } });
-      const el = h('button', { class: 'frame', attrs: { type: 'button', 'aria-label': label } }, h('span', { class: 'frame__nail' }), picture);
-      el.addEventListener('click', () => change(control.id));
-      return { el, sync: () => el.style.setProperty('--tilt', `${control.value * 5}deg`) };
-    }
-    case 'leds': {
-      const leds = Array.from({ length: LED_COUNT }, (_, i) => {
-        const led = h('button', { class: 'led', attrs: { type: 'button', 'aria-label': FIDGETS.led(i + 1) } });
-        led.addEventListener('click', () => change(control.id, i));
-        return led;
-      });
-      return {
-        el: h('div', { class: 'leds' }, ...leds),
-        sync: () => {
-          leds.forEach((led, i) => {
-            const on = Boolean(control.value & (1 << i));
-            led.classList.toggle('led--on', on);
-            led.setAttribute('aria-pressed', String(on));
-          });
-        },
-      };
-    }
-    case 'plug': {
-      const el = h(
-        'button',
-        { class: 'cable', attrs: { type: 'button', 'aria-label': label } },
-        h('span', { class: 'cable__port' }),
-        h('span', { class: 'cable__wire' }),
-        h('span', { class: 'cable__plug' }),
-        h('span', { class: 'cable__link' }),
-      );
-      el.addEventListener('click', () => change(control.id));
-      return { el, sync: () => el.classList.toggle('cable--in', control.value === 1) };
     }
   }
-}
-
-function bellSvg(): SVGSVGElement {
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS(NS, 'path');
-  path.setAttribute('d', 'M12 3a5 5 0 0 0-5 5v4l-2 3h14l-2-3V8a5 5 0 0 0-5-5zm-2 14a2 2 0 0 0 4 0z');
-  path.setAttribute('fill', 'currentColor');
-  svg.append(path);
-  return svg;
 }
