@@ -1,3 +1,5 @@
+import { readMemory, rememberLines, type Memory } from '../core/memory.ts';
+import { readImageText } from '../ui/read-image.ts';
 import { ANOMALY_TEXT } from '../content/anomalies.ts';
 import { anomaly } from '../ui/anomaly.ts';
 import type { Scene } from '../core/director.ts';
@@ -41,8 +43,21 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.blinkThenSay(WELCOME.greeting);
       if (!alive) return;
-      await pal.tapToContinue();
+      const remembered = await Promise.race([pal.tapToContinue().then(() => null), loadMemory()]);
+      pal.cancelTap();
+      stage.replaceChildren();
       if (!alive) return;
+      if (remembered) {
+        witness.record({ scene: SCENE, kind: 'remembered', trick: 'persistent-memory', data: { since: remembered.date } });
+        pal.setMood('dark');
+        for (const line of rememberLines(remembered)) {
+          await pal.say(line);
+          if (!alive) return;
+          await sleep(900);
+          if (!alive) return;
+        }
+        pal.setMood('happy');
+      }
       await pal.say(WELCOME.askName);
       if (!alive) return;
       // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
@@ -114,6 +129,28 @@ export const welcome: Scene<GameContext> = {
       const go = h('button', { class: 'btn', text: WELCOME.go, attrs: { type: 'button' }, on: { click: done } });
       stage.replaceChildren(go);
       go.focus();
+    }
+
+    /** A quiet file picker: a saved picture from an earlier game brings PAL's memory back. */
+    function loadMemory(): Promise<Memory> {
+      return new Promise((resolve) => {
+        const input = h('input', { class: 'sr-only', attrs: { type: 'file', accept: 'image/png', id: 'memory-file' } });
+        const label = h('label', { class: 'memory-load', text: WELCOME.load, attrs: { for: 'memory-file' } });
+        input.addEventListener('change', async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          let memory: Memory | null = null;
+          try {
+            const text = await readImageText(file);
+            memory = text ? readMemory(text) : null;
+          } catch {
+            memory = null;
+          }
+          if (memory) resolve(memory);
+          else void pal.say(WELCOME.notMine);
+        });
+        stage.replaceChildren(input, label);
+      });
     }
 
     void run();

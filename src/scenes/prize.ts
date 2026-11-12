@@ -1,5 +1,6 @@
 import { ASSISTANT_KINDS } from '../content/welcome.ts';
 import { PRIZE, hiddenPayload } from '../content/prize.ts';
+import { memoryFrom, memoryLine } from '../core/memory.ts';
 import { hide } from '../core/stego.ts';
 import type { GameScene } from '../game.ts';
 import { drawCertificate } from '../ui/certificate.ts';
@@ -134,7 +135,8 @@ export const prize: GameScene = {
       const g = cert.getContext('2d');
       if (!g) return;
       const pixels = g.getImageData(0, 0, cert.width, cert.height);
-      hide(pixels, hiddenPayload({ name: profile.name, assistant: profile.assistantName ?? kindLabel, email }));
+      const memory = memoryLine(memoryFrom(witness.events, profile.name ?? '', new Date()));
+      hide(pixels, hiddenPayload({ name: profile.name, assistant: profile.assistantName ?? kindLabel, email, memory }));
       g.putImageData(pixels, 0, 0);
       witness.record({ scene: SCENE, kind: 'saved-image', trick: 'stego-dropper' });
       cert.toBlob((blob) => {

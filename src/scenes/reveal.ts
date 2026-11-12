@@ -2,10 +2,10 @@ import { audio } from '../audio/engine.ts';
 import { KEYGEN } from '../content/keygen.ts';
 import type { Scene } from '../core/director.ts';
 import { collectDevice } from '../core/device.ts';
-import { reveal as readHidden } from '../core/stego.ts';
 import type { GameContext } from '../game.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 import { openKeygen } from '../ui/keygen.ts';
+import { readImageText } from '../ui/read-image.ts';
 import { createPalFace } from '../ui/pal-face.ts';
 import { buildReveal, buildTimeline } from './reveal-model.ts';
 
@@ -184,15 +184,7 @@ export const reveal: Scene<GameContext> = {
       const read = async (file: File | undefined): Promise<void> => {
         if (!file) return;
         try {
-          const bmp = await createImageBitmap(file);
-          const c = document.createElement('canvas');
-          c.width = bmp.width;
-          c.height = bmp.height;
-          const g = c.getContext('2d');
-          if (!g) return;
-          g.drawImage(bmp, 0, 0);
-          const px = g.getImageData(0, 0, c.width, c.height);
-          const text = readHidden({ data: px.data, width: px.width, height: px.height });
+          const text = await readImageText(file);
           if (text) decoded = true;
           out.textContent = text
             ? `${text}\n\n— Tohle bylo schované v pixelech. Dropper by ten kód spustil; já ho jen ukazuju.`

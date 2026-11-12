@@ -2830,3 +2830,20 @@ body {
 .anomalies__found {
   font-weight: 700;
 }
+
+/* ---------- loading PAL's memory from a saved picture ---------- */
+
+.memory-load {
+  display: block;
+  margin: 10px auto 0;
+  width: max-content;
+  font-size: 12px;
+  opacity: 0.6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.memory-load:hover,
+#memory-file:focus-visible + .memory-load {
+  opacity: 1;
+}

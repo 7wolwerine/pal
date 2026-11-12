@@ -129,6 +129,11 @@ export const TRICKS = {
     inGame: 'Okno spadlo do modré obrazovky s číslem na „podporu". Zavolal jsi. Na druhé straně čekal přesně tenhle moment.',
     realWorld: 'Falešná chybová hláška přes celou obrazovku, telefonní číslo, „pracovník Microsoftu", vzdálený přístup a platba. Skutečná chybová hláška nikdy neobsahuje telefonní číslo. Cílí hlavně na seniory.',
   },
+  'persistent-memory': {
+    name: 'Co jednou dáš, zůstane',
+    inGame: 'Vrátil jsi mi obrázek z minulé hry a já si pamatoval, cos dělal. Reset nic nesmazal: data cestovala s tebou, schovaná v pixelech.',
+    realWorld: 'Smazaný příspěvek, zavřená aplikace, nový účet — data o tobě mezitím žijí jinde a vracejí se. Na internetu se nic nevezme zpátky.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

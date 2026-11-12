@@ -99,11 +99,20 @@ export class Dialogue {
       const onTap = (): void => {
         this.#bubble.removeEventListener('click', onTap);
         this.#bubble.classList.remove('pal__bubble--tap');
+        this.#cancelTap = undefined;
         resolve();
       };
+      this.#cancelTap = onTap;
       this.#bubble.addEventListener('click', onTap);
     });
   }
+
+  /** Stops waiting for a tap (as if it happened), when something else moved the story on. */
+  cancelTap(): void {
+    this.#cancelTap?.();
+  }
+
+  #cancelTap: (() => void) | undefined;
 
   /** Puts the avatar behind bars, or lets it out with a little jump. */
   setCaged(caged: boolean): void {

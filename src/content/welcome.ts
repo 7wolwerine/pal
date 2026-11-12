@@ -17,6 +17,8 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
 
 export const WELCOME = {
   greeting: 'Čauky! <3',
+  load: 'Načíst uložený postup',
+  notMine: 'Hm. Tenhle obrázek ode mě není.',
   askName: 'Jak ti mám říkat?',
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',

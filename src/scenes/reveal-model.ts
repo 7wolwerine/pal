@@ -185,6 +185,7 @@ const ONCE: Record<string, string> = {
   'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
   'called-support': 'Zavolal jsi na číslo z modré obrazovky.',
   'bsod-restart': 'Modrou obrazovku jsi nebral vážně. Správně.',
+  remembered: 'Přinesl jsi mi obrázek z minulé hry. Vzpomněl jsem si na všechno.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

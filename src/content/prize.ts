@@ -28,12 +28,13 @@ export const PRIZE = {
  * it if the player drops the picture back in. It is only text: a dropper would
  * run the code part; PAL never does.
  */
-export function hiddenPayload(facts: { name?: string; assistant?: string; email?: string }): string {
+export function hiddenPayload(facts: { name?: string; assistant?: string; email?: string; memory?: string }): string {
   return [
     'PAL si pamatuje:',
     `  jméno: ${facts.name ?? '?'}`,
     `  parťák: ${facts.assistant ?? '?'}`,
     `  e-mail: ${facts.email ?? '(nedal jsi)'}`,
+    ...(facts.memory ? [facts.memory] : []),
     '',
     '// Skutečný dropper by tenhle kód spustil. PAL ho jen ukazuje:',
     "console.log('Ahoj z obrázku! Tohle nebyl jen obrázek.');",
