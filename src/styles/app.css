@@ -3961,3 +3961,80 @@ body.on-pc {
   flex: none;
   width: min(100%, 220px);
 }
+
+/* ---------- the painting: brush cursor, names, signature ---------- */
+
+.paint--brush .paint__canvas,
+.paint--brush .scene__hotspot {
+  cursor: crosshair;
+}
+
+.paint__names {
+  position: absolute;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.paint__name {
+  padding: 2px 10px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  background: #fffdf8;
+  color: #2b2b3a;
+  font-size: clamp(12px, 2.6vw, 18px);
+  line-height: 1.2;
+  cursor: var(--cursor-hand);
+  animation: pop 200ms ease-out both;
+}
+
+.paint__name--script {
+  font-family: 'Segoe Script', 'Brush Script MT', 'Snell Roundhand', cursive;
+}
+
+.paint__name--serif {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.paint__name--marker {
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+  font-weight: 700;
+}
+
+.paint__sig {
+  position: absolute;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  color: #2b2b3a;
+  font-size: clamp(11px, 2.4vw, 17px);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: rotate(-6deg);
+  animation: sign 1300ms steps(14, end) both;
+}
+
+@keyframes sign {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.paint--leave {
+  animation: paint-leave 600ms ease-in forwards;
+}
+
+@keyframes paint-leave {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}

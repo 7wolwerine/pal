@@ -36,6 +36,7 @@ const FIELD_LABELS: Record<string, string> = {
   email: 'E-mail',
   role: 'Kým jsi',
   firstPet: 'První mazlíček',
+  signature: 'Tvůj podpis',
 };
 
 /** Average silent reading speed, used to say how long reading would have taken. */
