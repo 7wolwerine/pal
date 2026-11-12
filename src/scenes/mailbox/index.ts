@@ -12,8 +12,10 @@ import {
   STAGE_WIDTH,
   paintAlert,
   paintBackdrop,
+  paintBirds,
   paintCloseUp,
   paintMailbox,
+  paintPlant,
   paintSmallEnvelope,
 } from './art.ts';
 
@@ -64,6 +66,23 @@ export const mailbox: GameScene = {
     });
     hotspot.hidden = true;
 
+    // Clickable bits of the garden: the character comments, nothing more. The
+    // reward-for-poking-around habit the game later turns against the player.
+    const C = MAILBOX.comments;
+    const nosey: { rect: { x: number; y: number; w: number; h: number }; text: string; label: string }[] = [
+      { rect: { x: 134, y: 6, w: 26, h: 32 }, text: C.tree.text, label: C.tree.label },
+      { rect: { x: 0, y: 0, w: 70, h: 26 }, text: C.sky.text, label: C.sky.label },
+      { rect: { x: 44, y: 38, w: 14, h: 10 }, text: C.heart.text, label: C.heart.label },
+      { rect: { x: 22, y: 42, w: 16, h: 16 }, text: C.window.text, label: C.window.label },
+    ];
+    for (const item of nosey) {
+      stage.hotspot(item.rect, item.label, () => {
+        if (phase !== 'quiet' && phase !== 'waiting') return;
+        caption.textContent = item.text;
+        ctx.witness.record({ scene: SCENE, kind: 'poked', data: { what: item.label } });
+      });
+    }
+
     stage.run((g, t) => {
       now = t;
       const p = t - phaseAt;
@@ -86,6 +105,8 @@ export const mailbox: GameScene = {
 
       const since = t - phaseAt;
       paintBackdrop(g, t, motion);
+      paintPlant(g);
+      if (motion) paintBirds(g, t);
       paintMailbox(g, phase !== 'quiet' && phase !== 'arriving');
 
       if (phase === 'arriving') {

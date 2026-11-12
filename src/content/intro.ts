@@ -4,6 +4,13 @@ export const MAILBOX = {
   arrived: 'Cink! Něco přišlo.',
   found: 'Flashka? A žádná zpáteční adresa.',
   go: 'Honem k počítači',
+  /** Little comments the character makes about the garden when the player pokes around. */
+  comments: {
+    tree: { label: 'Strom', text: 'Tenhle strom tady nasadil můj děda.' },
+    sky: { label: 'Obloha', text: 'Dneska je krásně!' },
+    heart: { label: 'Srdíčko nad dveřmi', text: 'Tohle je místo K+M+B+' },
+    window: { label: 'Okno', text: 'Čerstvě umyté. Jsem na sebe pyšný.' },
+  },
 } as const;
 
 export const DESK = {

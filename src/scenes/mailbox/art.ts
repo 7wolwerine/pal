@@ -188,6 +188,36 @@ export function paintMailbox(g: G, flagUp: boolean): void {
   }
 }
 
+/** A little potted plant on the grass, bottom-left. */
+export function paintPlant(g: G): void {
+  px(g, C.doorDark, 9, 90, 10, 2);
+  px(g, '#c56a4a', 9, 85, 10, 6);
+  px(g, '#b05638', 9, 85, 2, 6);
+  px(g, C.leaf, 11, 78, 6, 8);
+  px(g, C.leaf, 8, 81, 4, 5);
+  px(g, C.leaf, 16, 80, 4, 6);
+  px(g, C.leafLight, 12, 79, 3, 2);
+  px(g, C.leafLight, 17, 82, 2, 2);
+  px(g, C.pink, 10, 77, 2, 2);
+  px(g, C.yellow, 15, 76, 2, 2);
+}
+
+const BIRD = '#6c7b88';
+
+/** A few birds gliding across the sky, wings flapping. */
+export function paintBirds(g: G, t: number): void {
+  for (let i = 0; i < 3; i++) {
+    const span = STAGE_WIDTH + 40;
+    const bx = Math.round(STAGE_WIDTH + 16 - ((t * 0.013 + i * 58) % span));
+    const by = 5 + i * 5 + Math.round(Math.sin(t / 700 + i) * 2);
+    const up = Math.floor(t / 180 + i) % 2 === 0;
+    const wing = up ? -1 : 0;
+    px(g, BIRD, bx, by + wing, 2, 1);
+    px(g, BIRD, bx + 2, by - 1, 1, 1);
+    px(g, BIRD, bx + 3, by + wing, 2, 1);
+  }
+}
+
 /** The "!" that bobs over whatever wants attention. */
 export function paintAlert(g: G, x: number, y: number, t: number): void {
   const bob = Math.round(Math.sin(t / 220) * 1.5);
