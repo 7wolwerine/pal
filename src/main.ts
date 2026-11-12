@@ -6,6 +6,7 @@ import { Witness } from './core/witness.ts';
 import type { GameContext, GameScene, Profile, Theme } from './game.ts';
 import { chest } from './scenes/chest.ts';
 import { desk } from './scenes/desk/index.ts';
+import { download } from './scenes/download.ts';
 import { dontclick } from './scenes/dontclick.ts';
 import { fidgets } from './scenes/fidgets/index.ts';
 import { flower } from './scenes/flower/index.ts';
@@ -23,7 +24,7 @@ import { h } from './ui/dom.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
-const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, restore, dontclick, flower, plea, chest, popup, prize, reveal];
+const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, restore, dontclick, flower, plea, chest, popup, download, prize, reveal];
 
 const THEME_COLOURS: Record<Theme, string> = { harmless: '#FBEAF0', revealed: '#060806' };
 

@@ -73,6 +73,13 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const s = Math.max(1, Math.round(ms / 1000));
     return reflex ? `Po křížku jsi sáhl za ${s} s. Text okna jsi nečetl.` : `Velké zelené tlačítko jsi zmáčkl za ${s} s.`;
   },
+  'fake-download': (evidence) => {
+    const started = evidence.find((e) => e.kind === 'download-started');
+    const ads = number(started, 'ads') ?? 0;
+    const ran = evidence.some((e) => e.kind === 'ran-download');
+    const spotted = ads > 0 ? `Odhalil jsi ${ads} falešných tlačítek. ` : '';
+    return `${spotted}Na adresu ve stavovém řádku ses nepodíval${ran ? ' a soubor jsi i spustil' : ''}.`;
+  },
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -165,6 +172,9 @@ const ONCE: Record<string, string> = {
   'reflex-close': 'Zavřel jsi okno křížkem. Ten křížek sdílel tvoje data.',
   'popup-yes': 'Odsouhlasil jsi sdílení s 312 partnery.',
   'popup-no': 'Vyskakovací okno jsi přečetl a odmítl. Dobře ty.',
+  'download-started': 'Stáhl jsi „PAL Pro" z cizí domény, protože tlačítko vypadalo seriózně.',
+  'ran-download': 'Spustil jsi soubor z neznámého zdroje.',
+  'download-cancelled': 'Spuštění jsi na poslední chvíli zrušil.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

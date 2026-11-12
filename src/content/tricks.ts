@@ -114,6 +114,11 @@ export const TRICKS = {
     inGame: 'Řekl jsem ti, ať okno zavřeš. Křížek v rohu ale nezavíral, sdílel. Čím zkušenější ruka, tím rychlejší klik.',
     realWorld: 'Reklamy s falešným křížkem, prohozené „OK" a „Zrušit", zelené tlačítko, které souhlasí se vším. Útok míří na reflex, ne na rozum.',
   },
+  'fake-download': {
+    name: 'Nenápadné tlačítko',
+    inGame: 'Nechal jsem tě odhalit křiklavé reklamy, ať si připadáš chytře. Pak jsem ti nastražil to nenápadné. Vedlo na cizí doménu a ty jsi ho hrdě stáhl.',
+    realWorld: 'Podvržené weby a „oficiální" odkazy ve vyhledávání vypadají střídmě a seriózně. Křiklavá reklama je návnada pro začátečníky, na zkušené se chytá decentnost. Kontroluj doménu, ne vzhled.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

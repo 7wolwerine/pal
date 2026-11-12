@@ -11,6 +11,7 @@ export const BUG_WARNINGS = {
   restore: 'Zase opravuješ cizí věci? Nikdo tě neprosil!',
   flower: 'To sklo ji chrání! Nech ho být!',
   chest: 'To je kontrolní otázka k heslu!!',
+  download: 'Koukni na adresu dole!! To není jeho stránka!!',
   prize: 'Nedávej mu e-mail!!',
 } as const;
 

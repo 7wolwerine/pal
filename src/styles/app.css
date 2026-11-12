@@ -2304,3 +2304,189 @@ body {
     animation: none;
   }
 }
+
+/* ---------- the 90s download page ---------- */
+
+.dl {
+  display: grid;
+  gap: 8px;
+  padding: 10px 10px 0;
+  border: 2px outset #c0c0c0;
+  background: #ffff99 repeating-linear-gradient(45deg, transparent 0 8px, rgba(255, 153, 0, 0.12) 8px 16px);
+  color: #000080;
+  font-family: 'Comic Sans MS', 'Comic Sans', cursive;
+  text-align: center;
+  overflow: hidden;
+}
+
+.dl__title {
+  margin: 0;
+  color: #ff0000;
+  font-size: 18px;
+  text-shadow: 2px 2px 0 #ffcc00;
+  animation: dl-blink 900ms steps(2) infinite;
+}
+
+.dl__marquee {
+  overflow: hidden;
+  background: #000080;
+  color: #ffff00;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.dl__marquee span {
+  display: inline-block;
+  padding-left: 100%;
+  animation: dl-marquee 9s linear infinite;
+}
+
+.dl__grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.dl__ad {
+  padding: 8px 12px;
+  border: 3px outset #ff9900;
+  border-radius: 4px;
+  background: linear-gradient(#66ff66, #009900);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-shadow: 1px 1px 0 #000;
+  cursor: pointer;
+}
+
+.dl__ad--1 {
+  background: linear-gradient(#ff6666, #cc0000);
+  animation: dl-pulse 700ms ease-in-out infinite alternate;
+}
+
+.dl__ad--2 {
+  background: linear-gradient(#66ccff, #0055cc);
+}
+
+.dl__ad--3 {
+  background: linear-gradient(#ffcc33, #ff6600);
+  animation: dl-pulse 900ms ease-in-out infinite alternate;
+}
+
+.dl__ad--4 {
+  background: linear-gradient(#ff66ff, #9900cc);
+}
+
+.dl__ad--caught {
+  background: #ddd;
+  border-style: solid;
+  border-color: #999;
+  color: #555;
+  text-shadow: none;
+  animation: nope 320ms ease-in-out;
+  cursor: default;
+}
+
+.dl__small {
+  margin: 2px 0;
+  font-family: Arial, sans-serif;
+  font-size: 11px;
+}
+
+.dl__link {
+  color: #0000ee;
+}
+
+.dl__status {
+  margin: 4px -10px 0;
+  padding: 2px 6px;
+  border-top: 2px inset #c0c0c0;
+  background: #c0c0c0;
+  color: #000;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dl--done .dl__ad,
+.dl--done .dl__title,
+.dl--done .dl__ad--1,
+.dl--done .dl__ad--3 {
+  animation: none;
+}
+
+.dl__after {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dl__file {
+  display: grid;
+  gap: 4px;
+  width: min(280px, 100%);
+  font-size: 13px;
+}
+
+.dl__track {
+  display: block;
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.dl__bar {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--ok);
+}
+
+.dl__ask {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.dl__ask p,
+.dl__installing {
+  margin: 0;
+}
+
+@keyframes dl-blink {
+  50% {
+    color: #0000ff;
+  }
+}
+
+@keyframes dl-marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes dl-pulse {
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl__title,
+  .dl__marquee span,
+  .dl__ad {
+    animation: none;
+  }
+
+  .dl__marquee span {
+    padding-left: 0;
+  }
+}

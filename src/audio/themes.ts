@@ -126,6 +126,7 @@ export const SCENE_THEME: Record<string, ThemeId> = {
   plea: 'desk',
   chest: 'window',
   popup: 'window',
+  download: 'window',
   prize: 'window',
   reveal: 'dark',
 };
