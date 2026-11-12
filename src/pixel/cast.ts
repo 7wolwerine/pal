@@ -7,68 +7,59 @@ const CAST_PALETTE: Record<string, string> = {
   k: INK,
   h: '#6b4a2b', // hair, boots
   s: '#f5c4b3', // skin
+  c: '#f29bb0', // cheeks
   t: '#5dcaa5', // jumper
+  d: '#3c9b80', // jumper shade
   p: '#5b6bb5', // trousers
+  q: '#45539a', // trouser seam
   g: '#c9c9d1', // metal
   r: '#ed93b1', // drive body
   w: '#ffffff',
   b: '#7fb2e5', // tear
 };
 
-const HEAD = ['...hhhh...', '..hhhhhh..', '..hssssh..', '..skssks..'];
+// 14 x 20: big enough to sit right next to the mailbox and read as a person.
+const HEAD = [
+  '....hhhhhh....',
+  '...hhhhhhhh...',
+  '..hhhhhhhhhh..',
+  '..hhsssssshh..',
+  '..hskssssksh..',
+  '..hssssssssh..',
+  '...csskkssc...',
+  '....ssssss....',
+];
+
+const BODY = ['...tttttttt...', '..tttttttttt..', '.sttdttttdtts.', '.stttttttttts.', '..tttttttttt..', '..pppppppppp..'];
+
+const LEGS_STAND = ['..ppppqqpppp..', '..pppp..pppp..', '..ppp....ppp..', '..ppp....ppp..', '..hhh....hhh..', '.hhhh....hhhh.'];
+const LEGS_STRIDE = ['..pppppppppp..', '.pppp....ppp..', '.ppp......ppp.', 'ppp........ppp', 'hhh........hhh', 'hhh........hhh'];
+const LEGS_PASS = ['..pppppppppp..', '...pppppppp...', '....pppppp....', '....ppp.ppp...', '....hhh.hhh...', '...hhhh.hhhh..'];
 
 const POSES = {
-  stand: [
-    ...HEAD,
-    '..ssssss..',
-    '...ssss...',
-    '..tttttt..',
-    '.tttttttt.',
-    '.stttttts.',
-    '.stttttts.',
-    '..tttttt..',
-    '..pppppp..',
-    '..pp..pp..',
-    '..pp..pp..',
-    '..pp..pp..',
-    '..hh..hh..',
-  ],
-  step: [
-    ...HEAD,
-    '..ssssss..',
-    '...ssss...',
-    '..tttttt..',
-    '.tttttttt.',
-    '.stttttts.',
-    '.stttttts.',
-    '..tttttt..',
-    '..pppppp..',
-    '...pppp...',
-    '..pp..pp..',
-    '.pp....pp.',
-    '.hh....hh.',
-  ],
+  stand: [...HEAD, ...BODY, ...LEGS_STAND],
+  walkA: [...HEAD, ...BODY, ...LEGS_STRIDE],
+  walkB: [...HEAD, ...BODY, ...LEGS_PASS],
   amazed: [
-    ...HEAD,
-    '..sskkss..',
-    's..ssss..s',
-    's.tttttt.s',
-    'stttttttts',
-    '..tttttt..',
-    '..tttttt..',
-    '..tttttt..',
-    '..pppppp..',
-    '..pp..pp..',
-    '..pp..pp..',
-    '..pp..pp..',
-    '..hh..hh..',
+    ...HEAD.slice(0, 4),
+    's.hskssssksh.s',
+    's.hssssssssh.s',
+    '.s.csskkssc.s.',
+    '..s.ssssss.s..',
+    '...tttttttt...',
+    '..tttttttttt..',
+    '..tttdttdttt..',
+    '..tttttttttt..',
+    '..tttttttttt..',
+    '..pppppppppp..',
+    ...LEGS_STAND,
   ],
 } as const;
 
 export type Pose = keyof typeof POSES;
 
-export const CHARACTER_WIDTH = 10;
-export const CHARACTER_HEIGHT = 16;
+export const CHARACTER_WIDTH = 14;
+export const CHARACTER_HEIGHT = 20;
 
 /** The player's character. Deliberately plain: it is whoever is playing. */
 export function paintCharacter(g: CanvasRenderingContext2D, pose: Pose, x: number, y: number): void {

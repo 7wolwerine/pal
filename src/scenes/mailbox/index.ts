@@ -1,14 +1,16 @@
 import { audio } from '../../audio/engine.ts';
 import { MAILBOX } from '../../content/intro.ts';
 import type { GameScene } from '../../game.ts';
-import { CHARACTER_WIDTH, paintCharacter, paintDrive } from '../../pixel/cast.ts';
+import { CHARACTER_WIDTH, paintCharacter, paintDrive, type Pose } from '../../pixel/cast.ts';
 import { PixelStage, progress } from '../../pixel/stage.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import {
   CHARACTER_AT_MAILBOX,
   CHARACTER_HOME,
+  ENVELOPE_RECT,
   MAILBOX_RECT,
   MAIL_SLOT,
+  PATH_RECT,
   STAGE_HEIGHT,
   STAGE_WIDTH,
   paintAlert,
@@ -23,12 +25,13 @@ import {
 
 const SCENE = 'mailbox';
 
-type Phase = 'quiet' | 'arriving' | 'waiting' | 'walking' | 'opening' | 'amazed';
+type Phase = 'quiet' | 'arriving' | 'waiting' | 'walking' | 'letter' | 'opening' | 'amazed';
 
 const QUIET_MS = 1600;
 const ARRIVING_MS = 1300;
-const WALKING_MS = 1300;
-const OPENING_MS = 3200;
+const OPENING_MS = 2200;
+/** Walking speed in picture pixels per millisecond. */
+const WALK_SPEED = 0.04;
 
 /**
  * The opening scene. A letter with no return address lands in the mailbox and
@@ -50,14 +53,33 @@ export const mailbox: GameScene = {
     let now = 0;
     let arrivedAt = 0;
 
+    // Where the character stands, and an optional walk in progress.
+    let charX: number = CHARACTER_HOME.x;
+    let walk: { from: number; to: number; at: number; ms: number; then?: () => void } | null = null;
+
     const enter = (next: Phase): void => {
       phase = next;
       phaseAt = now;
     };
 
-    const hotspot = stage.hotspot(MAILBOX_RECT, MAILBOX.mailboxLabel, () => {
+    const walkTo = (to: number, then?: () => void): void => {
+      const from = charX;
+      const ms = Math.max(1, Math.abs(to - from) / WALK_SPEED);
+      walk = { from, to, at: now, ms, then };
+    };
+
+    // Click the path to stroll there. Pure fun, until it isn't.
+    stage.hotspot(PATH_RECT, MAILBOX.pathLabel, (event) => {
+      if (phase !== 'quiet' && phase !== 'waiting') return;
+      const box = (event.currentTarget as HTMLElement).getBoundingClientRect();
+      const fx = event.detail === 0 || box.width === 0 ? 0.5 : (event.clientX - box.left) / box.width;
+      const target = PATH_RECT.x + Math.min(1, Math.max(0, fx)) * PATH_RECT.w - CHARACTER_WIDTH / 2;
+      walkTo(Math.round(Math.min(CHARACTER_AT_MAILBOX.x, Math.max(PATH_RECT.x - 2, target))));
+    });
+
+    const mailboxSpot = stage.hotspot(MAILBOX_RECT, MAILBOX.mailboxLabel, () => {
       if (phase !== 'waiting') return;
-      hotspot.hidden = true;
+      mailboxSpot.hidden = true;
       ctx.witness.record({
         scene: SCENE,
         kind: 'opened-mail',
@@ -65,8 +87,22 @@ export const mailbox: GameScene = {
         data: { ms: Math.round(now - arrivedAt) },
       });
       enter('walking');
+      walkTo(CHARACTER_AT_MAILBOX.x, () => {
+        enter('letter');
+        caption.textContent = MAILBOX.letter;
+        envelopeSpot.hidden = false;
+        envelopeSpot.focus();
+      });
     });
-    hotspot.hidden = true;
+    mailboxSpot.hidden = true;
+
+    // The letter only opens when the player opens it.
+    const envelopeSpot = stage.hotspot(ENVELOPE_RECT, MAILBOX.letterLabel, () => {
+      if (phase !== 'letter') return;
+      envelopeSpot.hidden = true;
+      enter('opening');
+    });
+    envelopeSpot.hidden = true;
 
     // Clickable bits of the garden: the character comments, nothing more. The
     // reward-for-poking-around habit the game later turns against the player.
@@ -97,9 +133,8 @@ export const mailbox: GameScene = {
         enter('waiting');
         arrivedAt = t;
         caption.textContent = MAILBOX.wow;
-        hotspot.hidden = false;
+        mailboxSpot.hidden = false;
       }
-      if (phase === 'walking' && p >= WALKING_MS) enter('opening');
       if (phase === 'opening' && p >= OPENING_MS) {
         enter('amazed');
         audio.treasure();
@@ -107,6 +142,19 @@ export const mailbox: GameScene = {
         const go = h('button', { class: 'btn', text: MAILBOX.go, attrs: { type: 'button' }, on: { click: done } });
         actions.replaceChildren(go);
         go.focus();
+      }
+
+      // Advance any walk in progress.
+      let walking = false;
+      if (walk) {
+        const u = Math.min(1, (t - walk.at) / walk.ms);
+        charX = walk.from + (walk.to - walk.from) * u;
+        walking = u < 1;
+        if (!walking) {
+          const then = walk.then;
+          walk = null;
+          then?.();
+        }
       }
 
       const since = t - phaseAt;
@@ -127,31 +175,31 @@ export const mailbox: GameScene = {
         const u = progress(since, 0, ARRIVING_MS);
         paintSmallEnvelope(g, 170 + (MAIL_SLOT.x - 170) * u, 20 + (MAIL_SLOT.y - 20) * u - Math.sin(u * Math.PI) * 18);
       }
+
+      // The character: a two-frame walk with a little bob, or standing still.
+      const y = CHARACTER_HOME.y;
+      if (phase === 'amazed') {
+        const jump = motion && since < 700 ? Math.round(Math.abs(Math.sin(since / 110)) * 3) : 0;
+        paintCharacter(g, 'amazed', charX, y - jump);
+        paintDrive(g, charX + (CHARACTER_WIDTH - 6) / 2, y - 12 - jump);
+        paintAlert(g, charX + CHARACTER_WIDTH + 2, y - 10, motion ? t : 0);
+      } else {
+        const frame: Pose = walking ? (Math.floor(t / 150) % 2 ? 'walkA' : 'walkB') : 'stand';
+        const bob = walking && motion && Math.floor(t / 150) % 2 ? -1 : 0;
+        paintCharacter(g, frame, charX, y + bob);
+      }
+
       // A "?" over the character turns into a "!" as the surprise sinks in.
       if (phase === 'waiting') {
-        const mx = CHARACTER_HOME.x + 4;
-        const my = CHARACTER_HOME.y - 11;
+        const mx = charX + 6;
+        const my = y - 10;
         if (sinceArrived < 900) paintQuestion(g, mx, my, motion ? t : 0);
         else paintAlert(g, mx, my, motion ? t : 0);
       }
 
-      // The character.
-      if (phase === 'walking') {
-        const u = progress(since, 0, WALKING_MS);
-        const x = CHARACTER_HOME.x + (CHARACTER_AT_MAILBOX.x - CHARACTER_HOME.x) * u;
-        paintCharacter(g, Math.floor(since / 160) % 2 ? 'step' : 'stand', x, CHARACTER_HOME.y);
-      } else if (phase === 'amazed') {
-        const jump = motion && since < 700 ? Math.round(Math.abs(Math.sin(since / 110)) * 3) : 0;
-        const { x, y } = CHARACTER_AT_MAILBOX;
-        paintCharacter(g, 'amazed', x, y - jump);
-        paintDrive(g, x + (CHARACTER_WIDTH - 6) / 2, y - 12 - jump);
-        paintAlert(g, x + 14, y - 12, motion ? t : 0);
-      } else {
-        const at = phase === 'opening' ? CHARACTER_AT_MAILBOX : CHARACTER_HOME;
-        paintCharacter(g, 'stand', at.x, at.y);
-      }
-
-      if (phase === 'opening') paintCloseUp(g, progress(since, 0, OPENING_MS), t);
+      // The close-up: the closed letter waits, lower on screen, until clicked.
+      if (phase === 'letter') paintCloseUp(g, 0.2, t);
+      if (phase === 'opening') paintCloseUp(g, 0.25 + 0.75 * progress(since, 0, OPENING_MS), t);
     });
 
     return () => {

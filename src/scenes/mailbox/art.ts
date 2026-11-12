@@ -7,10 +7,14 @@ export const STAGE_WIDTH = 160;
 export const STAGE_HEIGHT = 100;
 
 /** Where things are, in picture pixels. */
-export const MAILBOX_RECT = { x: 110, y: 40, w: 34, h: 48 };
+export const MAILBOX_RECT = { x: 110, y: 40, w: 34, h: 44 };
 export const MAIL_SLOT = { x: 120, y: 58 };
-export const CHARACTER_HOME = { x: 64, y: 73 };
-export const CHARACTER_AT_MAILBOX = { x: 102, y: 73 };
+export const CHARACTER_HOME = { x: 62, y: 69 };
+export const CHARACTER_AT_MAILBOX = { x: 98, y: 69 };
+/** The strip of path the character can be sent along by clicking it. */
+export const PATH_RECT = { x: 44, y: 84, w: 86, h: 9 };
+/** Where the closed letter sits in the close-up, lower so the drive shows. */
+export const ENVELOPE_RECT = { x: 47, y: 53, w: 66, h: 42 };
 
 const C = {
   sky: '#bfe6f5',
@@ -271,6 +275,8 @@ export function paintSmallEnvelope(g: G, x: number, y: number): void {
  * `p` runs from 0 to 1 over the whole close-up.
  */
 export function paintCloseUp(g: G, p: number, t: number): void {
+  // Everything sits 14px lower than before, so the drive rises into clear view.
+  const dy = 14;
   g.globalAlpha = Math.min(0.6, p * 4);
   px(g, INK, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
   g.globalAlpha = 1;
@@ -280,32 +286,34 @@ export function paintCloseUp(g: G, p: number, t: number): void {
 
   if (open) {
     // Flap folded up, behind everything.
-    for (let i = 0; i < 16; i++) px(g, C.paperShade, 48 + i * 2, 40 - i, 64 - i * 4, 1);
+    for (let i = 0; i < 16; i++) px(g, C.paperShade, 48 + i * 2, 40 + dy - i, 64 - i * 4, 1);
   }
   // The drive rises out of the envelope; the envelope front hides the rest of it.
-  paintDrive(g, 71, 46 - slide * 38, 3);
-  px(g, C.paperLine, 47, 39, 66, 42);
-  px(g, C.paper, 48, 40, 64, 40);
+  paintDrive(g, 71, 46 + dy - slide * 40, 3);
+  px(g, C.paperLine, 47, 39 + dy, 66, 42);
+  px(g, C.paper, 48, 40 + dy, 64, 40);
   if (!open) {
-    for (let i = 0; i < 20; i++) px(g, C.paperShade, 48 + i * 1.6, 40 + i, 64 - i * 3.2, 1);
+    for (let i = 0; i < 20; i++) px(g, C.paperShade, 48 + i * 1.6, 40 + dy + i, 64 - i * 3.2, 1);
   }
-  px(g, C.paperLine, 48, 40, 64, 1);
-  // Heart seal.
-  px(g, C.red, 76, 58, 3, 2);
-  px(g, C.red, 81, 58, 3, 2);
-  px(g, C.red, 76, 60, 8, 2);
-  px(g, C.red, 77, 62, 6, 1);
-  px(g, C.red, 78, 63, 4, 1);
-  px(g, C.red, 79, 64, 2, 1);
+  px(g, C.paperLine, 48, 40 + dy, 64, 1);
+  // Heart seal; it beats gently while the letter waits to be opened.
+  const beat = !open && Math.floor(t / 420) % 2 === 0 ? 1 : 0;
+  const sy = 58 + dy;
+  px(g, C.red, 76 - beat, sy - beat, 3 + beat, 2);
+  px(g, C.red, 81, sy - beat, 3 + beat, 2);
+  px(g, C.red, 76 - beat, sy + 2, 8 + beat * 2, 2);
+  px(g, C.red, 77, sy + 4, 6, 1);
+  px(g, C.red, 78, sy + 5, 4, 1);
+  px(g, C.red, 79, sy + 6, 2, 1);
 
   if (slide >= 1) {
     // Sparkles once the drive is out.
     const on = Math.floor(t / 180) % 2 === 0;
     for (const [x, y] of [
-      [60, 14],
-      [98, 10],
-      [102, 28],
-      [58, 30],
+      [58, 18],
+      [100, 14],
+      [104, 34],
+      [56, 36],
     ] as const) {
       if (on === (x % 4 === 0)) continue;
       px(g, C.yellow, x, y - 1, 1, 3);

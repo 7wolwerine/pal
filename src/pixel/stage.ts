@@ -52,7 +52,7 @@ export class PixelStage {
   }
 
   /** A button over part of the picture, positioned in picture pixels. */
-  hotspot(rect: Rect, label: string, onClick: () => void): HTMLButtonElement {
+  hotspot(rect: Rect, label: string, onClick: (event: MouseEvent) => void): HTMLButtonElement {
     const button = h('button', {
       class: 'scene__hotspot',
       attrs: { type: 'button', 'aria-label': label },
