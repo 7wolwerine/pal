@@ -1194,3 +1194,100 @@ body {
   outline: 3px solid var(--ink-soft);
   outline-offset: 2px;
 }
+
+/* ---------- prize screen ---------- */
+
+.prize {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.score {
+  display: grid;
+  justify-items: center;
+  padding: 10px 18px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bubble);
+  animation: pop-in 500ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.score__label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.score__value {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--btn);
+  font-variant-numeric: tabular-nums;
+}
+
+.score__rank {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cert-preview {
+  width: min(100%, 360px);
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 0 var(--line);
+  animation: pop-in 600ms 150ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.prize__status {
+  min-height: 22px;
+  margin: 0;
+  font-weight: 700;
+  color: var(--ok);
+}
+
+.prize__actions {
+  width: 100%;
+}
+
+.prize__actions .btn--quiet {
+  margin-top: 6px;
+}
+
+.confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.confetti__piece {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  animation: confetti-fall 2.4s ease-in forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(560px) rotate(var(--spin, 360deg));
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}

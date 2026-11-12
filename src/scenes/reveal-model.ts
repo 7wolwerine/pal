@@ -28,6 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   assistantKind: 'Komu věříš',
   assistantName: 'Jméno, které ti něco říká',
   comfortFood: 'Jídlo z dětství',
+  email: 'E-mail',
 };
 
 /** Average silent reading speed, used to say how long reading would have taken. */

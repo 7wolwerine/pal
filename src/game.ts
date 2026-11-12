@@ -14,6 +14,8 @@ export interface Profile {
   assistantName?: string;
   /** True once the player has freed the assistant; closing the window then clings. */
   bonded?: boolean;
+  /** The e-mail address given for the prize. Kept in memory only, never sent. */
+  email?: string;
 }
 
 /** What scenes get to work with. */

@@ -79,6 +79,11 @@ export const TRICKS = {
     inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
+  'real-email': {
+    name: 'Skutečný e-mail za odměnu',
+    inGame: 'Za hezký obrázek jsi mi dal skutečnou e-mailovou adresu. Nic jsem neodeslal — ale mohl jsem.',
+    realWorld: 'Soutěže a „ceny zdarma" sbírají platné e-maily. Sledovací pixel v odpovědi pak prozradí, kdy, kde a na čem ji otevřeš.',
+  },
   'helpers-high': {
     name: 'Pocit zachránce (helper’s high)',
     inGame: 'Opravit rozbité a vidět, jak se všechno rozzáří. Pro tenhle pocit člověk udělá skoro cokoliv.',
