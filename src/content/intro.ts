@@ -1,13 +1,20 @@
 export const MAILBOX = {
   sceneLabel: 'Domek se zahrádkou a poštovní schránkou',
   mailboxLabel: 'Poštovní schránka',
-  arrived: 'Cink! Něco přišlo.',
-  wow: 'Wooow, co to asi je?',
-  letter: 'Dopis! A žádný odesílatel…',
-  letterLabel: 'Dopis',
   pathLabel: 'Cestička',
-  found: 'Flashka? A žádná zpáteční adresa.',
-  go: 'Honem k počítači',
+  doorLabel: 'Dveře domu',
+  sealLabel: 'Srdíčková pečeť na obálce',
+  letterLabel: 'Dopis',
+  /** What the character says, in bubbles over its head. */
+  post: 'Jé, pošta!',
+  sender: ['Bella Gothová', 'Krasohlídkov 162'],
+  letter: {
+    greeting: 'Ahoj broučku,',
+    body: 'posílám Ti dáreček! Je to překvapení, tak ti to nemůžu dopředu prozradit. Určitě tě potěší, vím, jak takové věci miluješ!',
+    signature: 'Tvoje babi',
+  },
+  fromGrandma: 'Jé, píše mi babička. Ta je zlatá, dneska už dopisy nikdo neposílá.',
+  curious: 'Jsem zvědavý!',
   /** Little comments the character makes about the garden when the player pokes around. */
   comments: {
     tree: { label: 'Strom', text: 'Tenhle strom tady nasadil můj děda.' },

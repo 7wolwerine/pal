@@ -9,6 +9,8 @@ export interface SayOptions {
   readonly tap?: boolean;
   /** Keep the bubble up after resolving; otherwise it stays until the next line anyway. */
   readonly ms?: number;
+  /** Hang the bubble under the speaker instead of over it. */
+  readonly below?: boolean;
   /** BUG's angry scribble instead of words. */
   readonly scribble?: boolean;
 }
@@ -28,6 +30,7 @@ export class Speech {
   readonly #bubble: HTMLElement;
   readonly #text: HTMLElement;
   #anchor: Anchor | undefined;
+  #below = false;
   #line = 0;
   #skip = false;
   #tap: (() => void) | undefined;
@@ -74,6 +77,7 @@ export class Speech {
     this.#cancelTap();
     this.#skip = false;
     this.#anchor = anchor;
+    this.#below = opts.below ?? false;
     const who = opts.who ?? 'hero';
     this.#bubble.className = `say say--${who}${opts.scribble ? ' say--scribble' : ''}`;
     this.#bubble.hidden = false;
@@ -142,7 +146,7 @@ export class Speech {
     let left = ax - bw / 2;
     left = Math.max(margin, Math.min(hostW - bw - margin, left));
     // Above the head when there is room, otherwise below it.
-    const above = ay - bh - 12 >= margin;
+    const above = !this.#below && ay - bh - 12 >= margin;
     const top = above ? ay - bh - 12 : Math.min(hostH - bh - margin, ay + 12);
     this.#bubble.style.left = `${Math.round(left)}px`;
     this.#bubble.style.top = `${Math.round(top)}px`;

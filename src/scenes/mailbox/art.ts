@@ -7,14 +7,21 @@ export const STAGE_WIDTH = 160;
 export const STAGE_HEIGHT = 100;
 
 /** Where things are, in picture pixels. */
-export const MAILBOX_RECT = { x: 112, y: 64, w: 28, h: 26 };
-export const MAIL_SLOT = { x: 121, y: 74 };
-export const CHARACTER_HOME = { x: 60, y: 65 };
-export const CHARACTER_AT_MAILBOX = { x: 99, y: 65 };
+export const MAILBOX_RECT = { x: 112, y: 54, w: 28, h: 32 };
+export const MAIL_SLOT = { x: 121, y: 66 };
+/** The character's feet rest on the path at this height. */
+export const FEET_Y = 91;
+export const CHARACTER_HOME = { x: 62 };
+export const CHARACTER_AT_MAILBOX = { x: 98 };
+export const CHARACTER_AT_DOOR = { x: 42 };
 /** The strip of path the character can be sent along by clicking it. */
 export const PATH_RECT = { x: 44, y: 84, w: 86, h: 9 };
-/** Where the closed letter sits in the close-up, lower so the drive shows. */
-export const ENVELOPE_RECT = { x: 47, y: 53, w: 66, h: 42 };
+export const DOOR_RECT = { x: 42, y: 47, w: 16, h: 26 };
+
+/** The close-up envelope, seen from the back: body, flap and the heart seal on it. */
+export const ENVELOPE = { x: 36, y: 50, w: 88, h: 44 };
+export const SEAL = { x: 80, y: 74 };
+export const SEAL_RECT = { x: 68, y: 62, w: 24, h: 22 };
 
 const C = {
   sky: '#bfe6f5',
@@ -177,25 +184,55 @@ export function paintBackdrop(g: G, t: number, motion: boolean): void {
   px(g, C.pink, 50, 45, 1, 1);
 }
 
-/** A small mailbox on a post, its box at the character's chest height. */
+/** A mailbox on a post that stands on the top edge of the path. */
 export function paintMailbox(g: G, flagUp: boolean): void {
-  // post
-  px(g, C.doorDark, 123, 80, 4, 12);
-  px(g, C.door, 124, 80, 2, 12);
+  // post, planted at the path's upper edge, with a little shadow
+  px(g, C.grassDark, 120, 84, 10, 1);
+  px(g, C.doorDark, 123, 72, 4, 13);
+  px(g, C.door, 124, 72, 2, 12);
   // box with a rounded top and a darker rim
-  px(g, INK, 116, 71, 16, 10);
-  px(g, C.boxDark, 117, 72, 14, 8);
-  px(g, C.box, 117, 72, 13, 7);
-  px(g, '#7fb2e5', 118, 72, 11, 1);
-  px(g, INK, 119, 75, 7, 1);
+  px(g, INK, 117, 61, 16, 1);
+  px(g, INK, 116, 62, 18, 11);
+  px(g, C.boxDark, 117, 63, 16, 9);
+  px(g, C.box, 117, 62, 15, 9);
+  px(g, '#7fb2e5', 118, 62, 13, 1);
+  px(g, INK, 119, 66, 8, 1);
   // flag
   if (flagUp) {
-    px(g, INK, 132, 66, 2, 10);
-    px(g, C.red, 134, 66, 4, 3);
+    px(g, INK, 134, 56, 2, 11);
+    px(g, C.red, 136, 56, 5, 3);
   } else {
-    px(g, INK, 132, 76, 6, 2);
-    px(g, C.red, 133, 76, 4, 1);
+    px(g, INK, 134, 66, 7, 2);
+    px(g, C.red, 135, 66, 5, 1);
   }
+}
+
+const ARROW = ['..kkk..', '..kpk..', '..kpk..', 'kkkpkkk', '.kpppk.', '..kpk..', '...k...'];
+
+/** A chunky pink arrow bobbing over something to click. (x, y) is its tip. */
+export function paintPointer(g: G, x: number, y: number, t: number): void {
+  const b = Math.round(Math.abs(Math.sin(t / 220)) * 3);
+  const ox = Math.round(x) - 3;
+  const oy = Math.round(y) - ARROW.length - b;
+  for (const [hx, hy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
+    ARROW.forEach((row, ry) => {
+      for (let rx = 0; rx < row.length; rx++) if (row[rx] !== '.') px(g, C.white, ox + rx + hx, oy + ry + hy, 1, 1);
+    });
+  }
+  ARROW.forEach((row, ry) => {
+    for (let rx = 0; rx < row.length; rx++) {
+      const ch = row[rx];
+      if (ch === 'k') px(g, INK, ox + rx, oy + ry, 1, 1);
+      else if (ch === 'p') px(g, '#ff6fa3', ox + rx, oy + ry, 1, 1);
+    }
+  });
+}
+
+/** A four-pointed twinkle, for "this is worth a look". */
+export function paintTwinkle(g: G, x: number, y: number, size: number, colour: string = C.yellow): void {
+  px(g, colour, x, y - size, 1, size * 2 + 1);
+  px(g, colour, x - size, y, size * 2 + 1, 1);
+  px(g, C.white, x, y, 1, 1);
 }
 
 /** A little potted plant on the grass, bottom-left. */
@@ -280,50 +317,96 @@ export function paintSmallEnvelope(g: G, x: number, y: number): void {
  * The close-up: a big envelope opens and the drive slides out of it.
  * `p` runs from 0 to 1 over the whole close-up.
  */
-export function paintCloseUp(g: G, p: number, t: number): void {
-  // Everything sits 14px lower than before, so the drive rises into clear view.
-  const dy = 14;
-  g.globalAlpha = Math.min(0.6, p * 4);
+/**
+ * The close-up: the envelope from the back. The heart is a wax seal on the
+ * point of the flap and beats while it waits. `open` (0..1) folds the flap up
+ * over the top edge, taking the seal with it.
+ */
+export function paintCloseUp(g: G, t: number, dim: number, open: number, beat: boolean): void {
+  g.globalAlpha = Math.min(0.6, dim);
   px(g, INK, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
   g.globalAlpha = 1;
+  const { x, y, w, h } = ENVELOPE;
+  const flapH = 24;
 
-  const open = p > 0.25;
-  const slide = Math.min(1, Math.max(0, (p - 0.35) / 0.4));
-
-  if (open) {
-    // Flap folded up, behind everything.
-    for (let i = 0; i < 16; i++) px(g, C.paperShade, 48 + i * 2, 40 + dy - i, 64 - i * 4, 1);
-  }
-  // The drive rises out of the envelope; the envelope front hides the rest of it.
-  paintDrive(g, 71, 46 + dy - slide * 40, 3);
-  px(g, C.paperLine, 47, 39 + dy, 66, 42);
-  px(g, C.paper, 48, 40 + dy, 64, 40);
-  if (!open) {
-    for (let i = 0; i < 20; i++) px(g, C.paperShade, 48 + i * 1.6, 40 + dy + i, 64 - i * 3.2, 1);
-  }
-  px(g, C.paperLine, 48, 40 + dy, 64, 1);
-  // Heart seal; it beats gently while the letter waits to be opened.
-  const beat = !open && Math.floor(t / 420) % 2 === 0 ? 1 : 0;
-  const sy = 58 + dy;
-  px(g, C.red, 76 - beat, sy - beat, 3 + beat, 2);
-  px(g, C.red, 81, sy - beat, 3 + beat, 2);
-  px(g, C.red, 76 - beat, sy + 2, 8 + beat * 2, 2);
-  px(g, C.red, 77, sy + 4, 6, 1);
-  px(g, C.red, 78, sy + 5, 4, 1);
-  px(g, C.red, 79, sy + 6, 2, 1);
-
-  if (slide >= 1) {
-    // Sparkles once the drive is out.
-    const on = Math.floor(t / 180) % 2 === 0;
-    for (const [x, y] of [
-      [58, 18],
-      [100, 14],
-      [104, 34],
-      [56, 36],
-    ] as const) {
-      if (on === (x % 4 === 0)) continue;
-      px(g, C.yellow, x, y - 1, 1, 3);
-      px(g, C.yellow, x - 1, y, 3, 1);
+  // Flap folded up above the top edge.
+  if (open > 0) {
+    const up = Math.max(1, Math.round(flapH * open));
+    for (let i = 0; i < up; i++) {
+      const half = Math.round((w / 2) * (1 - i / up));
+      px(g, C.paperShade, x + w / 2 - half, y - 1 - i, half * 2, 1);
+      px(g, C.paperLine, x + w / 2 - half, y - 1 - i, 1, 1);
+      px(g, C.paperLine, x + w / 2 + half - 1, y - 1 - i, 1, 1);
     }
+  }
+  // Body.
+  px(g, C.paperLine, x - 1, y - 1, w + 2, h + 2);
+  px(g, C.paper, x, y, w, h);
+  // the folded side and bottom panels
+  for (let i = 0; i < 20; i++) {
+    px(g, C.paperShade, x + i, y + h - 1 - Math.round(i * 0.9), 1, Math.round(i * 0.9) + 1);
+    px(g, C.paperShade, x + w - 1 - i, y + h - 1 - Math.round(i * 0.9), 1, Math.round(i * 0.9) + 1);
+  }
+  px(g, C.paperLine, x, y + h - 1, w, 1);
+
+  let sealX = SEAL.x;
+  let sealY = SEAL.y;
+  if (open <= 0) {
+    // Flap still closed: a triangle pointing down with the seal on its tip.
+    for (let i = 0; i < flapH; i++) {
+      const half = Math.round((w / 2) * (1 - i / flapH));
+      if (half <= 0) break;
+      px(g, C.paperShade, x + w / 2 - half, y + i, half * 2, 1);
+      px(g, C.paperLine, x + w / 2 - half, y + i, 1, 1);
+      px(g, C.paperLine, x + w / 2 + half - 1, y + i, 1, 1);
+    }
+  } else {
+    sealX = x + w / 2;
+    sealY = y - Math.round(flapH * open) + 3;
+  }
+  const pulse = beat ? Math.max(0, Math.sin(t / 130)) * Math.max(0, Math.sin(t / 520)) : 0;
+  paintSeal(g, sealX, sealY, pulse > 0.35);
+}
+
+const HEART_SMALL = ['.rr...rr.', 'rRrr.rrrr', 'rRrrrrrrr', 'rrrrrrrrr', '.rrrrrrr.', '..rrrrr..', '...rrr...', '....r....'];
+const HEART_BIG = ['.rrr...rrr.', 'rRrrr.rrrrr', 'rRrrrrrrrrr', 'rrrrrrrrrrr', 'rrrrrrrrrrr', '.rrrrrrrrr.', '..rrrrrrr..', '...rrrrr...', '....rrr....', '.....r.....'];
+
+/** The wax heart seal centred on (cx, cy); `big` is the beat. */
+function paintSeal(g: G, cx: number, cy: number, big: boolean): void {
+  const heart = big ? HEART_BIG : HEART_SMALL;
+  const w = heart[0]?.length ?? 0;
+  const ox = Math.round(cx - w / 2);
+  const oy = Math.round(cy - heart.length / 2);
+  // a wax puddle under the heart
+  px(g, '#9e2c35', ox - 2, oy, w + 4, heart.length);
+  px(g, '#9e2c35', ox - 1, oy - 2, w + 2, heart.length + 4);
+  px(g, '#c13a45', ox - 1, oy - 1, w + 2, heart.length + 1);
+  heart.forEach((row, ry) => {
+    for (let rx = 0; rx < row.length; rx++) {
+      const ch = row[rx];
+      if (ch === 'r') px(g, '#ef5566', ox + rx, oy + ry, 1, 1);
+      else if (ch === 'R') px(g, '#ffc2ca', ox + rx, oy + ry, 1, 1);
+    }
+  });
+}
+
+/** The drive rising out of the opened envelope; `u` 0..1. */
+export function paintDriveOut(g: G, u: number, t: number): void {
+  const { x, y, w } = ENVELOPE;
+  const dx = x + w / 2 - 9;
+  const dy = y + 4 - Math.round(u * 34);
+  paintDrive(g, dx, dy, 3);
+  // the envelope's front pocket hides the rest of the drive
+  px(g, C.paperLine, x - 1, y - 1, w + 2, 1);
+  px(g, C.paper, x, y, w, 14);
+  for (let i = 0; i < 14; i++) {
+    px(g, C.paperShade, x + i, y + 13 - i, 1, 1);
+    px(g, C.paperShade, x + w - 1 - i, y + 13 - i, 1, 1);
+  }
+  if (u >= 1) {
+    const on = Math.floor(t / 220) % 2 === 0;
+    paintTwinkle(g, dx - 7, dy + 6, on ? 3 : 2);
+    paintTwinkle(g, dx + 26, dy + 14, on ? 2 : 3);
+    paintTwinkle(g, dx + 22, dy - 3, on ? 1 : 2, C.white);
   }
 }
