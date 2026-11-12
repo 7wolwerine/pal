@@ -317,76 +317,102 @@ export function paintSmallEnvelope(g: G, x: number, y: number): void {
  * The close-up: a big envelope opens and the drive slides out of it.
  * `p` runs from 0 to 1 over the whole close-up.
  */
+const ENV = {
+  paper: '#fff6e0',
+  shade: '#f3e4c2',
+  inside: '#e9d3a3',
+  edge: '#d4b67c',
+  red: '#e24b4a',
+  blue: '#4f8fd6',
+} as const;
+
+/** The red-and-blue airmail stripes along an edge. */
+function airmail(g: G, x: number, y: number, w: number, h: number): void {
+  for (let i = 0; i < w; i++) {
+    const c = Math.floor((i + 0) / 3) % 2 ? ENV.blue : ENV.red;
+    if (i % 3 === 2) continue;
+    px(g, c, x + i, y, 1, h);
+  }
+}
+
 /**
- * The close-up: the envelope from the back. The heart is a wax seal on the
- * point of the flap and beats while it waits. `open` (0..1) folds the flap up
- * over the top edge, taking the seal with it.
+ * The close-up: the envelope from the back. The heart sits on the point of
+ * the flap like a seal and beats while it waits. `open` (0..1) folds the flap
+ * up over the top edge, taking the heart with it.
  */
 export function paintCloseUp(g: G, t: number, dim: number, open: number, beat: boolean): void {
-  g.globalAlpha = Math.min(0.6, dim);
+  g.globalAlpha = Math.min(0.62, dim);
   px(g, INK, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
   g.globalAlpha = 1;
   const { x, y, w, h } = ENVELOPE;
   const flapH = 24;
 
-  // Flap folded up above the top edge.
+  // A soft shadow under the envelope.
+  g.globalAlpha = 0.25;
+  px(g, INK, x + 2, y + 3, w, h);
+  g.globalAlpha = 1;
+
+  // Flap folded up above the top edge, inside showing.
   if (open > 0) {
     const up = Math.max(1, Math.round(flapH * open));
     for (let i = 0; i < up; i++) {
       const half = Math.round((w / 2) * (1 - i / up));
-      px(g, C.paperShade, x + w / 2 - half, y - 1 - i, half * 2, 1);
-      px(g, C.paperLine, x + w / 2 - half, y - 1 - i, 1, 1);
-      px(g, C.paperLine, x + w / 2 + half - 1, y - 1 - i, 1, 1);
+      if (half <= 0) break;
+      px(g, ENV.edge, x + w / 2 - half, y - 1 - i, half * 2, 1);
+      px(g, ENV.shade, x + w / 2 - half + 1, y - 1 - i, Math.max(0, half * 2 - 2), 1);
     }
   }
-  // Body.
-  px(g, C.paperLine, x - 1, y - 1, w + 2, h + 2);
-  px(g, C.paper, x, y, w, h);
-  // the folded side and bottom panels
-  for (let i = 0; i < 20; i++) {
-    px(g, C.paperShade, x + i, y + h - 1 - Math.round(i * 0.9), 1, Math.round(i * 0.9) + 1);
-    px(g, C.paperShade, x + w - 1 - i, y + h - 1 - Math.round(i * 0.9), 1, Math.round(i * 0.9) + 1);
+
+  // Body with an airmail border.
+  px(g, ENV.edge, x - 1, y - 1, w + 2, h + 2);
+  px(g, ENV.paper, x, y, w, h);
+  airmail(g, x + 1, y + h - 3, w - 2, 2);
+  airmail(g, x + 1, y + 1, w - 2, 2);
+  // the side flaps folded in, meeting the bottom flap
+  for (let i = 0; i < 22; i++) {
+    const hh = Math.round(i * 0.8);
+    px(g, ENV.shade, x + i, y + h - 3 - hh, 1, hh);
+    px(g, ENV.shade, x + w - 1 - i, y + h - 3 - hh, 1, hh);
   }
-  px(g, C.paperLine, x, y + h - 1, w, 1);
+
+  if (open > 0) {
+    // The opening: the inside of the pocket shows above its front edge.
+    px(g, ENV.inside, x, y, w, 4);
+    px(g, ENV.edge, x, y + 4, w, 1);
+  }
 
   let sealX = SEAL.x;
   let sealY = SEAL.y;
   if (open <= 0) {
-    // Flap still closed: a triangle pointing down with the seal on its tip.
+    // Flap still closed: a triangle pointing down with the heart on its tip.
     for (let i = 0; i < flapH; i++) {
       const half = Math.round((w / 2) * (1 - i / flapH));
       if (half <= 0) break;
-      px(g, C.paperShade, x + w / 2 - half, y + i, half * 2, 1);
-      px(g, C.paperLine, x + w / 2 - half, y + i, 1, 1);
-      px(g, C.paperLine, x + w / 2 + half - 1, y + i, 1, 1);
+      px(g, ENV.shade, x + w / 2 - half, y + i, half * 2, 1);
+      px(g, ENV.edge, x + w / 2 - half, y + i, 1, 1);
+      px(g, ENV.edge, x + w / 2 + half - 1, y + i, 1, 1);
     }
   } else {
     sealX = x + w / 2;
-    sealY = y - Math.round(flapH * open) + 3;
+    sealY = y - Math.round(flapH * open) + 4;
   }
-  const pulse = beat ? Math.max(0, Math.sin(t / 130)) * Math.max(0, Math.sin(t / 520)) : 0;
-  paintSeal(g, sealX, sealY, pulse > 0.35);
+  // Lub-dub: two quick beats, then a rest.
+  const phase = t % 1100;
+  const big = beat && (phase < 120 || (phase > 240 && phase < 360));
+  paintHeart(g, sealX, sealY, big);
 }
 
-const HEART_SMALL = ['.rr...rr.', 'rRrr.rrrr', 'rRrrrrrrr', 'rrrrrrrrr', '.rrrrrrr.', '..rrrrr..', '...rrr...', '....r....'];
-const HEART_BIG = ['.rrr...rrr.', 'rRrrr.rrrrr', 'rRrrrrrrrrr', 'rrrrrrrrrrr', 'rrrrrrrrrrr', '.rrrrrrrrr.', '..rrrrrrr..', '...rrrrr...', '....rrr....', '.....r.....'];
+const HEART = ['rrr..rrr', 'rrr..rrr', 'rrrrrrrr', 'rrrrrrrr', '.rrrrrr.', '..rrrr..', '...rr...'];
+const HEART_BIG = ['.rrr..rrr.', 'rrrrrrrrrr', 'rrrrrrrrrr', 'rrrrrrrrrr', '.rrrrrrrr.', '..rrrrrr..', '...rrrr...', '....rr....'];
 
-/** The wax heart seal centred on (cx, cy); `big` is the beat. */
-function paintSeal(g: G, cx: number, cy: number, big: boolean): void {
-  const heart = big ? HEART_BIG : HEART_SMALL;
+/** The little red heart, centred on (cx, cy); `big` is the beat. */
+function paintHeart(g: G, cx: number, cy: number, big: boolean): void {
+  const heart = big ? HEART_BIG : HEART;
   const w = heart[0]?.length ?? 0;
   const ox = Math.round(cx - w / 2);
   const oy = Math.round(cy - heart.length / 2);
-  // a wax puddle under the heart
-  px(g, '#9e2c35', ox - 2, oy, w + 4, heart.length);
-  px(g, '#9e2c35', ox - 1, oy - 2, w + 2, heart.length + 4);
-  px(g, '#c13a45', ox - 1, oy - 1, w + 2, heart.length + 1);
   heart.forEach((row, ry) => {
-    for (let rx = 0; rx < row.length; rx++) {
-      const ch = row[rx];
-      if (ch === 'r') px(g, '#ef5566', ox + rx, oy + ry, 1, 1);
-      else if (ch === 'R') px(g, '#ffc2ca', ox + rx, oy + ry, 1, 1);
-    }
+    for (let rx = 0; rx < row.length; rx++) if (row[rx] === 'r') px(g, C.red, ox + rx, oy + ry, 1, 1);
   });
 }
 
@@ -394,15 +420,12 @@ function paintSeal(g: G, cx: number, cy: number, big: boolean): void {
 export function paintDriveOut(g: G, u: number, t: number): void {
   const { x, y, w } = ENVELOPE;
   const dx = x + w / 2 - 9;
-  const dy = y + 4 - Math.round(u * 34);
+  const dy = y + 6 - Math.round(u * 34);
   paintDrive(g, dx, dy, 3);
   // the envelope's front pocket hides the rest of the drive
-  px(g, C.paperLine, x - 1, y - 1, w + 2, 1);
-  px(g, C.paper, x, y, w, 14);
-  for (let i = 0; i < 14; i++) {
-    px(g, C.paperShade, x + i, y + 13 - i, 1, 1);
-    px(g, C.paperShade, x + w - 1 - i, y + 13 - i, 1, 1);
-  }
+  px(g, ENV.edge, x - 1, y + 4, w + 2, 1);
+  px(g, ENV.paper, x, y + 5, w, 12);
+  airmail(g, x + 1, y + 6, w - 2, 2);
   if (u >= 1) {
     const on = Math.floor(t / 220) % 2 === 0;
     paintTwinkle(g, dx - 7, dy + 6, on ? 3 : 2);

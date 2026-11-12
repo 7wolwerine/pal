@@ -2,9 +2,10 @@ import { audio } from '../../audio/engine.ts';
 import { MAILBOX } from '../../content/intro.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
 import type { GameScene } from '../../game.ts';
-import { HERO_HEIGHT, HERO_WIDTH, paintHero, type HeroPose } from '../../pixel/hero.ts';
-import { PixelStage, progress } from '../../pixel/stage.ts';
-import { h, prefersReducedMotion } from '../../ui/dom.ts';
+
+import { HERO_HEIGHT, HERO_WIDTH, heroHands, paintHero, type HeroPose } from '../../pixel/hero.ts';
+import { PixelStage, progress, px } from '../../pixel/stage.ts';
+import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import {
   CHARACTER_AT_DOOR,
@@ -43,6 +44,7 @@ type Phase =
   | 'opening'
   | 'reading'
   | 'gift'
+  | 'garden'
   | 'home'
   | 'entering';
 
@@ -77,12 +79,15 @@ export const mailbox: GameScene = {
     let pose: HeroPose = 'stand';
     let facing: -1 | 0 | 1 = 0;
     let alive = true;
+    const holdingPhases: readonly Phase[] = ['garden', 'home', 'walking', 'entering'];
 
     let charX: number = CHARACTER_HOME.x;
     let walk: { from: number; to: number; at: number; ms: number; then?: () => void } | null = null;
     const head = (): { x: number; y: number } => ({ x: charX + HERO_WIDTH / 2, y: FEET_Y - HERO_HEIGHT - 1 });
 
+    let phaseAtGift = false;
     const enter = (next: Phase): void => {
+      if (next === 'gift') phaseAtGift = true;
       phase = next;
       phaseAt = now;
       actedAt = now;
@@ -135,15 +140,18 @@ export const mailbox: GameScene = {
     const sender = stage.overlay({ x: ENVELOPE.x + 10, y: ENVELOPE.y + 28, w: 50, h: 14 }, 'mb-sender');
     sender.append(...MAILBOX.sender.map((line) => h('span', { text: line })));
     sender.hidden = true;
-    const slot = stage.overlay({ x: 22, y: 0, w: 116, h: ENVELOPE.y + 2 }, 'mb-slot');
+    const slot = stage.overlay({ x: ENVELOPE.x + 4, y: 0, w: ENVELOPE.w - 8, h: ENVELOPE.y + 4 }, 'mb-slot');
     const paper = h(
       'div',
       { class: 'mb-letter', attrs: { role: 'document', 'aria-label': MAILBOX.letterLabel } },
       h('p', { class: 'mb-letter__hi', text: MAILBOX.letter.greeting }),
       h('p', { text: MAILBOX.letter.body }),
       h('p', { class: 'mb-letter__sig', text: MAILBOX.letter.signature }),
+      h('span', { class: 'mb-letter__more', attrs: { 'aria-hidden': 'true' } }),
     );
     slot.append(paper);
+    let letterRead: (() => void) | undefined;
+    paper.addEventListener('click', () => letterRead?.());
     slot.hidden = true;
 
     const doorSpot = stage.hotspot(DOOR_RECT, MAILBOX.doorLabel, () => {
@@ -182,23 +190,35 @@ export const mailbox: GameScene = {
     async function readLetter(): Promise<void> {
       sender.hidden = true;
       slot.hidden = false;
-      await say(MAILBOX.fromGrandma, true, true);
+      // The player reads at their own pace; a click on the letter puts it away.
+      await new Promise<void>((resolve) => {
+        letterRead = resolve;
+      });
+      letterRead = undefined;
       if (!alive) return;
       slot.classList.add('mb-slot--away');
+      audio.click(70, 0.3);
+      await sleep(500);
+      if (!alive) return;
+      slot.hidden = true;
+      // The present slides out of the envelope.
       enter('gift');
       audio.treasure();
-      window.setTimeout(() => {
-        if (!alive) return;
-        enter('home');
-        pose = 'happy';
-        void say(MAILBOX.curious).then(() => {
-          if (!alive) return;
-          window.setTimeout(() => {
-            if (alive && phase === 'home') pose = 'stand';
-          }, 900);
-        });
-        doorSpot.hidden = false;
-      }, 1900);
+      await sleep(2000);
+      if (!alive) return;
+      enter('garden');
+      pose = 'hold';
+      await sleep(450);
+      if (!alive) return;
+      await say(MAILBOX.fromGrandma, true);
+      if (!alive) return;
+      pose = 'happy';
+      await say(MAILBOX.curious);
+      if (!alive) return;
+      enter('home');
+      doorSpot.hidden = false;
+      await sleep(900);
+      if (alive && phase === 'home') pose = 'hold';
     }
 
     stage.run((g, t) => {
@@ -253,11 +273,20 @@ export const mailbox: GameScene = {
         paintSmallEnvelope(g, 170 + (MAIL_SLOT.x - 170) * u, 14 + (MAIL_SLOT.y - 14) * u - Math.sin(u * Math.PI) * 18);
       }
 
+      const holding = holdingPhases.includes(phase) && phaseAtGift;
       // The character, walking, standing, or going in through the door.
       if (phase !== 'entering' || since < 350) {
         if (phase === 'entering') g.globalAlpha = 1 - since / 350;
         const shown: HeroPose = walking ? 'walk' : pose;
         paintHero(g, charX, FEET_Y, { pose: shown, facing: walking ? facing : 0, t, motion });
+        if (holding && !walking && shown === 'hold') {
+          const hand = heroHands(charX, FEET_Y);
+          // The little pink drive lies across both palms.
+          px(g, '#c9c9d1', hand.x + 3, hand.y - 1, 2, 2);
+          px(g, '#d4537e', hand.x - 4, hand.y - 2, 7, 4);
+          px(g, '#ed93b1', hand.x - 4, hand.y - 2, 6, 3);
+          px(g, '#ffffff', hand.x - 3, hand.y - 1, 2, 1);
+        }
         g.globalAlpha = 1;
       }
 
@@ -281,6 +310,13 @@ export const mailbox: GameScene = {
       if (phase === 'gift') {
         paintCloseUp(g, t, 0.6, 1, false);
         paintDriveOut(g, progress(since, 200, 1200), t);
+      }
+      if (phase === 'garden' && since < 400) {
+        // The close-up fades back into the garden.
+        g.globalAlpha = 1 - since / 400;
+        paintCloseUp(g, t, 0.6, 1, false);
+        paintDriveOut(g, 1, t);
+        g.globalAlpha = 1;
       }
       if (phase === 'sealed' && idle) paintPointer(g, SEAL.x, SEAL.y - 9, t);
     });
