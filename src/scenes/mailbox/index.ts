@@ -127,8 +127,8 @@ export const mailbox: GameScene = {
       }
       // A "?" over the character turns into a "!" as the surprise sinks in.
       if (phase === 'waiting') {
-        const mx = CHARACTER_HOME.x + 2;
-        const my = CHARACTER_HOME.y - 15;
+        const mx = CHARACTER_HOME.x + 4;
+        const my = CHARACTER_HOME.y - 11;
         if (sinceArrived < 900) paintQuestion(g, mx, my, motion ? t : 0);
         else paintAlert(g, mx, my, motion ? t : 0);
       }

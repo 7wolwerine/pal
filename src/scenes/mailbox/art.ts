@@ -218,24 +218,42 @@ export function paintBirds(g: G, t: number): void {
   }
 }
 
-/** The "!" that bobs over whatever wants attention. */
-export function paintAlert(g: G, x: number, y: number, t: number): void {
-  const bob = Math.round(Math.sin(t / 220) * 1.5);
-  px(g, C.white, x - 2, y - 2 + bob, 7, 14);
-  px(g, INK, x, y + bob, 3, 6);
-  px(g, INK, x, y + 8 + bob, 3, 2);
+type Part = readonly [number, number, number, number];
+
+/** Draws a small glyph with a soft one-pixel halo so it reads on any background. */
+function mark(g: G, parts: readonly Part[], x: number, y: number): void {
+  for (const [ox, oy] of [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ] as const) {
+    for (const [dx, dy, w, h] of parts) px(g, C.white, x + dx + ox, y + dy + oy, w, h);
+  }
+  for (const [dx, dy, w, h] of parts) px(g, INK, x + dx, y + dy, w, h);
 }
 
-/** A bobbing "?" shown over the character before the surprise sinks in. */
+// A compact "!" and "?": small, clean, and clearly not buttons.
+const BANG: readonly Part[] = [
+  [0, 0, 2, 4],
+  [0, 5, 2, 2],
+];
+const QUESTION: readonly Part[] = [
+  [0, 0, 3, 1],
+  [2, 1, 1, 1],
+  [1, 2, 2, 1],
+  [1, 3, 1, 1],
+  [1, 5, 1, 2],
+];
+
+/** A small "!" that bobs over whatever wants attention. */
+export function paintAlert(g: G, x: number, y: number, t: number): void {
+  mark(g, BANG, x, y + Math.round(Math.sin(t / 240)));
+}
+
+/** A small "?" shown over the character before the surprise sinks in. */
 export function paintQuestion(g: G, x: number, y: number, t: number): void {
-  const bob = Math.round(Math.sin(t / 220) * 1.5);
-  const yy = y + bob;
-  px(g, C.white, x - 3, y - 3 + bob, 9, 15);
-  px(g, INK, x, yy, 4, 1);
-  px(g, INK, x + 3, yy + 1, 1, 2);
-  px(g, INK, x + 1, yy + 3, 3, 1);
-  px(g, INK, x + 1, yy + 4, 1, 2);
-  px(g, INK, x + 1, yy + 8, 1, 2);
+  mark(g, QUESTION, x, y + Math.round(Math.sin(t / 240)));
 }
 
 export function paintSmallEnvelope(g: G, x: number, y: number): void {
