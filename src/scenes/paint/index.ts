@@ -64,11 +64,16 @@ export const paint: GameScene = {
 
     // The painting: the brush fills the hole in one go.
     const canvasSpot = stage.hotspot(PAINTING_RECT, PAINT.labels.painting, (event) => {
-      if (step !== 'hole' || held !== 'brush') return;
+      if (step !== 'hole') return;
+      if (held !== 'brush') {
+        // Bare hands: the bucket twinkles at once, as if to say "with this".
+        actedAt = now - HINT_AFTER_MS;
+        return;
+      }
       acted();
-      const [x, y] = aim(event);
-      if (painting.at(x, y) !== HOLE) return;
-      const changed = painting.fill(x, y, SKY);
+      const hit = nearestHole(...aim(event));
+      if (!hit) return;
+      const changed = painting.fill(hit[0], hit[1], SKY);
       if (changed.length === 0) return;
       // One pixel in the middle of the new sky never quite takes the paint.
       const [dx, dy] = changed[Math.floor(changed.length / 2)] ?? [...HOLE_CENTRE];
@@ -95,6 +100,23 @@ export const paint: GameScene = {
         Math.floor(((event.clientX - box.left) / box.width) * painting.width),
         Math.floor(((event.clientY - box.top) / box.height) * painting.height),
       ];
+    }
+
+    /** A hole pixel near where the player aimed: fingers and mice are not that precise. */
+    function nearestHole(x: number, y: number): [number, number] | undefined {
+      let best: [number, number] | undefined;
+      let bestD = 7 * 7;
+      for (let py = 0; py < painting.height; py++) {
+        for (let pxl = 0; pxl < painting.width; pxl++) {
+          if (painting.at(pxl, py) !== HOLE) continue;
+          const d = (pxl - x) ** 2 + (py - y) ** 2;
+          if (d <= bestD) {
+            bestD = d;
+            best = [pxl, py];
+          }
+        }
+      }
+      return best;
     }
 
     async function frameIt(): Promise<void> {

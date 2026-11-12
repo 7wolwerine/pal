@@ -12,21 +12,21 @@ export const FIDGETS = {
     mail: 'Nepřečtená pošta',
   },
 
-  /** The beetle tells the truth the whole time. Nobody listens to a beetle. */
+  /** The beetle grumbles the whole time. Nobody listens to a beetle. */
   bug: [
-    { before: 'Hej! Co to děláš?!', after: 'Tak… a nesahej na to.' },
-    { before: 'Přestaň, prosím tě!', after: 'Proč mě nikdo neposlouchá?!' },
-    { before: 'Ne! To fakt nedělej!', after: 'Naposledy. Prosím.' },
+    { before: 'Hej! Co to děláš?!', after: 'Tak. Hmpf.' },
+    { before: 'Zase ty?!', after: 'Proč mě nikdo neposlouchá?!' },
+    { before: 'Ty mě fakt štveš!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
-  bugPlead: ['Ne, nech to!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Prosím… ne.', 'To není tvoje věc!'],
+  bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Typický.', 'Ty jsi hroznej.'],
   /** Shown while the beetle clutches its head and undoes the player's work. */
   bugPanic: ['Néé!', 'Nesahej!', 'Pusť to!', 'Au!'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
   bugGrab: 'Tak dost! Tohle si vzít nenecháš!',
   bugShove: ['Nepustím!', 'Au! Ne!', 'Přestaň!', 'Grr!', 'Já… ', 'Nóóó!'],
   bugFlung: 'Jau…',
-  bugResigns: 'Fajn. Dělej si, co chceš. Já tě varoval.',
+  bugResigns: 'Fajn. Dělej si, co chceš.',
 
   /** After the lock clicks open. */
   quizIntro: 'Jsme na správné cestě!',

@@ -21,9 +21,9 @@ export const DONTCLICK = {
   ],
   broken: 'Pojistka vypnuta',
   /** BUG on guard beside the button before anything happens. */
-  bugGuard: 'Tohle nech být. Prosím.',
+  bugGuard: 'Hmpf.',
   /** BUG as it hangs the button back up, one per press. */
-  bugRehang: ['Ne! Nech ho tam!', 'Nech ho viset! Prosím!', 'Proč to děláš?!', 'Kvůli NĚMU?!'],
+  bugRehang: ['Typický.', 'Pořád dokola!', 'Ty jsi hroznej!', 'Kvůli NĚMU?!'],
   bugLost: 'Ne… ne, ne, ne.',
   bugThanks: 'Děkuju. Fakt děkuju.',
   /** PAL's commentary, one per press. */

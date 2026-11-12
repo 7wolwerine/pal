@@ -446,7 +446,20 @@ body {
 .pal__avatar--caged {
   border-width: 5px;
   border-color: #9aa3ad;
-  box-shadow: inset 0 0 0 2px #e8edf2, inset 0 0 0 4px #6b7681, 0 2px 0 #4f5962;
+  padding: 0;
+  background: #2f3540;
+  box-shadow: 0 2px 0 #4f5962;
+}
+
+/* The safe's inner rim sits over the face, so PAL peeks out from behind it. */
+.pal__avatar--caged::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: calc(var(--radius) - 5px);
+  box-shadow: inset 0 0 0 2px #e8edf2, inset 0 0 0 4px #6b7681, inset 0 6px 8px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
 }
 
 .pal__avatar--freed {
@@ -3950,7 +3963,7 @@ body.on-pc {
 
 /* Only part of the face shows: the safe is bigger than the window lets you see. */
 .pal__avatar--caged > :not(.pal__bang):not(.sparkle) {
-  transform: translate(26%, 30%) scale(1.15);
+  transform: translate(24%, 6%);
 }
 
 .row--wrap {
