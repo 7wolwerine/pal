@@ -76,7 +76,7 @@ export class Dialogue {
   }
 
   /** Blinks a cursor a few times, then types the line. For the very first greeting. */
-  async blinkThenSay(text: string, blinks = 3): Promise<void> {
+  async blinkThenSay(text: string, blinks = 2): Promise<void> {
     const line = ++this.#line;
     this.#skip = false;
     this.#spoken.textContent = text;

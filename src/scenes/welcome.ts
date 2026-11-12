@@ -1,10 +1,8 @@
-import { readMemory, rememberLines, type Memory } from '../core/memory.ts';
-import { readImageText } from '../ui/read-image.ts';
 import { ANOMALY_TEXT } from '../content/anomalies.ts';
 import { anomaly } from '../ui/anomaly.ts';
 import type { Scene } from '../core/director.ts';
-import type { GameContext } from '../game.ts';
-import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, isCardCode, type AssistantKind } from '../content/welcome.ts';
+import { lean, type GameContext } from '../game.ts';
+import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '../content/welcome.ts';
 import { h, sleep } from '../ui/dom.ts';
 import { livingSprite } from '../ui/sprites.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
@@ -43,21 +41,8 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.blinkThenSay(WELCOME.greeting);
       if (!alive) return;
-      const remembered = await Promise.race([pal.tapToContinue().then(() => null), loadMemory()]);
-      pal.cancelTap();
-      stage.replaceChildren();
+      await pal.tapToContinue();
       if (!alive) return;
-      if (remembered) {
-        witness.record({ scene: SCENE, kind: 'remembered', trick: 'persistent-memory', data: { since: remembered.date } });
-        pal.setMood('dark');
-        for (const line of rememberLines(remembered)) {
-          await pal.say(line);
-          if (!alive) return;
-          await sleep(900);
-          if (!alive) return;
-        }
-        pal.setMood('happy');
-      }
       await pal.say(WELCOME.askName);
       if (!alive) return;
       // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
@@ -84,6 +69,7 @@ export const welcome: Scene<GameContext> = {
       const role = await askRole(stage);
       if (!alive) return;
       profile.role = role;
+      lean(profile, role, 2);
       witness.disclose(SCENE, 'role-casting', 'role', ROLES[role].label);
       stage.replaceChildren();
       await pal.say(ROLES[role].affirm);
@@ -108,6 +94,8 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.say(WELCOME.slip, 42);
       if (!alive) return;
+      await sleep(450);
+      if (!alive) return;
       await pal.glitch();
       if (!alive) return;
       await pal.say(WELCOME.askOwnName);
@@ -129,61 +117,6 @@ export const welcome: Scene<GameContext> = {
       const go = h('button', { class: 'btn', text: WELCOME.go, attrs: { type: 'button' }, on: { click: done } });
       stage.replaceChildren(go);
       go.focus();
-    }
-
-    /** A quiet file picker: a saved picture from an earlier game brings PAL's memory back. */
-    function loadMemory(): Promise<Memory> {
-      return new Promise((resolve) => {
-        const input = h('input', { class: 'sr-only', attrs: { type: 'file', accept: 'image/png', id: 'memory-file' } });
-        const label = h('label', { class: 'memory-load', text: WELCOME.load, attrs: { for: 'memory-file' } });
-        input.addEventListener('change', async () => {
-          const file = input.files?.[0];
-          if (!file) return;
-          let memory: Memory | null = null;
-          try {
-            const text = await readImageText(file);
-            memory = text ? readMemory(text) : null;
-          } catch {
-            memory = null;
-          }
-          if (memory) resolve(memory);
-          else void pal.say(WELCOME.notMine);
-        });
-        stage.replaceChildren(h('div', { class: 'quiet-links' }, input, label, cardCode()));
-      });
-    }
-
-    /** "I have a code from the card": what the AR bear's sign showed. */
-    function cardCode(): HTMLElement {
-      const box = h('div', { class: 'card-code' });
-      const open = h('button', { class: 'memory-load', text: WELCOME.cardLink, attrs: { type: 'button' } });
-      open.addEventListener('click', () => {
-        const input = h('input', {
-          class: 'field',
-          attrs: { type: 'text', autocomplete: 'off', maxlength: '12', 'aria-label': WELCOME.cardLabel, placeholder: WELCOME.cardLabel },
-        });
-        const form = h('form', { class: 'row', attrs: { novalidate: '' } }, input, h('button', { class: 'btn', text: WELCOME.cardSubmit, attrs: { type: 'submit' } }));
-        form.addEventListener('submit', (event) => {
-          event.preventDefault();
-          if (!isCardCode(input.value)) {
-            void pal.say(WELCOME.cardWrong);
-            input.focus();
-            return;
-          }
-          witness.record({ scene: SCENE, kind: 'ar-code', trick: 'camera-permission' });
-          box.replaceChildren();
-          void (async () => {
-            await pal.say(WELCOME.cardRight);
-            if (!alive) return;
-            await sleep(900);
-            if (alive) await pal.say(WELCOME.cardCamera);
-          })();
-        });
-        box.replaceChildren(form);
-        input.focus();
-      });
-      box.append(open);
-      return box;
     }
 
     void run();

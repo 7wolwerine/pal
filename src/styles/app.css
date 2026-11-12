@@ -15,6 +15,7 @@ body {
   background-image: radial-gradient(var(--desk-dot) 1.5px, transparent 1.5px);
   background-size: 22px 22px;
   color: var(--ink);
+  cursor: var(--cursor);
   font-family: var(--font-ui);
   font-size: 17px;
   line-height: 1.5;
@@ -49,7 +50,7 @@ body {
   animation: win-in 420ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 
-.win--nope {
+.win.win--nope {
   animation: nope 320ms ease-in-out;
 }
 
@@ -89,7 +90,7 @@ body {
   border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .win__btn:hover {
@@ -150,10 +151,13 @@ body {
   flex: 1;
   min-height: 76px;
   padding: 12px 16px;
+  border: 3px solid var(--btn);
   border-radius: var(--radius);
-  background: var(--bubble);
-  color: var(--bubble-ink);
-  cursor: default;
+  background: var(--field);
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 3px 0 var(--line);
+  cursor: var(--cursor);
   overflow-wrap: anywhere;
 }
 
@@ -161,13 +165,13 @@ body {
 .pal__bubble::before {
   content: '';
   position: absolute;
-  left: -7px;
-  top: 22px;
+  left: -12px;
+  top: 20px;
   width: 0;
   height: 0;
-  border-top: 7px solid transparent;
-  border-bottom: 7px solid transparent;
-  border-right: 8px solid var(--bubble);
+  border-top: 9px solid transparent;
+  border-bottom: 9px solid transparent;
+  border-right: 10px solid var(--btn);
 }
 
 .pal__bubble--glitch {
@@ -225,7 +229,7 @@ body {
   color: var(--btn-ink);
   font: inherit;
   font-weight: 700;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: transform 80ms, box-shadow 80ms;
 }
 
@@ -265,7 +269,7 @@ body {
   font: inherit;
   font-size: 13px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: transform 120ms;
 }
 
@@ -412,12 +416,12 @@ body {
 
 @keyframes glitch {
   0% {
-    transform: translate(2px, -1px) skewX(6deg);
-    filter: hue-rotate(90deg);
+    transform: translate(1px, -1px) skewX(3deg);
+    filter: hue-rotate(60deg);
   }
   100% {
-    transform: translate(-2px, 1px) skewX(-4deg);
-    filter: hue-rotate(-60deg);
+    transform: translate(-1px, 1px) skewX(-2deg);
+    filter: hue-rotate(-40deg);
   }
 }
 
@@ -462,17 +466,22 @@ body {
 }
 
 .pal__bubble--tap {
-  cursor: pointer;
+  cursor: var(--cursor-hand);
+  padding-bottom: 26px;
 }
 
 .pal__bubble--tap::after {
-  content: '▸';
+  content: '';
   position: absolute;
-  right: 10px;
-  bottom: 6px;
-  font-size: 14px;
-  color: var(--ink-soft);
-  animation: nudge 900ms ease-in-out infinite;
+  left: 50%;
+  bottom: 7px;
+  width: 0;
+  height: 0;
+  margin-left: -9px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 12px solid var(--btn);
+  animation: say-nudge 800ms ease-in-out infinite;
 }
 
 @keyframes twinkle {
@@ -555,7 +564,7 @@ body {
 .cell button {
   color: inherit;
   font: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .cell button:focus-visible,
@@ -886,7 +895,7 @@ body {
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .shove:focus-visible {
@@ -1012,7 +1021,7 @@ body {
   border: 3px solid var(--line);
   border-radius: 50%;
   background: var(--pick);
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: background-color 120ms, border-color 120ms, transform 120ms;
 }
 
@@ -1076,7 +1085,7 @@ body {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   transition: background-color 300ms, border-color 300ms, color 300ms;
 }
 
@@ -1135,7 +1144,7 @@ body {
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .scene__hotspot:focus-visible {
@@ -1341,7 +1350,7 @@ body {
   border: 0;
   background: transparent;
   color: var(--ink-soft);
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .gear svg {
@@ -1411,7 +1420,7 @@ body {
   font-size: 18px;
   font-weight: 700;
   line-height: 1;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   opacity: 0.85;
 }
 
@@ -1591,7 +1600,7 @@ body {
   color: var(--ink-soft);
   font: inherit;
   font-size: 13px;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .decoder__drop {
@@ -1599,7 +1608,7 @@ body {
   padding: 18px 12px;
   border: 2px dashed var(--line);
   text-align: center;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .decoder__drop--over {
@@ -1940,7 +1949,7 @@ body {
   font: inherit;
   font-size: 14px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .dontclick:active {
@@ -1949,7 +1958,7 @@ body {
 }
 
 .dontclick[aria-disabled='true'] {
-  cursor: default;
+  cursor: var(--cursor);
 }
 
 .dontclick__hang--fallen {
@@ -2122,7 +2131,7 @@ body {
   background: transparent;
   color: var(--ink);
   font: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .chest:hover:not(:disabled),
@@ -2131,7 +2140,7 @@ body {
 }
 
 .chest:disabled {
-  cursor: default;
+  cursor: var(--cursor);
 }
 
 .chest__art {
@@ -2237,7 +2246,7 @@ body {
   background: transparent;
   color: #1f2329;
   font-size: 14px;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .popup__x:hover {
@@ -2281,7 +2290,7 @@ body {
   color: #c0392b;
   font: inherit;
   font-size: 12px;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 @keyframes popup-in {
@@ -2350,7 +2359,7 @@ body {
   font-size: 14px;
   font-weight: 700;
   text-shadow: 1px 1px 0 #000;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .dl__ad--1 {
@@ -2378,7 +2387,7 @@ body {
   color: #555;
   text-shadow: none;
   animation: nope 320ms ease-in-out;
-  cursor: default;
+  cursor: var(--cursor);
 }
 
 .dl__small {
@@ -2583,7 +2592,7 @@ body {
   color: #0067c0;
   font: inherit;
   font-weight: 700;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .bsod__btn--quiet {
@@ -2594,7 +2603,7 @@ body {
 
 .bsod__btn:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: var(--cursor);
 }
 
 .bsod__line {
@@ -2700,7 +2709,7 @@ body {
   background: #000;
   color: #28e05a;
   font: inherit;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .keygen__btn:hover,
@@ -2767,7 +2776,7 @@ body {
   background: transparent;
   color: inherit;
   font: inherit;
-  cursor: default;
+  cursor: var(--cursor);
 }
 
 .anomaly--title {
@@ -2832,7 +2841,7 @@ body {
   font-size: 12px;
   opacity: 0.6;
   text-decoration: underline;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 .memory-load:hover,
@@ -2862,4 +2871,174 @@ button.memory-load {
 html,
 body {
   overflow-x: clip;
+}
+
+/* ---------- speech bubbles inside pixel scenes ---------- */
+
+.say {
+  position: absolute;
+  z-index: 5;
+  max-width: min(62%, 300px);
+  padding: 8px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: #fffdf8;
+  color: var(--ink);
+  font-size: clamp(12px, 2.4vw, 15px);
+  font-weight: 800;
+  line-height: 1.3;
+  box-shadow: 0 3px 0 rgba(75, 21, 40, 0.25);
+  cursor: var(--cursor-hand);
+  overflow-wrap: anywhere;
+}
+
+.say::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--tail, 50%) - 8px);
+  bottom: -11px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 11px solid var(--ink);
+}
+
+.say::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--tail, 50%) - 5px);
+  bottom: -6px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid #fffdf8;
+}
+
+.say--below::after {
+  bottom: auto;
+  top: -11px;
+  border-top: 0;
+  border-bottom: 11px solid var(--ink);
+}
+
+.say--below::before {
+  bottom: auto;
+  top: -6px;
+  border-top: 0;
+  border-bottom: 7px solid #fffdf8;
+}
+
+.say--pal {
+  border-color: var(--btn);
+  background: #fff4f8;
+}
+
+.say--pal::after {
+  border-top-color: var(--btn);
+}
+
+.say--pal.say--below::after {
+  border-bottom-color: var(--btn);
+}
+
+.say--pal::before,
+.say--pal.say--below::before {
+  border-top-color: #fff4f8;
+  border-bottom-color: #fff4f8;
+}
+
+.say--pal.say--below::before {
+  border-top-color: transparent;
+}
+
+.say--bug {
+  border-color: #2a1a12;
+  background: #fff1d6;
+  color: #5a2a10;
+}
+
+.say--bug::before {
+  border-top-color: #fff1d6;
+}
+
+.say--bug.say--below::before {
+  border-top-color: transparent;
+  border-bottom-color: #fff1d6;
+}
+
+.say--tap {
+  padding-bottom: 20px;
+}
+
+.say--tap > span::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 0;
+  height: 0;
+  margin-left: -6px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid currentColor;
+  animation: say-nudge 800ms ease-in-out infinite;
+}
+
+.say__scribble {
+  display: block;
+  width: 56px;
+  height: 22px;
+  color: #c0392b;
+}
+
+@keyframes say-nudge {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say--tap > span::after {
+    animation: none;
+  }
+}
+
+/* ---------- scene arrows for testing (?debug) ---------- */
+
+.debug {
+  position: fixed;
+  z-index: 50;
+  left: 50%;
+  bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font: 700 12px/1 ui-monospace, Consolas, monospace;
+  transform: translateX(-50%);
+}
+
+.debug__btn {
+  width: 34px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 14px;
+  cursor: var(--cursor-hand);
+}
+
+.debug__label {
+  min-width: 70px;
+  text-align: center;
 }

@@ -19,6 +19,36 @@ export interface Profile {
   role?: RoleId;
   /** The e-mail address given for the prize. Kept in memory only, never sent. */
   email?: string;
+  /** How much each answer so far leaned towards each role. The strongest one wins the certificate. */
+  tendency?: Partial<Record<RoleId, number>>;
+}
+
+/** Assistants that speak of themselves in the feminine (dělala, věděla). */
+const FEMININE: ReadonlySet<SpriteId> = new Set<SpriteId>(['girl', 'mom', 'grandma', 'cat']);
+
+/** True once the freed assistant is one who talks about herself in the feminine. */
+export function isFeminine(profile: Profile): boolean {
+  return Boolean(profile.bonded && profile.assistantLook && FEMININE.has(profile.assistantLook));
+}
+
+/** Picks the masculine or feminine form for the assistant's own lines. */
+export function gendered(profile: Profile, masculine: string, feminine: string): string {
+  return isFeminine(profile) ? feminine : masculine;
+}
+
+/** Counts one answer towards a role. */
+export function lean(profile: Profile, role: RoleId, weight = 1): void {
+  const t = (profile.tendency ??= {});
+  t[role] = (t[role] ?? 0) + weight;
+}
+
+/** The role the player leaned towards most; the one they picked breaks ties. */
+export function strongestRole(profile: Profile): RoleId {
+  const t = profile.tendency ?? {};
+  const order: RoleId[] = ['helper', 'loner', 'fixer'];
+  let best: RoleId = profile.role ?? 'helper';
+  for (const role of order) if ((t[role] ?? 0) > (t[best] ?? 0)) best = role;
+  return best;
 }
 
 /** What scenes get to work with. */

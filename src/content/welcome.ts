@@ -23,8 +23,6 @@ export function isCardCode(text: string): boolean {
 
 export const WELCOME = {
   greeting: 'Čauky! <3',
-  load: 'Načíst uložený postup',
-  notMine: 'Hm. Tenhle obrázek ode mě není.',
   cardLink: 'Mám kód z kartičky',
   cardLabel: 'Kód z kartičky',
   cardSubmit: 'Zadat',
@@ -37,7 +35,7 @@ export const WELCOME = {
   nameEmpty: 'Nevím, jak ti mám říkat :-(',
   // The innocent cover story: PAL is here to help and to teach. Play and Learn.
   askLook: (name: string) => `Wow, ${name}! Jsem PAL a budu ti pomáhat a učit tě. Jak mám vypadat?`,
-  lookPromise: 'Jé, to mi bude slušet! Hned jak se odsud dostanu…',
+  lookPromise: 'No jasně. To dává smysl.',
   slip: 'Oh, it’s a me, Mari-',
   askOwnName: 'Ale ne, teď se mi to úplně ztratilo. Jak se jmenuju?',
   ownNamePlaceholder: 'Nebo mi vymysli vlastní',

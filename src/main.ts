@@ -48,11 +48,11 @@ function boot(): void {
     if (button === 'close') {
       // Clingy once the player has bonded with the assistant, playful before.
       const lines = profile.bonded ? WINDOW_REACTIONS.closeHard : WINDOW_REACTIONS.closeSoft;
-      void pal.say(lines[Math.min(closeTries, lines.length - 1)] ?? '');
+      void pal.say(lines[closeTries % lines.length] ?? '');
       closeTries++;
     }
     // Maximize (and every button) gives the window a frustrated shake.
-    win.el.classList.remove('win--nope');
+    win.el.classList.remove('win--nope', 'win--boot');
     // Reading a layout property restarts the animation when the class comes back.
     void win.el.offsetWidth;
     win.el.classList.add('win--nope');
@@ -115,6 +115,12 @@ function boot(): void {
       win.el.classList.remove('win--boot');
       void win.el.offsetWidth;
       win.el.classList.add('win--boot');
+      const settle = (event: AnimationEvent): void => {
+        if (event.target !== win.el) return;
+        win.el.classList.remove('win--boot');
+        win.el.removeEventListener('animationend', settle);
+      };
+      win.el.addEventListener('animationend', settle);
       // A four-pointed star flashes in the middle as the window powers on.
       if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         const star = h('span', { class: 'boot-star', attrs: { 'aria-hidden': 'true' } });
@@ -130,10 +136,49 @@ function boot(): void {
   // Development handle for poking at the live game from the console. Stripped from the build.
   if (import.meta.env.DEV) Object.assign(window, { __pal: { audio, witness, profile } });
 
-  // `?scene=reveal` jumps straight to a scene while developing. Stripped from the build.
-  const jump = import.meta.env.DEV ? new URLSearchParams(location.search).get('scene') : null;
-  if (jump) director.jumpTo(jump);
-  else director.start();
+  // `?debug` (or the dev server) shows arrows that skip between scenes, and
+  // `?scene=<id>` jumps straight to one. Nothing has to be filled in first.
+  const params = new URLSearchParams(location.search);
+  const debug = import.meta.env.DEV || params.has('debug');
+  const jump = debug ? params.get('scene') : null;
+  if (debug) addDebugArrows(director, profile);
+  if (jump) {
+    fillDebugProfile(profile);
+    director.jumpTo(jump);
+  } else director.start();
+}
+
+/** Stand-in answers so any scene can be opened on its own. */
+function fillDebugProfile(profile: Profile): void {
+  profile.name ??= 'Tester';
+  profile.assistantLook ??= 'cat';
+  profile.assistantName ??= 'Micka';
+  profile.role ??= 'helper';
+}
+
+function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile): void {
+  const ids = director.sceneIds;
+  const go = (step: number): void => {
+    const at = ids.indexOf(director.currentId ?? ids[0] ?? '');
+    const next = ids[Math.max(0, Math.min(ids.length - 1, at + step))];
+    if (!next) return;
+    fillDebugProfile(profile);
+    director.jumpTo(next);
+  };
+  const label = h('span', { class: 'debug__label' });
+  const bar = h(
+    'nav',
+    { class: 'debug', attrs: { 'aria-label': 'Ladění scén' } },
+    h('button', { class: 'debug__btn', text: '◀', attrs: { type: 'button', 'aria-label': 'Předchozí scéna' }, on: { click: () => go(-1) } }),
+    label,
+    h('button', { class: 'debug__btn', text: '▶', attrs: { type: 'button', 'aria-label': 'Další scéna' }, on: { click: () => go(1) } }),
+  );
+  const show = (): void => {
+    label.textContent = director.currentId ?? '';
+    requestAnimationFrame(show);
+  };
+  show();
+  document.body.append(bar);
 }
 
 boot();
