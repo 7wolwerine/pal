@@ -2865,3 +2865,9 @@ button.memory-load {
   font: inherit;
   font-size: 12px;
 }
+
+/* Entry animations overshoot a little; never let them scroll the page sideways on a phone. */
+html,
+body {
+  overflow-x: clip;
+}

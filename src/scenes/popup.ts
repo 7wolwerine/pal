@@ -28,7 +28,9 @@ export const popup: GameScene = {
       await sleep(300);
       if (!alive) return;
       dialog = buildDialog();
-      ctx.window.el.append(dialog);
+      // On <body>, not inside the window: the window keeps a transform after its
+      // boot animation, which would trap a fixed element inside it.
+      document.body.append(dialog);
       shownAt = performance.now();
     }
 
