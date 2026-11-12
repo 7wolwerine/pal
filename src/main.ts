@@ -144,9 +144,10 @@ function boot(): void {
   const params = new URLSearchParams(location.search);
   const debug = import.meta.env.DEV || params.has('debug');
   const jump = debug ? params.get('scene') : null;
-  if (debug) addDebugArrows(director, profile);
+  if (debug) addDebugArrows(director, profile, pal);
   if (jump) {
     fillDebugProfile(profile);
+    debugBond(director.sceneIds, jump, profile, pal);
     director.jumpTo(jump);
   } else director.start();
 }
@@ -160,13 +161,22 @@ function fillDebugProfile(profile: Profile): void {
   profile.bonded ??= true;
 }
 
-function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile): void {
+/** Past the safe, the assistant is already out: show it as the player would have it by then. */
+function debugBond(ids: readonly string[], target: string, profile: Profile, pal: Dialogue): void {
+  if (ids.indexOf(target) <= ids.indexOf('fidgets') || !profile.assistantLook) return;
+  pal.setAvatar(profile.assistantLook);
+  pal.setCaged(false);
+  if (profile.assistantName) pal.setName(profile.assistantName);
+}
+
+function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile, pal: Dialogue): void {
   const ids = director.sceneIds;
   const go = (step: number): void => {
     const at = ids.indexOf(director.currentId ?? ids[0] ?? '');
     const next = ids[Math.max(0, Math.min(ids.length - 1, at + step))];
     if (!next) return;
     fillDebugProfile(profile);
+    debugBond(ids, next, profile, pal);
     director.jumpTo(next);
   };
   const label = h('span', { class: 'debug__label' });

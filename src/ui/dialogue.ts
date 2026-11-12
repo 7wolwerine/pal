@@ -1,6 +1,6 @@
 import { h, prefersReducedMotion, sleep } from './dom.ts';
 import { createPalFace, type PalFace, type PalMood } from './pal-face.ts';
-import { livingSprite, type SpriteId } from './sprites.ts';
+import { livingSprite, setSpriteMood, type SpriteId, type SpriteMood } from './sprites.ts';
 
 const GLITCH_CHARS = '▓▒░█#@%&?!';
 
@@ -44,11 +44,20 @@ export class Dialogue {
     this.el = h('div', { class: 'pal' }, h('div', { class: 'pal__who' }, this.#avatar, this.#name), this.#bubble);
   }
 
-  /** Switch the avatar to one of the 12x12 cast sprites (the freed assistant). */
+  /** Switch the avatar to one of the cast sprites (the freed assistant). */
   setAvatar(id: SpriteId): void {
     this.#face?.stop();
     this.#face = null;
-    this.#avatar.replaceChildren(livingSprite(id));
+    this.#look = { id, canvas: livingSprite(id) };
+    this.#avatar.replaceChildren(this.#look.canvas);
+  }
+
+  #look: { id: SpriteId; canvas: HTMLCanvasElement } | undefined;
+
+  /** The freed assistant looks happy or sad (PAL's own face uses setMood). */
+  setLookMood(mood: SpriteMood): void {
+    if (this.#look) setSpriteMood(this.#look.canvas, this.#look.id, mood);
+    else this.setMood(mood === 'sad' ? 'sad' : 'happy');
   }
 
   /** Shows a name tag under the avatar. An empty name hides it. */

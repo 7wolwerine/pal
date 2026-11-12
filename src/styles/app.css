@@ -1831,7 +1831,8 @@ body {
 .sms {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
-  right: 12px;
+  left: 50%;
+  margin-left: calc(min(320px, calc(100vw - 24px)) / -2);
   z-index: 60;
   width: min(320px, calc(100vw - 24px));
   padding: 10px 14px 12px;

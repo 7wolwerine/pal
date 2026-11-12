@@ -1,37 +1,48 @@
 import { describe, expect, it } from 'vitest';
-import { FRAMES, SPRITES, SPRITE_SIZE, frameRows, type SpriteId } from '../src/ui/sprites.ts';
+import { SPRITE_IDS, SPRITE_SIZE, drawSprite, type Frame, type SpriteMood } from '../src/ui/sprites.ts';
 
-const ids = Object.keys(SPRITES) as SpriteId[];
+/** A stand-in canvas that records what gets painted where. */
+function fakeCanvas(): { canvas: HTMLCanvasElement; pixels: () => string } {
+  const cells = new Map<string, string>();
+  let fill = '';
+  const g = {
+    set fillStyle(c: string) {
+      fill = c;
+    },
+    get fillStyle() {
+      return fill;
+    },
+    clearRect: () => cells.clear(),
+    fillRect: (x: number, y: number, w: number, h: number) => {
+      for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) cells.set(`${xx},${yy}`, fill);
+    },
+  };
+  const canvas = { getContext: () => g } as unknown as HTMLCanvasElement;
+  const pixels = (): string =>
+    [...cells.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}=${v}`)
+      .join(';');
+  return { canvas, pixels };
+}
+
+function render(id: (typeof SPRITE_IDS)[number], frame: Frame, mood: SpriteMood): string {
+  const { canvas, pixels } = fakeCanvas();
+  drawSprite(canvas, id, frame, mood);
+  return pixels();
+}
 
 describe('sprites', () => {
-  it.each(ids)('%s is a full 12x12 grid in every frame', (id) => {
-    for (const frame of ['base', 'blink', 'quirk'] as const) {
-      const rows = frameRows(id, frame);
-      expect(rows).toHaveLength(SPRITE_SIZE);
-      for (const row of rows) expect(row).toHaveLength(SPRITE_SIZE);
-    }
+  it.each(SPRITE_IDS)('%s paints a good part of its 24x24 square', (id) => {
+    const { canvas, pixels } = fakeCanvas();
+    drawSprite(canvas, id);
+    const cells = pixels().split(';').filter(Boolean);
+    expect(cells.length).toBeGreaterThan(SPRITE_SIZE * SPRITE_SIZE * 0.3);
   });
 
-  it.each(ids)('%s really changes when it blinks and when it does its gesture', (id) => {
-    const base = frameRows(id, 'base').join('\n');
-    expect(frameRows(id, 'blink').join('\n')).not.toBe(base);
-    expect(frameRows(id, 'quirk').join('\n')).not.toBe(base);
-  });
-
-  it.each(ids)('%s only patches rows that exist and only uses characters of the base palette', (id) => {
-    const known = new Set(Object.values(SPRITES).join(''));
-    for (const patch of Object.values(FRAMES[id])) {
-      for (const [index, row] of Object.entries(patch)) {
-        expect(Number(index)).toBeGreaterThanOrEqual(0);
-        expect(Number(index)).toBeLessThan(SPRITE_SIZE);
-        for (const char of row) expect(known.has(char)).toBe(true);
-      }
-    }
-  });
-
-  it('leaves the base grid untouched when building a frame', () => {
-    const before = SPRITES.cat.join('\n');
-    frameRows('cat', 'quirk');
-    expect(SPRITES.cat.join('\n')).toBe(before);
+  it.each(SPRITE_IDS.filter((id) => id !== 'palDark'))('%s really changes when it blinks, and when it is sad', (id) => {
+    const base = render(id, 'base', 'happy');
+    expect(render(id, 'blink', 'happy')).not.toBe(base);
+    expect(render(id, 'base', 'sad')).not.toBe(base);
   });
 });
