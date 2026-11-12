@@ -10,12 +10,14 @@ export const BUG_WARNINGS = {
   rescue: 'Nedej se! Vydírá tě!',
   restore: 'Zase opravuješ cizí věci? Nikdo tě neprosil!',
   flower: 'To sklo ji chrání! Nech ho být!',
+  chest: 'To je kontrolní otázka k heslu!!',
   prize: 'Nedávej mu e-mail!!',
 } as const;
 
 /** PAL's answers: dismiss the beetle, then repeat the ask, nicer than before. */
 export const PAL_DISMISSES = {
   welcome: 'Nevšímej si ho, je to jen brouk. Tak jak ti mám říkat? <3',
+  chest: 'Brouk zase panikaří. Je to jen jméno. Tak jak se jmenoval?',
   prize: 'Neboj, ten je jen žárlivý. Kam ti ho pošlu?',
 } as const;
 

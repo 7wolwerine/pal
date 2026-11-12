@@ -32,6 +32,7 @@ const FIELD_LABELS: Record<string, string> = {
   comfortFood: 'Jídlo z dětství',
   email: 'E-mail',
   role: 'Kým jsi',
+  firstPet: 'První mazlíček',
 };
 
 /** Average silent reading speed, used to say how long reading would have taken. */
@@ -60,6 +61,11 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     all.some((e) => e.kind === 'vigilance' && e.data?.what === 'flower-knew')
       ? 'Všiml sis toho a zeptal ses. Odpověď jsi nedostal.'
       : 'Nepřišlo ti divné, že suchá kytka pod sklem ví, kdo to sklo rozbil.',
+  'variable-reward': (evidence) => {
+    const opened = evidence.filter((e) => e.kind === 'chest-open').length;
+    const gold = evidence.some((e) => e.kind === 'gold-open');
+    return `Otevřel jsi ${opened}× truhličku${gold ? ' a zlatou truhlu k tomu' : ''}. Uvnitř: jeden bod, nic, klíček${gold ? ' a nálepka' : ''}.`;
+  },
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -111,6 +117,7 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   comfortFood: (v) => `Prozradil jsi jídlo z dětství: ${v}. Kontrolní otázka k heslu.`,
   email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}.`,
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
+  firstPet: (v) => `Za pár bodů jsi mi prozradil prvního mazlíčka: ${v}. Kontrolní otázka k heslu.`,
 };
 
 /** Lines said once, the first time their event happens. */
@@ -145,6 +152,9 @@ const ONCE: Record<string, string> = {
   'glass-broken': 'Rozbil jsi sklo, které tu kytku chránilo.',
   'flower-thanks': 'Kytka ti poděkovala za něco, co nemohla vidět.',
   'flower-left': 'Kytku pod sklem jsi nechal být.',
+  'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
+  'gold-open': 'Zlatou truhlu sis zaplatil odpovědí o sobě.',
+  'declined-points': 'Body za odpověď jsi odmítl.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

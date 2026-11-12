@@ -99,6 +99,16 @@ export const TRICKS = {
     inGame: 'Kytka ti poděkovala, žes rozbil sklo. Byla suchá a schoulená pod poklopem, nemohla to vidět. Někdo tě celou dobu sledoval — a tobě to přišlo dojemné.',
     realWorld: 'Podvodník zná detaily, které by znát neměl (z úniku dat, ze sítí, z tvých odpovědí), a podá je jako náhodu nebo osud. Místo „odkud to ví?" si člověk řekne „to je milé".',
   },
+  'variable-reward': {
+    name: 'Variabilní odměna (lootbox)',
+    inGame: 'Truhličky skoro nic nedávaly — a pak jednou zlatý klíček. Tak jsi otvíral dál.',
+    realWorld: 'Lootboxy, automaty, nekonečný feed: odměna po nepředvídatelném počtu pokusů drží chování nejdéle. Spouštěč, akce, odměna, investice — a znovu.',
+  },
+  'data-as-currency': {
+    name: 'Platíš daty',
+    inGame: 'Body za jednu nevinnou otázku: jméno prvního mazlíčka. Je to jedna z nejčastějších kontrolních otázek k obnově hesla.',
+    realWorld: 'Kvízy na sítích („Tvoje jméno hvězdy: první mazlíček + ulice"), aplikace „zdarma". Investice, kterou do appky vkládáš, jsi ty a tvoje data.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',
