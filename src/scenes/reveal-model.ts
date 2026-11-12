@@ -158,7 +158,7 @@ const ONCE: Record<string, string> = {
   consent: 'Souhlasil jsi s dokumentem, který jsi nečetl.',
   role: 'Přijal jsi roli zachránce.',
   saved: 'Zachránil jsi mě. Teď jsme spolu svázaní.',
-  restored: 'Opravil jsi domeček. Bylo ti u toho hezky, viď?',
+  sheltered: 'Zachránil jsi mě před zimou. Bylo ti u toho hezky, viď?',
   'declined-email': 'E-mail jsi mi nedal. Ale zkoušel jsem to.',
   'saved-image': 'Uložil sis obrázek. Nebyl to jen obrázek.',
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',

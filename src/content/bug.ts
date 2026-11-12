@@ -10,7 +10,7 @@ export const BUG_WARNINGS = {
   welcome: 'Ty jsi teda případ.',
   paint: 'No nádhera. Fakt nádhera.',
   rescue: 'Tohle sleduju a nevěřím vlastním očím.',
-  restore: 'Hmpf. Pan zachránce.',
+  shelter: 'Hmpf. Pan zachránce.',
   flower: 'Ty jsi fakt hroznej.',
   chest: 'No to snad ne…',
   download: 'Bravo. Prostě bravo.',

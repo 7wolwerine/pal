@@ -134,7 +134,7 @@ export const SCENE_THEME: Record<string, ThemeId> = {
   fidgets: 'window',
   paint: 'cozy',
   rescue: 'tense',
-  restore: 'cozy',
+  shelter: 'cozy',
   dontclick: 'window',
   flower: 'garden',
   plea: 'desk',
