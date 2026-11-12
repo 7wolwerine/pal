@@ -980,20 +980,26 @@ body {
   }
 
   .print-sheet {
-    display: block;
-    padding-top: 10mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
     color: #000000;
     font-family: sans-serif;
   }
 
   .print-sheet .surprise {
     gap: 8mm;
+    align-items: center;
+    text-align: center;
   }
 
-  /* 18 cm wide: the size the marker generator and the AR model scale assume. */
+  /* Half the earlier 18 cm, centred on the page. */
   .print-sheet .surprise__code {
-    width: 180mm;
-    height: 180mm;
+    width: 90mm;
+    height: 90mm;
   }
 
   .print-sheet .surprise__caption {

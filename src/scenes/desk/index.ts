@@ -103,7 +103,7 @@ export const desk: GameScene = {
             { label: DESK.retry.show, action: 'show', quiet: true },
           ]);
         case 'onscreen':
-          return dialog(DESK.onscreen.title, DESK.onscreen.body, [{ label: DESK.onscreen.done, action: 'seen' }], surprise());
+          return dialog(DESK.onscreen.title, DESK.onscreen.body, [{ label: DESK.onscreen.done, action: 'seen' }], surprise('screen'));
         case 'happy':
           return dialog(DESK.happy.title, DESK.happy.body, [], undefined, DESK.happy.go);
       }
