@@ -59,7 +59,7 @@ describe('buildReveal', () => {
       ['security-question', 1],
     ]);
     expect(model.tricks[0]?.name).toBe(TRICKS.rapport.name);
-    expect(model.stats).toEqual({ seconds: 42, clicks: 7, windowButtons: 1, vigilance: 0 });
+    expect(model.stats).toEqual({ seconds: 42, clicks: 7, windowButtons: 1, vigilance: 0, bugWarnings: 0 });
   });
 
   it('adds a line about this player to the tricks that have one', () => {

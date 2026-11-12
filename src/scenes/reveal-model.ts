@@ -20,6 +20,8 @@ export interface RevealModel {
     windowButtons: number;
     /** Times the player poked at something that did not add up. */
     vigilance: number;
+    /** Times BUG warned the player. */
+    bugWarnings: number;
   };
 }
 
@@ -97,6 +99,7 @@ const ONCE: Record<string, string> = {
   'saved-image': 'Uložil sis obrázek. Nebyl to jen obrázek.',
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
   vigilance: 'Jednou jsi zbystřil. Jen jednou.',
+  'bug-warning': 'Brouk tě varoval. Nechal ses ukolébat mnou.',
 };
 
 function clock(ms: number): string {
@@ -164,6 +167,7 @@ export function buildReveal(witness: Witness): RevealModel {
       clicks: witness.count('click'),
       windowButtons: events.filter((e) => e.kind === 'window-button').length,
       vigilance: events.filter((e) => e.kind === 'vigilance').length,
+      bugWarnings: events.filter((e) => e.kind === 'bug-warning').length,
     },
   };
 }

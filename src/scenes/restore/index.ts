@@ -1,6 +1,7 @@
 import { RESTORE, type RepairId } from '../../content/restore.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
+import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import { REPAIR_RECTS, STAGE_H, STAGE_W, paintRestore } from './art.ts';
 import { RestoreModel } from './model.ts';
@@ -22,6 +23,9 @@ export const restore: GameScene = {
     const caption = h('p', { class: 'scene__caption', text: RESTORE.intro, attrs: { 'aria-live': 'polite' } });
     const actions = h('div', { class: 'scene__actions' });
     ctx.scenery.replaceChildren(stage.el, caption, actions);
+    const warnTimer = window.setTimeout(() => {
+      if (doneAt === undefined) void bugWarns(ctx, stage.el, 'restore', { side: 'left', mood: 'angry' });
+    }, 2600);
 
     const ids = Object.keys(RESTORE.repairs) as RepairId[];
     const model = new RestoreModel(ids.map((id) => ({ id, needed: RESTORE.repairs[id].needed })));
@@ -65,6 +69,7 @@ export const restore: GameScene = {
     });
 
     return () => {
+      window.clearTimeout(warnTimer);
       stage.stop();
       ctx.scenery.replaceChildren();
     };

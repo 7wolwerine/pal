@@ -1,6 +1,7 @@
 import { RESCUE } from '../../content/rescue.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
+import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
 import {
@@ -129,6 +130,7 @@ export const rescue: GameScene = {
       water = 1;
       caption.textContent = RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1] ?? '';
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
+      if (deaths === 1) void bugWarns(ctx, stage.el, 'rescue', { side: 'left', mood: 'angry' });
       window.setTimeout(() => {
         if (phase !== 'dead') return;
         scramble(layout);

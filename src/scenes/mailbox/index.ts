@@ -1,5 +1,6 @@
 import { audio } from '../../audio/engine.ts';
 import { MAILBOX } from '../../content/intro.ts';
+import { bugWarns } from '../../ui/bug-cameo.ts';
 import type { GameScene } from '../../game.ts';
 import { CHARACTER_WIDTH, paintCharacter, paintDrive, type Pose } from '../../pixel/cast.ts';
 import { PixelStage, progress } from '../../pixel/stage.ts';
@@ -134,6 +135,10 @@ export const mailbox: GameScene = {
         arrivedAt = t;
         caption.textContent = MAILBOX.wow;
         mailboxSpot.hidden = false;
+        // BUG pops up by the tree, the only one telling the truth.
+        window.setTimeout(() => {
+          if (phase === 'waiting') void bugWarns(ctx, stage.el, 'mailbox', { side: 'right' });
+        }, 1500);
       }
       if (phase === 'opening' && p >= OPENING_MS) {
         enter('amazed');

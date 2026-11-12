@@ -1,4 +1,5 @@
 import { DESK } from '../../content/intro.ts';
+import { bugWarns } from '../../ui/bug-cameo.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage, progress } from '../../pixel/stage.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
@@ -72,6 +73,7 @@ export const desk: GameScene = {
     const flashka = stage.hotspot({ x: 106, y: 80, w: 20, h: 12 }, DESK.flashkaLabel, () => {
       if (step !== 'pick') return;
       step = 'holding';
+      void bugWarns(ctx, stage.el, 'desk', { side: 'left', mood: 'angry' });
       flashka.hidden = true;
       caption.textContent = DESK.grabbed;
       stage.el.style.cursor = `url(${cursorUrl}) 3 10, pointer`;

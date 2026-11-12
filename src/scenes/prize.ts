@@ -3,6 +3,8 @@ import { PRIZE, hiddenPayload } from '../content/prize.ts';
 import { hide } from '../core/stego.ts';
 import type { GameScene } from '../game.ts';
 import { drawCertificate } from '../ui/certificate.ts';
+import { PAL_DISMISSES } from '../content/bug.ts';
+import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 
 const SCENE = 'prize';
@@ -52,6 +54,9 @@ export const prize: GameScene = {
       await pal.say(PRIZE.askEmail);
       if (!alive) return;
       askEmail();
+      void bugWarns(ctx, ctx.window.el, 'prize', { side: 'right', mood: 'angry' }).then(() => {
+        if (alive && email === undefined) void pal.say(PAL_DISMISSES.prize);
+      });
     }
 
     function askEmail(): void {

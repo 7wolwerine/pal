@@ -81,7 +81,7 @@ export const reveal: Scene<GameContext> = {
     }
 
     function breakdown(): Node[] {
-      const { seconds, clicks, windowButtons, vigilance } = model.stats;
+      const { seconds, clicks, windowButtons, vigilance, bugWarnings } = model.stats;
 
       const disclosed = h('dl');
       for (const item of model.disclosed) disclosed.append(h('dt', { text: item.label }), h('dd', { text: item.value }));
@@ -126,6 +126,8 @@ export const reveal: Scene<GameContext> = {
         windowButtons > 0 && h('p', { text: `Pokusů zavřít nebo schovat okno: ${windowButtons}. A přesto jsme tady.` }),
         h('h2', { text: 'Ten obrázek' }),
         decoder(),
+        bugWarnings > 0 &&
+          h('p', { text: `Brouk tě varoval ${bugWarnings}×. Pokaždé měl pravdu. A ty jsi poslouchal mě.` }),
         h('h2', { text: 'Ostražitost' }),
         h('p', {
           text:

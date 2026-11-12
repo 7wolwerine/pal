@@ -3,6 +3,8 @@ import type { GameContext } from '../game.ts';
 import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '../content/welcome.ts';
 import { h, sleep } from '../ui/dom.ts';
 import { livingSprite } from '../ui/sprites.ts';
+import { PAL_DISMISSES } from '../content/bug.ts';
+import { bugWarns } from '../ui/bug-cameo.ts';
 
 const SCENE = 'welcome';
 
@@ -40,12 +42,18 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.say(WELCOME.askName);
       if (!alive) return;
+      // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
+      let named = false;
+      void bugWarns(ctx, ctx.window.el, 'welcome', { side: 'right' }).then(() => {
+        if (alive && !named) void pal.say(PAL_DISMISSES.welcome);
+      });
       const name = await askText(stage, {
         placeholder: WELCOME.namePlaceholder,
         submit: WELCOME.nameSubmit,
         empty: WELCOME.nameEmpty,
         autocomplete: 'given-name',
       });
+      named = true;
       if (!alive) return;
       profile.name = name.value;
       witness.disclose(SCENE, 'rapport', 'name', name.value, { ms: name.ms });
