@@ -1,8 +1,9 @@
-import { bugImage, type BugFrame } from './bug-sprite.ts';
+import { BUG_SIZE, bugImage, type BugFrame } from './bug-sprite.ts';
+import { scribble } from './speech.ts';
 import { h, prefersReducedMotion } from './dom.ts';
 
 /** Rendered size of BUG in CSS pixels. */
-export const BUG_PX = 56;
+export const BUG_PX = 64;
 
 /**
  * BUG as a little actor on the panel. It scurries between spots in hopping
@@ -23,7 +24,7 @@ export class Beetle {
   #raf = 0;
 
   constructor() {
-    this.#canvas = h('canvas', { class: 'bug__sprite', attrs: { width: '16', height: '16', 'aria-hidden': 'true' } });
+    this.#canvas = h('canvas', { class: 'bug__sprite', attrs: { width: String(BUG_SIZE), height: String(BUG_SIZE), 'aria-hidden': 'true' } });
     this.#body = h('div', { class: 'bug__body' }, this.#canvas);
     this.#flip = h('div', { class: 'bug__flip' }, this.#body);
     this.#bubble = h('div', { class: 'bug__bubble', attrs: { 'aria-live': 'assertive' } });
@@ -43,7 +44,7 @@ export class Beetle {
   #draw(frame: BugFrame): void {
     const g = this.#canvas.getContext('2d');
     if (!g) return;
-    g.clearRect(0, 0, 16, 16);
+    g.clearRect(0, 0, BUG_SIZE, BUG_SIZE);
     g.drawImage(bugImage(frame), 0, 0);
   }
 
@@ -59,8 +60,16 @@ export class Beetle {
   }
 
   say(line: string): void {
+    this.#bubble.classList.remove('bug__bubble--scribble');
     this.#bubble.textContent = line;
     this.#bubble.hidden = !line;
+  }
+
+  /** An angry tangle of lines in the bubble: BUG does not like this one bit. */
+  grumble(): void {
+    this.#bubble.replaceChildren(scribble());
+    this.#bubble.classList.add('bug__bubble--scribble');
+    this.#bubble.hidden = false;
   }
 
   /** The face and pose BUG holds while it is not walking. */
@@ -111,11 +120,41 @@ export class Beetle {
     this.#body.classList.add('bug__body--land');
   }
 
-  /** Little furious hops on the spot. */
+  /** Stamps a foot, again and again, with a little puff of dust each time. */
   async stomp(times = 2): Promise<void> {
     this.setMood('angry');
     if (!this.#motion) return;
-    for (let i = 0; i < times; i++) await this.#bounce(7, 200);
+    for (let i = 0; i < times; i++) {
+      this.#draw('stomp1');
+      await wait(150);
+      this.#draw('stomp2');
+      this.#squash();
+      await wait(170);
+    }
+    this.#draw(this.#mood);
+  }
+
+  /** Strains at something for a while: leaning in, gritting its teeth, sweating. */
+  async strain(ms: number): Promise<void> {
+    if (!this.#motion) {
+      await wait(ms);
+      return;
+    }
+    const until = performance.now() + ms;
+    let i = 0;
+    while (performance.now() < until) {
+      this.#draw(i++ % 2 ? 'effort1' : 'effort2');
+      this.#body.classList.toggle('bug__body--strain', true);
+      await wait(140);
+    }
+    this.#body.classList.remove('bug__body--strain');
+    this.#draw(this.#mood);
+  }
+
+  /** A happy little hop. */
+  async cheer(): Promise<void> {
+    this.setMood('happy');
+    if (this.#motion) await this.#bounce(10, 260);
   }
 
   /** One small hop straight up and down on the spot, landing with a squash. */
@@ -149,4 +188,8 @@ export class Beetle {
   stop(): void {
     cancelAnimationFrame(this.#raf);
   }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

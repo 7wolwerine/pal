@@ -156,7 +156,7 @@ export class Speech {
 }
 
 /** BUG's angry scribble: a tangle of strokes in a speech bubble. */
-function scribble(): SVGSVGElement {
+export function scribble(): SVGSVGElement {
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', '0 0 60 22');

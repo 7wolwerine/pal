@@ -1,7 +1,7 @@
 import { CRASH } from '../content/crash.ts';
 import type { GameScene } from '../game.ts';
 import { BUG_PX, Beetle } from '../ui/beetle.ts';
-import { bugImage } from '../ui/bug-sprite.ts';
+import { BUG_SIZE, bugImage } from '../ui/bug-sprite.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 
 const SCENE = 'crash';
@@ -59,15 +59,15 @@ export const crash: GameScene = {
       canvas.height = Math.max(1, Math.round(host.height + 60));
       board.append(canvas);
       const g = canvas.getContext('2d');
-      const sprite = bugImage('stand').getContext('2d')?.getImageData(0, 0, 16, 16);
+      const sprite = bugImage('stand').getContext('2d')?.getImageData(0, 0, BUG_SIZE, BUG_SIZE);
       beetle.el.classList.add('bug--gone');
       if (!g || !sprite) return;
-      const cell = BUG_PX / 16;
+      const cell = BUG_PX / BUG_SIZE;
       const drops: { x: number; y: number; v: number; ch: string }[] = [];
       let k = 0;
-      for (let y = 0; y < 16; y++) {
-        for (let x = 0; x < 16; x++) {
-          if ((sprite.data[(y * 16 + x) * 4 + 3] ?? 0) < 128) continue;
+      for (let y = 0; y < BUG_SIZE; y++) {
+        for (let x = 0; x < BUG_SIZE; x++) {
+          if ((sprite.data[(y * BUG_SIZE + x) * 4 + 3] ?? 0) < 128) continue;
           drops.push({
             x: box.left - host.left + x * cell,
             y: box.top - host.top + y * cell,
