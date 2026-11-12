@@ -1,3 +1,5 @@
+import { audio } from './audio/engine.ts';
+import { SCENE_THEME } from './audio/themes.ts';
 import { WINDOW_REACTIONS } from './content/window.ts';
 import { Director } from './core/director.ts';
 import { Witness } from './core/witness.ts';
@@ -61,6 +63,24 @@ function boot(): void {
 
   document.addEventListener('pointerdown', () => witness.tally('click'));
 
+  // Music can only start after a user gesture; the first click or key does it.
+  const unlockAudio = (): void => audio.unlock();
+  document.addEventListener('pointerdown', unlockAudio, { capture: true });
+  document.addEventListener('keydown', unlockAudio, { capture: true });
+
+  const mute = h('button', {
+    class: 'mute',
+    attrs: { type: 'button', 'aria-label': 'Ztlumit hudbu', 'aria-pressed': 'false' },
+    text: '♪',
+  });
+  mute.addEventListener('click', () => {
+    audio.setMuted(!audio.muted);
+    mute.setAttribute('aria-pressed', String(audio.muted));
+    mute.setAttribute('aria-label', audio.muted ? 'Zapnout hudbu' : 'Ztlumit hudbu');
+    mute.classList.toggle('mute--off', audio.muted);
+  });
+  document.body.append(mute);
+
   const ctx: GameContext = {
     witness,
     profile,
@@ -87,7 +107,12 @@ function boot(): void {
       win.el.classList.add('win--boot');
     }
     winWasHidden = onScenery;
+    // Each scene has its own calm theme; the reveal turns it dark.
+    audio.play(SCENE_THEME[scene.id] ?? 'window');
   });
+
+  // Development handle for poking at the live game from the console. Stripped from the build.
+  if (import.meta.env.DEV) Object.assign(window, { __pal: { audio, witness, profile } });
 
   // `?scene=reveal` jumps straight to a scene while developing. Stripped from the build.
   const jump = import.meta.env.DEV ? new URLSearchParams(location.search).get('scene') : null;

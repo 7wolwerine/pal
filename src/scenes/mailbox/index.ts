@@ -1,3 +1,4 @@
+import { audio } from '../../audio/engine.ts';
 import { MAILBOX } from '../../content/intro.ts';
 import type { GameScene } from '../../game.ts';
 import { CHARACTER_WIDTH, paintCharacter, paintDrive } from '../../pixel/cast.ts';
@@ -101,6 +102,7 @@ export const mailbox: GameScene = {
       if (phase === 'walking' && p >= WALKING_MS) enter('opening');
       if (phase === 'opening' && p >= OPENING_MS) {
         enter('amazed');
+        audio.treasure();
         caption.textContent = MAILBOX.found;
         const go = h('button', { class: 'btn', text: MAILBOX.go, attrs: { type: 'button' }, on: { click: done } });
         actions.replaceChildren(go);
