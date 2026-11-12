@@ -2,7 +2,8 @@ import { audio } from '../../audio/engine.ts';
 import { GLASS } from '../../content/glass.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
-import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
+import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
+import { Speech } from '../../ui/speech.ts';
 import { GLASS_RECT, SPLASH_MS, STAGE_H, STAGE_W, paintGlassScene } from './art.ts';
 import { BOUNCE_AT, SETTLE_MS } from './model.ts';
 
@@ -21,9 +22,11 @@ export const glass: GameScene = {
   mount(ctx, done) {
     const motion = !prefersReducedMotion();
     const stage = new PixelStage(STAGE_W, STAGE_H, GLASS.sceneLabel);
-    const caption = h('p', { class: 'scene__caption', text: GLASS.toast, attrs: { 'aria-live': 'polite' } });
-    const actions = h('div', { class: 'scene__actions' });
-    ctx.scenery.replaceChildren(stage.el, caption, actions);
+    ctx.scenery.replaceChildren(stage.el);
+    const speech = new Speech(stage.el, STAGE_W, STAGE_H);
+    // PAL is not in the picture; its words come from just above the table.
+    const voice = (): { x: number; y: number } => ({ x: GLASS_RECT.x + GLASS_RECT.w / 2, y: GLASS_RECT.y - 4 });
+    void speech.say(GLASS.toast, voice, { who: 'pal' });
 
     let alive = true;
     let now = 0;
@@ -62,10 +65,8 @@ export const glass: GameScene = {
       }
       if (!alive) return;
       ctx.witness.record({ scene: SCENE, kind: 'glass-bounced', trick: 'broken-physics', data: { touched } });
-      caption.textContent = GLASS.after;
-      const go = h('button', { class: 'btn', text: GLASS.go, attrs: { type: 'button' }, on: { click: done } });
-      actions.replaceChildren(go);
-      go.focus();
+      await speech.say(GLASS.after, voice, { who: 'pal', tap: true });
+      if (alive) done();
     }
 
     stage.run((g, t) => {
@@ -76,6 +77,7 @@ export const glass: GameScene = {
     return () => {
       alive = false;
       window.clearTimeout(slideTimer);
+      speech.stop();
       stage.stop();
       ctx.scenery.replaceChildren();
     };
