@@ -66,6 +66,13 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const gold = evidence.some((e) => e.kind === 'gold-open');
     return `Otevřel jsi ${opened}× truhličku${gold ? ' a zlatou truhlu k tomu' : ''}. Uvnitř: jeden bod, nic, klíček${gold ? ' a nálepka' : ''}.`;
   },
+  'muscle-memory': (evidence) => {
+    const reflex = evidence.find((e) => e.kind === 'reflex-close');
+    const ms = number(reflex ?? evidence[0], 'ms');
+    if (ms === undefined) return undefined;
+    const s = Math.max(1, Math.round(ms / 1000));
+    return reflex ? `Po křížku jsi sáhl za ${s} s. Text okna jsi nečetl.` : `Velké zelené tlačítko jsi zmáčkl za ${s} s.`;
+  },
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -155,6 +162,9 @@ const ONCE: Record<string, string> = {
   'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
   'gold-open': 'Zlatou truhlu sis zaplatil odpovědí o sobě.',
   'declined-points': 'Body za odpověď jsi odmítl.',
+  'reflex-close': 'Zavřel jsi okno křížkem. Ten křížek sdílel tvoje data.',
+  'popup-yes': 'Odsouhlasil jsi sdílení s 312 partnery.',
+  'popup-no': 'Vyskakovací okno jsi přečetl a odmítl. Dobře ty.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

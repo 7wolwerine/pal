@@ -109,6 +109,11 @@ export const TRICKS = {
     inGame: 'Body za jednu nevinnou otázku: jméno prvního mazlíčka. Je to jedna z nejčastějších kontrolních otázek k obnově hesla.',
     realWorld: 'Kvízy na sítích („Tvoje jméno hvězdy: první mazlíček + ulice"), aplikace „zdarma". Investice, kterou do appky vkládáš, jsi ty a tvoje data.',
   },
+  'muscle-memory': {
+    name: 'Obrácené UI (svalová paměť)',
+    inGame: 'Řekl jsem ti, ať okno zavřeš. Křížek v rohu ale nezavíral, sdílel. Čím zkušenější ruka, tím rychlejší klik.',
+    realWorld: 'Reklamy s falešným křížkem, prohozené „OK" a „Zrušit", zelené tlačítko, které souhlasí se vším. Útok míří na reflex, ne na rozum.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

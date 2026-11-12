@@ -125,6 +125,7 @@ export const SCENE_THEME: Record<string, ThemeId> = {
   flower: 'garden',
   plea: 'desk',
   chest: 'window',
+  popup: 'window',
   prize: 'window',
   reveal: 'dark',
 };

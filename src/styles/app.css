@@ -2209,3 +2209,98 @@ body {
     animation: none;
   }
 }
+
+/* ---------- the inverted popup ---------- */
+
+.popup {
+  position: fixed;
+  left: 50%;
+  top: 58%;
+  z-index: 40;
+  width: min(330px, calc(100vw - 32px));
+  border: 1px solid #9aa0aa;
+  border-radius: 6px;
+  background: #f4f5f7;
+  color: #1f2329;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
+  transform: translate(-50%, -50%);
+  animation: popup-in 180ms ease-out both;
+}
+
+.popup__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 1px solid #d5d8de;
+  font-size: 13px;
+}
+
+.popup__x {
+  width: 30px;
+  height: 26px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #1f2329;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.popup__x:hover {
+  background: #e81123;
+  color: #fff;
+}
+
+.popup__text {
+  margin: 14px 14px 6px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.popup__status {
+  min-height: 18px;
+  margin: 0 14px;
+  color: #1d7a4f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.popup__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 10px 14px 14px;
+}
+
+.popup__yes {
+  height: 38px;
+  background: #1d9e75;
+  box-shadow: 0 3px 0 #0f6e56;
+  color: #fff;
+}
+
+.popup__no {
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: #c0392b;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup {
+    animation: none;
+  }
+}
