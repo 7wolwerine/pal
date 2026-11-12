@@ -79,6 +79,11 @@ export const TRICKS = {
     inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
+  'helpers-high': {
+    name: 'Pocit zachránce (helper’s high)',
+    inGame: 'Opravit rozbité a vidět, jak se všechno rozzáří. Pro tenhle pocit člověk udělá skoro cokoliv.',
+    realWorld: 'Charitativní a romance podvody ti dají roli zachránce. Ten hřejivý pocit je platidlo, kterým pak platíš.',
+  },
   'role-casting': {
     name: 'Zarolování do role (konzistence a závazek)',
     inGame: 'Zachránce. Tu roli jsem ti přidělil já a od té chvíle ji hraješ.',
