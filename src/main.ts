@@ -157,6 +157,7 @@ function fillDebugProfile(profile: Profile): void {
   profile.assistantLook ??= 'cat';
   profile.assistantName ??= 'Micka';
   profile.role ??= 'helper';
+  profile.bonded ??= true;
 }
 
 function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile): void {

@@ -1,10 +1,11 @@
 import { audio } from '../../audio/engine.ts';
 import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
-import type { GameScene } from '../../game.ts';
+import { gendered, type GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
-import { h, prefersReducedMotion } from '../../ui/dom.ts';
+import { prefersReducedMotion } from '../../ui/dom.ts';
+import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
 import { DIRS, E, N, S, W, createLayout, isConnected, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
 
@@ -83,9 +84,15 @@ export const rescue: GameScene = {
   mount(ctx, done) {
     const motion = !prefersReducedMotion();
     const stage = new PixelStage(STAGE_W, STAGE_H, RESCUE.sceneLabel);
-    const caption = h('p', { class: 'scene__caption', attrs: { 'aria-live': 'polite' } });
-    const actions = h('div', { class: 'scene__actions' });
-    ctx.scenery.replaceChildren(stage.el, caption, actions);
+    ctx.scenery.replaceChildren(stage.el);
+    const speech = new Speech(stage.el, STAGE_W, STAGE_H);
+    const masculine = gendered(ctx.profile, 'm', 'f') === 'm';
+    /** Where the assistant's head is, so its words hang right by it. */
+    let face = { x: TANK.x + TANK.w / 2, y: TANK.y + 40 };
+    const say = (text: string, tap = false): Promise<void> => speech.say(text, () => face, { who: 'pal', tap });
+    let lastLine = 0;
+    let lines = 0;
+    let diedAt = 0;
 
     const look: SpriteId = ctx.profile.assistantLook ?? 'pal';
     const avatar = sprite(look);
@@ -106,7 +113,7 @@ export const rescue: GameScene = {
     const bubbles: { x: number; y: number; born: number }[] = [];
 
     // The first plea leans on the role the player accepted at the start.
-    caption.textContent = ctx.profile.role ? ROLES[ctx.profile.role].rescue : (RESCUE.intro[0] ?? '');
+    void say(ctx.profile.role ? ROLES[ctx.profile.role].rescue : (RESCUE.intro[0] ?? ''));
     witnessAttempt();
 
     function witnessAttempt(): void {
@@ -138,7 +145,11 @@ export const rescue: GameScene = {
       phase = 'dead';
       deaths++;
       water = 1;
-      caption.textContent = RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1] ?? '';
+      diedAt = now;
+      audio.gurgle(1.2);
+      window.setTimeout(() => {
+        if (phase === 'dead') void say(RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '');
+      }, 1500);
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
       if (deaths === 1) void bugWarns(ctx, stage.el, 'rescue', { side: 'left', mood: 'angry' });
       window.setTimeout(() => {
@@ -149,18 +160,17 @@ export const rescue: GameScene = {
         threatened = false;
         water = 0.18;
         phase = 'play';
-        caption.textContent = RESCUE.intro[Math.min(deaths, RESCUE.intro.length - 1)] ?? '';
+        void say(RESCUE.intro[Math.min(deaths, RESCUE.intro.length - 1)] ?? '');
         witnessAttempt();
-      }, 2600);
+      }, 4200);
     }
 
     function win(): void {
       phase = 'won';
       ctx.witness.record({ scene: SCENE, kind: 'saved', trick: 'guilt-trip', data: { deaths } });
-      caption.textContent = RESCUE.saved;
-      const go = h('button', { class: 'btn', text: RESCUE.go, attrs: { type: 'button' }, on: { click: done } });
-      actions.replaceChildren(go);
-      go.focus();
+      void say(RESCUE.saved(masculine), true).then(() => {
+        if (phase === 'won') done();
+      });
     }
 
     stage.run((g, t) => {
@@ -172,6 +182,13 @@ export const rescue: GameScene = {
 
       if (phase === 'play') {
         water = Math.min(1, water + RISE_PER_S * dt);
+        // Every few seconds the assistant panics, or tells the player which pipe to turn.
+        if (t - lastLine > 4200 && !threatened) {
+          lastLine = t;
+          lines++;
+          const advice = lines % 2 === 0 ? adviceLine() : undefined;
+          void say(advice ?? RESCUE.panic[lines % RESCUE.panic.length] ?? '');
+        }
         // The water has to have run all the way through before the tank drains.
         if (isConnected(layout) && t - flowFrom > wet.length * FLOW_MS) {
           phase = 'draining';
@@ -180,7 +197,7 @@ export const rescue: GameScene = {
           die();
         } else if (deaths >= 2 && water > 0.7 && !threatened) {
           threatened = true;
-          caption.textContent = RESCUE.threat;
+          void say(RESCUE.threat);
         }
       } else if (phase === 'draining') {
         water = Math.max(0, water - DRAIN_PER_S * dt);
@@ -225,14 +242,29 @@ export const rescue: GameScene = {
       const bob = motion ? Math.round(Math.sin(t / (panic ? 110 : 320)) * (panic ? 2 : 1)) : 0;
       const size = 30;
       const ax = TANK.x + TANK.w / 2 - size / 2 + 4;
-      const ay = Math.max(TANK.y + 1, Math.min(TANK.y + TANK.h - size, surface - size + 10)) + bob;
-      g.drawImage(avatar, ax, ay, size, size);
+      const sink = phase === 'dead' ? Math.min(1, (t - diedAt) / 1400) : 0;
+      const floatY = Math.max(TANK.y + 1, Math.min(TANK.y + TANK.h - size, surface - size + 10));
+      const ay = Math.round(floatY + (TANK.y + TANK.h - size - floatY) * sink) + (sink > 0 ? 0 : bob);
+      face = { x: ax + size / 2, y: ay };
+      if (sink > 0) g.globalAlpha = 1 - sink * 0.55;
+      g.drawImage(avatar, ax + (sink > 0 && sink < 1 && motion ? Math.round(Math.sin(t / 60)) : 0), ay, size, size);
+      g.globalAlpha = 1;
+      if (sink >= 1) {
+        // two little crosses for eyes
+        for (const ex of [ax + 9, ax + 19]) {
+          px(g, '#1a0f0c', ex, ay + 11, 1, 1);
+          px(g, '#1a0f0c', ex + 2, ay + 11, 1, 1);
+          px(g, '#1a0f0c', ex + 1, ay + 12, 1, 1);
+          px(g, '#1a0f0c', ex, ay + 13, 1, 1);
+          px(g, '#1a0f0c', ex + 2, ay + 13, 1, 1);
+        }
+      }
       if (panic) {
         px(g, C.danger, ax - 3, ay + 2, 2, 5);
         px(g, C.danger, ax + size + 1, ay + 3, 2, 5);
       }
       if (phase === 'dead' && motion) {
-        if (bubbles.length < 12 && Math.random() < 0.3) bubbles.push({ x: ax + 6 + Math.random() * 18, y: ay + 8, born: t });
+        if (bubbles.length < 16 && Math.random() < 0.4) bubbles.push({ x: ax + 6 + Math.random() * 18, y: ay + 8, born: t });
       }
       for (let i = bubbles.length - 1; i >= 0; i--) {
         const b = bubbles[i];
@@ -361,7 +393,30 @@ export const rescue: GameScene = {
       for (const [rx, ry] of [[-5, -5], [4, -5], [-5, 3], [4, 3]] as const) px(g, C.rustHi, cx + rx, cy + ry, 1, 1);
     }
 
+    /** Which pipe on the way out is still turned wrong, said the way a panicking person would. */
+    function adviceLine(): string | undefined {
+      const PATH: [string, number][] = [
+        ['p03', W | N],
+        ['p02', S | E],
+        ['p12', W | N],
+        ['p11', S | E],
+        ['p21', W | E],
+        ['p31', W | S],
+        ['p32', N | S],
+        ['p33', N | S],
+      ];
+      for (const [id, want] of PATH) {
+        const piece = layout.pieces.find((p) => p.id === id);
+        if (!piece || piece.openings === want) continue;
+        const row = RESCUE.rows[piece.row] ?? '';
+        const col = RESCUE.cols[piece.col] ?? '';
+        return RESCUE.advise(`${row} ${col}`);
+      }
+      return undefined;
+    }
+
     return () => {
+      speech.stop();
       stage.stop();
       ctx.scenery.replaceChildren();
     };
