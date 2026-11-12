@@ -4595,3 +4595,111 @@ body.on-pc {
     height: 9px;
   }
 }
+
+/* ---------- the dark replay ---------- */
+
+.night {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  padding: 16px;
+  background: #000;
+  animation: night-in 900ms ease-out both;
+}
+
+.night--out {
+  animation: night-out 500ms ease-in forwards;
+}
+
+.night__tv {
+  position: relative;
+  width: min(92vw, 760px);
+  aspect-ratio: 16 / 10;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 0 0 6px #0b1a12, 0 0 60px rgba(29, 158, 117, 0.25);
+  animation: night-flicker 4s steps(1) infinite;
+}
+
+.night__screen {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.night__rec {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  color: #ff4d4d;
+  font: 700 16px ui-monospace, Consolas, monospace;
+  animation: night-blink 1s steps(2) infinite;
+}
+
+.night__clock {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  color: #9fe1cb;
+  font: 700 15px ui-monospace, Consolas, monospace;
+  opacity: 0.85;
+}
+
+.night__caption {
+  width: min(92vw, 760px);
+  min-height: 2.8em;
+  margin: 0;
+  color: #9fe1cb;
+  font: 700 clamp(15px, 2.6vw, 20px) / 1.4 ui-monospace, Consolas, monospace;
+  text-align: center;
+  text-shadow: 0 0 8px rgba(93, 202, 165, 0.6);
+}
+
+.night__skip {
+  padding: 6px 16px;
+  border: 1px solid #0f6e56;
+  border-radius: 0;
+  background: transparent;
+  color: #1d9e75;
+  font: 700 13px ui-monospace, Consolas, monospace;
+  cursor: pointer;
+}
+
+@keyframes night-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes night-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes night-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes night-flicker {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  47% {
+    filter: brightness(1.25) contrast(1.2);
+  }
+  48% {
+    filter: brightness(0.7);
+  }
+  49% {
+    filter: brightness(1);
+  }
+}

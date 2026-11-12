@@ -5,6 +5,7 @@ import { collectDevice } from '../core/device.ts';
 import type { GameContext } from '../game.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 import { openKeygen } from '../ui/keygen.ts';
+import { playNightmare } from '../ui/nightmare.ts';
 import { readImageText } from '../ui/read-image.ts';
 import { createPalFace } from '../ui/pal-face.ts';
 import { buildReveal, buildTimeline } from './reveal-model.ts';
@@ -54,6 +55,10 @@ export const reveal: Scene<GameContext> = {
     });
 
     async function play(): Promise<void> {
+      // First the whole game again, in the dark, the way the player played it.
+      const night = import.meta.env.DEV && new URLSearchParams(location.search).has('night') ? demoEvents() : ctx.witness.events;
+      await playNightmare(night, ctx.profile);
+      if (!alive) return;
       const fast = prefersReducedMotion();
       for (const line of timeline) {
         if (!alive) return;
@@ -223,3 +228,14 @@ export const reveal: Scene<GameContext> = {
     };
   },
 };
+
+/** Development only: a made-up game, so the dark replay can be watched on its own with `?scene=reveal&night`. */
+function demoEvents(): import('../core/witness.ts').WitnessEvent[] {
+  const scenes = ['mailbox', 'desk', 'welcome', 'fidgets', 'paint', 'rescue', 'shelter', 'flower', 'dontclick', 'chest', 'plea', 'download', 'prize'];
+  const events: import('../core/witness.ts').WitnessEvent[] = scenes.map((scene, i) => ({ seq: i, t: i * 1000, scene, kind: 'step' }));
+  events.push({ seq: 90, t: 90, scene: 'rescue', kind: 'death' });
+  events.push({ seq: 91, t: 91, scene: 'shelter', kind: 'shelter', data: { path: 'cave' } });
+  events.push({ seq: 92, t: 92, scene: 'chest', kind: 'disclose', data: { field: 'street', value: 'Lipová' } });
+  for (let i = 0; i < 4; i++) events.push({ seq: 93 + i, t: 93 + i, scene: 'dontclick', kind: 'forbidden-press' });
+  return events;
+}
