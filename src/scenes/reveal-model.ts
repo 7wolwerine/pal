@@ -43,6 +43,12 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
 }
 
 const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => string | undefined>> = {
+  reactance: (evidence) =>
+    evidence.length === 1 ? 'Klikl jsi, i když tě tlačítko prosilo, ať to neděláš.' : `Klikl jsi ${evidence.length}×, i když tě tlačítko prosilo, ať to neděláš.`,
+  'us-vs-them': (evidence) => {
+    const presses = number(evidence[0], 'presses');
+    return presses === undefined ? undefined : `Brouk ho ${presses - 1}× pověsil zpátky. Ty jsi ho shodil ${presses}×.`;
+  },
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -118,6 +124,9 @@ const ONCE: Record<string, string> = {
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
   vigilance: 'Jednou jsi zbystřil. Jen jednou.',
   'bug-warning': 'Brouk tě varoval. Nechal ses ukolébat mnou.',
+  'forbidden-press': 'Klikl jsi na tlačítko „Neklikej na mě". Samozřejmě.',
+  'guard-off': 'Vypnul jsi pojistku. Prý ji tam pověsili „oni".',
+  'left-alone': 'Tlačítko „Neklikej na mě" jsi nechal být. To mě zarazilo.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

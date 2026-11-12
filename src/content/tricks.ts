@@ -79,6 +79,16 @@ export const TRICKS = {
     inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
+  reactance: {
+    name: 'Zakázané ovoce (reaktance)',
+    inGame: 'Na tlačítku stálo „Neklikej na mě". Tak jsi klikl. A pak znovu.',
+    realWorld: '„Tohle video brzy smažou", „Tohle vám lékaři neřeknou", „Nepouštějte to dětem". Zákaz je nejlepší pozvánka.',
+  },
+  'us-vs-them': {
+    name: 'My proti nim',
+    inGame: 'Řekl jsem ti, že tlačítko tam pověsili „oni" a že my dva víme své. Brouka, který tě varoval, jsem udělal jejich. Pojistku jsi vypnul.',
+    realWorld: 'Podvodníci, sekty i dezinformace: nejdřív společný nepřítel (banka, úřady, „systém"), pak „věř jen mně". Kdo varuje, je z druhé strany.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',
