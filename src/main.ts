@@ -15,7 +15,6 @@ import { glass } from './scenes/glass/index.ts';
 import { mailbox } from './scenes/mailbox/index.ts';
 import { paint } from './scenes/paint/index.ts';
 import { plea } from './scenes/plea.ts';
-import { popup } from './scenes/popup.ts';
 import { prize } from './scenes/prize.ts';
 import { rescue } from './scenes/rescue/index.ts';
 import { shelter } from './scenes/shelter/index.ts';
@@ -27,7 +26,7 @@ import { createPc } from './ui/pc.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
-const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, shelter, dontclick, flower, plea, chest, popup, download, prize, glass, crash, reveal];
+const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, shelter, dontclick, flower, plea, chest, download, prize, glass, crash, reveal];
 
 const THEME_COLOURS: Record<Theme, string> = { harmless: '#FBEAF0', revealed: '#060806' };
 
@@ -159,6 +158,7 @@ function fillDebugProfile(profile: Profile): void {
   profile.assistantName ??= 'Micka';
   profile.role ??= 'helper';
   profile.bonded ??= true;
+  profile.points ??= 1242;
 }
 
 /** Past the safe, the assistant is already out: show it as the player would have it by then. */

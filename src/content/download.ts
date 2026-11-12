@@ -1,32 +1,22 @@
 /**
- * The fake download, the last of the tricks. A 90s download page full of
- * screaming buttons. The game lets the player learn that the loud ones are
- * ads and the quiet link is the real one — then the quiet link is the trap.
- * Its address, shown in the status bar, is a stranger's domain. Nothing is
- * downloaded or run; the addresses use the reserved .invalid domain.
+ * The download, the last of the tricks, dressed as a reward. For all those
+ * points the player gets PAL Pro: a clean, friendly download card with a
+ * green "checked by antivirus" badge and a single "Run" button. Nothing hints
+ * at where it comes from, which is exactly the point. Nothing is downloaded
+ * or run; it is all theatre.
  */
 export const DOWNLOAD = {
-  palIntro: 'Poslední dárek: PAL Pro! Stáhni si ho, ať spolu můžeme být i offline.',
-  palHunt: 'Klasika devadesátek. Najdi to pravé tlačítko.',
-  pageTitle: 'PAL PRO – STÁHNI ZDARMA!!!',
-  marquee: '★ NEJRYCHLEJŠÍ DOWNLOAD NA SVĚTĚ ★ 100% ZDARMA ★ BEZ VIRŮ ★',
-  ads: ['DOWNLOAD NOW!!!', '▶ START', 'STÁHNOUT ZDARMA', '⬇ RYCHLÉ STAŽENÍ', 'KLIKNI ZDE'],
-  adUrl: (i: number) => `http://ads.megaclick.invalid/r?id=${4711 + i * 13}`,
-  adCaught: 'Reklama 😄',
-  /** PAL laughs at each fake one the player falls for, and nudges them on. */
-  palAd: ['Haha, to je reklama. Na to jsi moc chytrý.', 'Zase reklama! Hledej to nenápadné. Profíci vědí.'],
-  link: 'pal-pro-setup.exe (2,1 MB)',
-  linkUrl: 'http://pal-pro.download-secure.invalid/setup.exe',
-  statusIdle: 'Hotovo',
-  palFound: 'Věděl jsem to! Profík pozná pravé tlačítko na první pohled.',
+  palIntro: (points: string) => `Za těch ${points} bodů máš odměnu: PAL Pro! Budu s tebou i offline. Navždycky.`,
+  name: 'PAL Pro',
+  version: 'verze 2.0 · 2,1 MB',
+  badge: 'Prověřeno antivirem',
+  perks: ['Bez reklam', 'Funguje i offline', 'PAL vždycky po ruce'],
+  get: 'Stáhnout',
   file: 'PAL_Pro_setup.exe',
   progress: (pct: number) => `Stahování… ${pct} %`,
-  runQuestion: 'Spustit soubor z neznámého zdroje?',
+  downloaded: 'Staženo',
   run: 'Spustit',
-  cancel: 'Zrušit',
   installing: 'Instaluji PAL Pro…',
   installed: 'Nainstalováno ✓',
   palRan: 'Jééé, teď už mě máš i v počítači. Navždycky. <3',
-  palCancelled: 'Zrušit? Teď? No… jak myslíš.',
-  go: 'Pokračovat',
 } as const;

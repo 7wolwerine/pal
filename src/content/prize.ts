@@ -1,10 +1,11 @@
+import type { RoleId } from './roles.ts';
+
 export const PRIZE = {
   cheer: 'Zvládl jsi to! Jsi prostě neuvěřitelný! <3',
-  score: 9_999_999,
   scoreLabel: 'Skóre',
-  rank: 'TOP 0,01 % všech hráčů',
-  certificateAlt: 'Certifikát nejlepšího parťáka',
-  askEmail: 'Pošlu ti ten krásný obrázek. Kam?',
+  rank: (pct: number) => `Lepší než ${pct} % hráčů`,
+  certificateAlt: 'Certifikát',
+  askEmail: 'Pošlu ti ten krásný certifikát. Kam?',
   emailPlaceholder: 'jmeno@email.cz',
   send: 'Pošli mi ho',
   sending: 'Odesílám…',
@@ -17,10 +18,16 @@ export const PRIZE = {
   go: 'Pokračovat',
   fileName: 'PAL-certifikat.png',
   certificate: {
-    title: 'Certifikát nejlepšího parťáka',
-    awarded: 'udělen hráči',
+    kicker: 'Certifikát',
+    awarded: 'uděluje se',
     footer: 'PAL · Play and Learn',
   },
+  /** The title on the certificate, from the role the player leaned to most. */
+  titles: {
+    helper: 'Záchranář roku',
+    loner: 'Nejlepší vlk samotář',
+    fixer: 'Geniální inženýr',
+  } satisfies Record<RoleId, string>,
 } as const;
 
 /**

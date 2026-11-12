@@ -2,8 +2,10 @@ import { ASSISTANT_KINDS } from '../content/welcome.ts';
 import { PRIZE, hiddenPayload } from '../content/prize.ts';
 import { memoryFrom, memoryLine } from '../core/memory.ts';
 import { hide } from '../core/stego.ts';
-import type { GameScene } from '../game.ts';
-import { drawCertificate } from '../ui/certificate.ts';
+import { strongestRole, type GameScene } from '../game.ts';
+import { TRICKS } from '../content/tricks.ts';
+import { rankOf, scoreOf } from '../core/score.ts';
+import { certificateCard, drawCertificate, type CertificateFacts } from '../ui/certificate.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
 import { ROLES } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
@@ -26,32 +28,27 @@ export const prize: GameScene = {
     let email: string | undefined;
 
     const kindLabel = ASSISTANT_KINDS.find((k) => k.id === profile.assistantLook)?.label;
-    const cert = drawCertificate({
+    const used = witness.tricksUsed().length;
+    const facts: CertificateFacts = {
       name: profile.name ?? 'Ty',
+      title: PRIZE.titles[strongestRole(profile)],
       assistant: profile.assistantLook ?? 'pal',
+      score: scoreOf(profile.points ?? 0, used),
+      rank: rankOf(used, Object.keys(TRICKS).length),
       date: new Date(),
-    });
-
-    const scoreValue = h('span', { class: 'score__value', text: '0' });
-    const score = h(
-      'div',
-      { class: 'score' },
-      h('span', { class: 'score__label', text: PRIZE.scoreLabel }),
-      scoreValue,
-      h('span', { class: 'score__rank', text: PRIZE.rank }),
-    );
-    const preview = h('img', {
-      class: 'cert-preview',
-      attrs: { src: cert.toDataURL('image/png'), alt: PRIZE.certificateAlt },
-    });
+    };
+    const cert = drawCertificate(facts);
+    const card = certificateCard(facts);
+    const scoreValue = card.querySelector<HTMLElement>('.cert__value');
     const actions = h('div', { class: 'prize__actions' });
     const status = h('p', { class: 'prize__status', attrs: { role: 'status' } });
-    stage.replaceChildren(h('div', { class: 'prize' }, confetti(), score, preview, status, actions));
+    stage.replaceChildren(h('div', { class: 'prize' }, confetti(), card, status, actions));
 
     async function run(): Promise<void> {
+      if (scoreValue) void countUp(scoreValue, facts.score);
       await pal.say(profile.role ? ROLES[profile.role].prize : PRIZE.cheer);
       if (!alive) return;
-      await countUp(scoreValue, PRIZE.score);
+      await pal.tapToContinue();
       if (!alive) return;
       await pal.say(PRIZE.askEmail);
       if (!alive) return;

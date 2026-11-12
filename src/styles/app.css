@@ -4276,3 +4276,243 @@ body.on-pc {
     transform: rotate(360deg);
   }
 }
+
+/* ---------- PAL Pro, the reward ---------- */
+
+.pro {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, #fff, #fff4f8);
+}
+
+.pro__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pro__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #fbeaf0;
+  box-shadow: 0 3px 0 var(--line);
+}
+
+.pro__name {
+  display: block;
+  font-size: 24px;
+}
+
+.pro__version {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.pro__badge {
+  padding: 3px 12px 3px 28px;
+  border-radius: 999px;
+  background: #e1f5ee url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z' fill='%231d9e75'/%3E%3Cpath d='M9 12l2 2 4-4' stroke='%23fff' stroke-width='2.4' fill='none'/%3E%3C/svg%3E") 8px 50% / 16px no-repeat;
+  color: #085041;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.pro__perks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+}
+
+.pro__perks li::before {
+  content: '♥ ';
+  color: var(--btn);
+}
+
+.pro__get {
+  min-width: 180px;
+}
+
+.pro__after {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ---------- the certificate: gold, shine and twinkling stars ---------- */
+
+.cert {
+  position: relative;
+  width: min(100%, 420px);
+  margin: 6px auto 0;
+  padding: 10px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #a6741c, #ffd23f 25%, #fff1a8 45%, #e0b13a 60%, #ffd23f 80%, #a6741c);
+  box-shadow: 0 8px 24px rgba(166, 116, 28, 0.35);
+  animation: cert-in 700ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.cert__inner {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 14px 16px 12px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 0%, #fffdf6, #fff6e0);
+  overflow: hidden;
+  text-align: center;
+}
+
+.cert__shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: cert-shine 3.2s 900ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+.cert__kicker {
+  margin: 0;
+  color: #a6741c;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
+.cert__title {
+  margin: 0;
+  color: #4b1528;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(22px, 5vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.cert__awarded {
+  margin: 0;
+  color: #993556;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 13px;
+}
+
+.cert__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cert__avatar {
+  width: 48px;
+  height: 48px;
+}
+
+.cert__name {
+  margin: 0;
+  color: #d4537e;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+}
+
+.cert__score {
+  display: grid;
+  justify-items: center;
+  margin-top: 4px;
+}
+
+.cert__label {
+  color: #4b1528;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cert__value {
+  color: #c98f2e;
+  font-size: 34px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  text-shadow: 0 2px 0 #fff1a8;
+}
+
+.cert__rank {
+  color: #993556;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.cert__foot {
+  margin: 6px 0 0;
+  color: #993556;
+  font-size: 11px;
+}
+
+.cert__stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cert__star {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: #ffd23f;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  animation: cert-twinkle 1400ms ease-in-out infinite both;
+}
+
+.cert__star:nth-child(3n) {
+  background: #ffffff;
+}
+
+.cert__star:nth-child(4n) {
+  background: #ff9cc8;
+}
+
+.prize {
+  gap: 8px;
+}
+
+@keyframes cert-in {
+  from {
+    transform: scale(0.6) rotate(-4deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cert-shine {
+  0% {
+    transform: translateX(-100%);
+  }
+  45%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes cert-twinkle {
+  0%,
+  100% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1) rotate(45deg);
+    opacity: 1;
+  }
+}

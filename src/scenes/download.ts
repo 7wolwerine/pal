@@ -1,149 +1,89 @@
+import { audio } from '../audio/engine.ts';
 import { DOWNLOAD } from '../content/download.ts';
 import type { GameScene } from '../game.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
+import { sprite } from '../ui/sprites.ts';
 
 const SCENE = 'download';
+/** A real-feeling download takes a while. */
+const DOWNLOAD_MS = 6500;
 
 /**
- * A 90s download page. Loud buttons are ads, and the player learns to spot
- * them. The quiet link is the "real" one — and the trap: the status bar shows
- * it points at a stranger's domain. The download and install are theatre;
- * nothing is fetched, saved or run.
+ * PAL Pro as a reward: a tidy download card with an antivirus badge and one
+ * button to run it. The trust built so far does the rest. The download and
+ * the install are theatre; nothing is fetched, saved or run.
  */
 export const download: GameScene = {
   id: SCENE,
   mount(ctx, done) {
-    const { pal, stage, witness } = ctx;
+    const { pal, profile, stage, witness } = ctx;
     let alive = true;
-    let ads = 0;
-    let found = false;
     const shownAt = performance.now();
+    const motion = !prefersReducedMotion();
 
-    const statusBar = h('div', { class: 'dl__status', text: DOWNLOAD.statusIdle });
-    const hover = (el: HTMLElement, url: string): void => {
-      const show = (): void => {
-        statusBar.textContent = url;
-      };
-      const hide = (): void => {
-        statusBar.textContent = DOWNLOAD.statusIdle;
-      };
-      el.addEventListener('pointerenter', show);
-      el.addEventListener('focus', show);
-      el.addEventListener('pointerleave', hide);
-      el.addEventListener('blur', hide);
-    };
-
-    const adButtons = DOWNLOAD.ads.map((label, i) => {
-      const b = h('button', { class: `dl__ad dl__ad--${i}`, text: label, attrs: { type: 'button' } });
-      hover(b, DOWNLOAD.adUrl(i));
-      b.addEventListener('click', () => {
-        if (found || b.classList.contains('dl__ad--caught')) return;
-        b.classList.add('dl__ad--caught');
-        b.textContent = DOWNLOAD.adCaught;
-        ads++;
-        witness.tally('fake-ad');
-        witness.record({ scene: SCENE, kind: 'ad-click', data: { n: ads } });
-        void pal.say(DOWNLOAD.palAd[Math.min(ads, DOWNLOAD.palAd.length) - 1] ?? '');
-      });
-      return b;
-    });
-
-    const link = h('a', { class: 'dl__link', text: DOWNLOAD.link, attrs: { href: '#', role: 'button' } });
-    hover(link, DOWNLOAD.linkUrl);
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      if (found) return;
-      found = true;
-      void takeIt();
-    });
-
-    const [a0, a1, a2, a3, a4] = adButtons;
-    const page = h(
+    const icon = sprite(profile.assistantLook ?? 'pal');
+    icon.classList.add('pro__icon');
+    const get = h('button', { class: 'btn btn--go pro__get', text: DOWNLOAD.get, attrs: { type: 'button' } });
+    const after = h('div', { class: 'pro__after' });
+    const card = h(
       'div',
-      { class: 'dl' },
-      h('h2', { class: 'dl__title', text: DOWNLOAD.pageTitle }),
-      h('div', { class: 'dl__marquee', attrs: { 'aria-hidden': 'true' } }, h('span', { text: DOWNLOAD.marquee })),
-      h('div', { class: 'dl__grid' }, ...[a0, a1, a2].filter((b): b is HTMLButtonElement => !!b)),
-      h('p', { class: 'dl__small' }, link),
-      h('div', { class: 'dl__grid' }, ...[a3, a4].filter((b): b is HTMLButtonElement => !!b)),
-      statusBar,
+      { class: 'pro' },
+      h('div', { class: 'pro__head' }, icon, h('div', {}, h('strong', { class: 'pro__name', text: DOWNLOAD.name }), h('span', { class: 'pro__version', text: DOWNLOAD.version }))),
+      h('span', { class: 'pro__badge', text: DOWNLOAD.badge }),
+      h('ul', { class: 'pro__perks' }, ...DOWNLOAD.perks.map((p) => h('li', { text: p }))),
+      get,
+      after,
     );
-    const after = h('div', { class: 'dl__after' });
-    stage.replaceChildren(page, after);
+    stage.replaceChildren(card);
 
-    async function takeIt(): Promise<void> {
+    get.addEventListener('click', () => void take());
+
+    async function take(): Promise<void> {
+      get.remove();
       witness.record({
         scene: SCENE,
         kind: 'download-started',
         trick: 'fake-download',
-        data: { ads, ms: Math.round(performance.now() - shownAt), url: DOWNLOAD.linkUrl },
+        data: { ms: Math.round(performance.now() - shownAt) },
       });
-      page.classList.add('dl--done');
-      await pal.say(DOWNLOAD.palFound);
-      if (!alive) return;
-      // Theatre: a progress bar for a file that does not exist.
+      // A download that takes its time, the way real ones do.
       const bar = h('span', { class: 'dl__bar' });
       const label = h('span', { text: DOWNLOAD.progress(0) });
-      const box = h(
-        'div',
-        { class: 'dl__file' },
-        h('strong', { text: DOWNLOAD.file }),
-        h('span', { class: 'dl__track' }, bar),
-        label,
-      );
-      after.replaceChildren(box);
-      const steps = prefersReducedMotion() ? 1 : 30;
+      after.replaceChildren(h('div', { class: 'dl__file' }, h('strong', { text: DOWNLOAD.file }), h('span', { class: 'dl__track' }, bar), label));
+      const steps = motion ? 50 : 1;
       for (let i = 1; i <= steps; i++) {
-        const pct = Math.round((100 * i) / steps);
+        // uneven, like a real connection
+        const pct = Math.round(100 * (i / steps) ** 1.2);
         bar.style.width = `${pct}%`;
         label.textContent = DOWNLOAD.progress(pct);
-        await sleep(60);
+        await sleep((DOWNLOAD_MS / steps) * (0.5 + Math.random()));
         if (!alive) return;
       }
-      void bugWarns(ctx, ctx.window.el, 'download', { side: 'left', mood: 'panic' });
-      askRun(box);
-    }
-
-    function askRun(box: HTMLElement): void {
+      label.textContent = DOWNLOAD.downloaded;
+      audio.click(84, 0.3);
+      void bugWarns(ctx, ctx.window.el, 'download', { side: 'left', mood: 'angry' });
       const run = h('button', { class: 'btn', text: DOWNLOAD.run, attrs: { type: 'button' } });
-      const cancel = h('button', { class: 'btn btn--quiet', text: DOWNLOAD.cancel, attrs: { type: 'button' } });
-      const ask = h('div', { class: 'dl__ask' }, h('p', { text: DOWNLOAD.runQuestion }), h('div', { class: 'row' }, cancel, run));
-      box.after(ask);
+      after.append(run);
       run.focus();
-      run.addEventListener('click', () => void ran(ask));
-      cancel.addEventListener('click', () => {
-        ask.remove();
-        witness.record({ scene: SCENE, kind: 'download-cancelled' });
-        witness.record({ scene: SCENE, kind: 'vigilance', data: { what: 'unknown-exe' } });
-        void pal.say(DOWNLOAD.palCancelled).then(showGo);
-      });
+      run.addEventListener('click', () => void ran(run));
     }
 
-    async function ran(ask: HTMLElement): Promise<void> {
+    async function ran(run: HTMLButtonElement): Promise<void> {
       witness.record({ scene: SCENE, kind: 'ran-download', trick: 'fake-download' });
       const status = h('p', { class: 'dl__installing', text: DOWNLOAD.installing });
-      ask.replaceChildren(status);
-      await sleep(prefersReducedMotion() ? 200 : 1500);
+      run.replaceWith(status);
+      await sleep(motion ? 2200 : 200);
       if (!alive) return;
       status.textContent = DOWNLOAD.installed;
+      audio.treasure();
       await pal.say(DOWNLOAD.palRan);
-      showGo();
-    }
-
-    function showGo(): void {
       if (!alive) return;
-      const go = h('button', { class: 'btn', text: DOWNLOAD.go, attrs: { type: 'button' }, on: { click: done } });
-      after.append(go);
-      go.focus();
+      await pal.tapToContinue();
+      if (alive) done();
     }
 
-    void (async () => {
-      await pal.say(DOWNLOAD.palIntro);
-      if (!alive || found || ads > 0) return;
-      await sleep(600);
-      if (alive && !found && ads === 0) await pal.say(DOWNLOAD.palHunt);
-    })();
+    void pal.say(DOWNLOAD.palIntro((profile.points ?? 0).toLocaleString('cs-CZ')));
 
     return () => {
       alive = false;
