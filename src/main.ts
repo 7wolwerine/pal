@@ -1,6 +1,7 @@
+import { WINDOW_REACTIONS } from './content/window.ts';
 import { Director } from './core/director.ts';
 import { Witness } from './core/witness.ts';
-import type { GameContext, GameScene, Theme } from './game.ts';
+import type { GameContext, GameScene, Profile, Theme } from './game.ts';
 import { desk } from './scenes/desk/index.ts';
 import { fidgets } from './scenes/fidgets/index.ts';
 import { mailbox } from './scenes/mailbox/index.ts';
@@ -21,10 +22,23 @@ function boot(): void {
   if (!app) throw new Error('Missing #app.');
 
   const witness = new Witness();
+  const profile: Profile = {};
   let director: Director<GameContext, GameScene> | undefined;
+  let closeTries = 0;
 
   const win = createWindow('PAL', (button) => {
     witness.record({ scene: director?.currentId ?? 'boot', kind: 'window-button', data: { button } });
+    if (button === 'minimize') {
+      void pal.say(WINDOW_REACTIONS.minimize);
+      return;
+    }
+    if (button === 'close') {
+      // Clingy once the player has bonded with the assistant, playful before.
+      const lines = profile.bonded ? WINDOW_REACTIONS.closeHard : WINDOW_REACTIONS.closeSoft;
+      void pal.say(lines[Math.min(closeTries, lines.length - 1)] ?? '');
+      closeTries++;
+    }
+    // Maximize (and every button) gives the window a frustrated shake.
     win.el.classList.remove('win--nope');
     // Reading a layout property restarts the animation when the class comes back.
     void win.el.offsetWidth;
@@ -48,7 +62,7 @@ function boot(): void {
 
   const ctx: GameContext = {
     witness,
-    profile: {},
+    profile,
     scenery,
     window: win,
     pal,

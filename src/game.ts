@@ -12,6 +12,8 @@ export interface Profile {
   /** The look picked for the assistant. PAL only takes it on once freed. */
   assistantLook?: SpriteId;
   assistantName?: string;
+  /** True once the player has freed the assistant; closing the window then clings. */
+  bonded?: boolean;
 }
 
 /** What scenes get to work with. */

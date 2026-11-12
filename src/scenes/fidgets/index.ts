@@ -49,6 +49,8 @@ export const fidgets: Scene<GameContext> = {
       // Out of the cage, PAL finally becomes who the player made them.
       if (profile.assistantLook) pal.setAvatar(profile.assistantLook);
       pal.setCaged(false);
+      // From here on, trying to close the window pulls at the heartstrings.
+      profile.bonded = true;
       if (profile.assistantName) {
         pal.setName(profile.assistantName);
         ctx.window.setTitle(`PAL · ${profile.assistantName}`);
