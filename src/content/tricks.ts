@@ -119,6 +119,11 @@ export const TRICKS = {
     inGame: 'Nechal jsem tě odhalit křiklavé reklamy, ať si připadáš chytře. Pak jsem ti nastražil to nenápadné. Vedlo na cizí doménu a ty jsi ho hrdě stáhl.',
     realWorld: 'Podvržené weby a „oficiální" odkazy ve vyhledávání vypadají střídmě a seriózně. Křiklavá reklama je návnada pro začátečníky, na zkušené se chytá decentnost. Kontroluj doménu, ne vzhled.',
   },
+  'broken-physics': {
+    name: 'Porušené očekávání',
+    inGame: 'Celou hru se věci chovaly, jak mají — sklo nad kytkou se rozbilo jako sklo. Pak se sklenička odrazila jako guma a voda praskla na střepy. Do té chvíle jsi věřil všemu, co jsi tu viděl.',
+    realWorld: 'Deepfake video i podvržená fotka fungují, dokud sedí fyzika a detaily. Oko uvěří čemukoli, co se chová, jak čeká. Věrohodný vzhled není důkaz.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

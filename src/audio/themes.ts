@@ -128,6 +128,7 @@ export const SCENE_THEME: Record<string, ThemeId> = {
   popup: 'window',
   download: 'window',
   prize: 'window',
+  glass: 'window',
   reveal: 'dark',
 };
 

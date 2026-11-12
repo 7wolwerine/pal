@@ -88,6 +88,55 @@ class AudioEngine {
     });
   }
 
+  /** A rubbery "boing": a pitch that drops and wobbles. */
+  boing(level = 0.45): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.01;
+    const osc = ctx.createOscillator();
+    const wobble = ctx.createOscillator();
+    const depth = ctx.createGain();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(260, t0);
+    osc.frequency.exponentialRampToValueAtTime(85, t0 + 0.38);
+    wobble.frequency.value = 17;
+    depth.gain.value = 35;
+    wobble.connect(depth).connect(osc.frequency);
+    gain.gain.setValueAtTime(level, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.42);
+    osc.connect(gain).connect(out);
+    osc.start(t0);
+    wobble.start(t0);
+    osc.stop(t0 + 0.45);
+    wobble.stop(t0 + 0.45);
+  }
+
+  /** Something glassy shattering: a burst of bright noise and a few tinkles. */
+  shatter(): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.01;
+    const length = Math.floor(ctx.sampleRate * 0.35);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const high = ctx.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 2800;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.5;
+    noise.connect(high).connect(gain).connect(out);
+    noise.start(t0);
+    [100, 105, 98, 108, 103].forEach((midi, i) => {
+      this.#pluck(out, midiToHz(midi), t0 + 0.03 + i * 0.045, 0.3, 'triangle', 0.18);
+    });
+  }
+
   #start(id: ThemeId): void {
     const ctx = this.#ctx;
     const master = this.#master;

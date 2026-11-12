@@ -175,6 +175,7 @@ const ONCE: Record<string, string> = {
   'download-started': 'Stáhl jsi „PAL Pro" z cizí domény, protože tlačítko vypadalo seriózně.',
   'ran-download': 'Spustil jsi soubor z neznámého zdroje.',
   'download-cancelled': 'Spuštění jsi na poslední chvíli zrušil.',
+  'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };
