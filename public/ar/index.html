@@ -26,14 +26,26 @@
     box-shadow: 0 4px 16px rgba(0,0,0,.35);
   }
   .motion[hidden] { display: none; }
+  /* Plocha, do které se scéna při odchodu do hry zhasne. Má barvu a puntíky
+     stolu ze hry (src/styles/tokens.css, motiv harmless), takže hra pak na
+     stejném pozadí jen vyjede svým oknem. */
+  .veil {
+    position: fixed; inset: 0; z-index: 30; pointer-events: none;
+    background-color: #fbeaf0;
+    background-image: radial-gradient(#f4c0d1 1.5px, transparent 1.5px);
+    background-size: 22px 22px;
+  }
+  .veil[hidden] { display: none; }
+  body.leaving .hint, body.leaving .motion { display: none; }
 </style>
 </head>
 <body>
+<div class="veil" id="veil" hidden></div>
 <div class="hint"><span id="hint">Namiř foťák na značku s medvědem 🐻</span></div>
 <button class="motion" id="motion" type="button" hidden>Povolit pohyb, ať medvěd stojí rovně</button>
 
 <script>
-/* Kam vede ťuknutí na medvěda. Stránka leží ve složce ar/ vedle hry, takže hra je o složku výš. */
+/* Kam vede druhé ťuknutí na medvěda. Stránka leží ve složce ar/ vedle hry, takže hra je o složku výš. */
 const GAME_URL = '../';
 
 /* Obal všech sítí objektu v souřadnicích jiného objektu (rámce). */
@@ -55,6 +67,91 @@ function boxIn(frame, object) {
   return box;
 }
 
+/* ---- plynulé přechody ---- */
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+const lerp = (a, b, p) => a + (b - a) * p;
+/* Jak daleko je děj, který začíná v čase `from` a trvá `length`: od 0 do 1. */
+const progress = (t, from, length) => clamp01((t - from) / length);
+const ease = {
+  outCubic: (p) => 1 - Math.pow(1 - p, 3),
+  inCubic: (p) => p * p * p,
+  outBack: (p) => 1 + 2.7 * Math.pow(p - 1, 3) + 1.7 * Math.pow(p - 1, 2),
+  inBack: (p) => 2.7 * p * p * p - 1.7 * p * p,
+  inOutBack: (p) => {
+    const c = 2.6;
+    return p < 0.5 ? (Math.pow(2 * p, 2) * ((c + 1) * 2 * p - c)) / 2
+      : (Math.pow(2 * p - 2, 2) * ((c + 1) * (2 * p - 2) + c) + 2) / 2;
+  }
+};
+/* Kdo si vypnul animace, má je aspoň rychlé. */
+const PACE = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 3 : 1;
+
+/* ---- srdce jako konfeta ----
+   Srdce podle klasické křivky: dva oblé laloky a špička. Je ploché a tenké
+   jako fóliová konfeta. Kolmice jsou u okraje jen nepatrně vykloněné, jako
+   u lehce prohnutého plíšku, aby po něm odlesk při otáčení přejel. */
+function heartGeometry(size) {
+  const N = 48, outline = [];
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * Math.PI * 2;
+    outline.push([
+      16 * Math.pow(Math.sin(t), 3),
+      13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5
+    ]);
+  }
+  outline.reverse();   /* proti směru hodin, aby přední strana mířila k +Z */
+  const k = size / 32, bend = 0.1;   /* náklon kolmice na okraji v radiánech */
+  const position = [0, 0, 0], normal = [0, 0, 1], index = [];
+  for (let i = 0; i < N; i++) {
+    const [x, y] = outline[i], len = Math.hypot(x, y) || 1;
+    position.push(x * k, y * k, 0);
+    normal.push((x / len) * Math.sin(bend), (y / len) * Math.sin(bend), Math.cos(bend));
+    index.push(0, 1 + i, 1 + (i + 1) % N);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(normal, 3));
+  g.setIndex(index);
+  return g;
+}
+
+/* Malé „studio“, které se v konfetách zrcadlí: tmavší pozadí a pár jasných
+   světel. Čím větší kontrast, tím zřetelnější záblesky. Kreslí se jednou
+   a sdílí ho všechna srdíčka. */
+let studio;
+function studioEnv(renderer) {
+  if (studio !== undefined || !renderer) return studio || null;
+  studio = null;
+  try {
+    const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256;
+    const g = cv.getContext('2d');
+    const back = g.createLinearGradient(0, 0, 0, 256);
+    back.addColorStop(0, '#e9ecff'); back.addColorStop(0.3, '#8f95c4');
+    back.addColorStop(0.55, '#6a6796'); back.addColorStop(1, '#3b3158');
+    g.fillStyle = back; g.fillRect(0, 0, 512, 256);
+    g.fillStyle = '#ffffff';
+    for (const [x, y, w, h] of [[30, 34, 86, 44], [186, 58, 44, 66], [300, 28, 96, 36], [440, 64, 40, 60]]) g.fillRect(x, y, w, h);
+    g.fillRect(0, 124, 512, 5);                                   /* světlý pruh na obzoru */
+    g.fillStyle = '#ffd0e4'; g.fillRect(120, 150, 70, 26); g.fillRect(360, 156, 60, 22);
+    const sheet = new THREE.CanvasTexture(cv);
+    sheet.mapping = THREE.EquirectangularReflectionMapping; sheet.encoding = THREE.sRGBEncoding;
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    studio = pmrem.fromEquirectangular(sheet).texture;
+    pmrem.dispose(); sheet.dispose();
+  } catch (e) {
+    studio = null;   /* bez zrcadlení zůstanou srdíčka barevná, jen méně lesklá */
+  }
+  return studio;
+}
+
+function foilMaterial(renderer, colour) {
+  const env = studioEnv(renderer);
+  return new THREE.MeshStandardMaterial({
+    color: colour, side: THREE.DoubleSide, envMapIntensity: 1.7, envMap: env,
+    metalness: env ? 1 : 0.3, roughness: env ? 0.1 : 0.25
+  });
+}
+
 /* ---- lesklá konfetová srdíčka ----
    Padají kolem medvěda (ne na něj), třepotají se, dopadnou na zem, chvíli tam
    leží a pak se zmenší a zmizí. Lesk dělá kovový materiál, ve kterém se zrcadlí
@@ -74,12 +171,8 @@ AFRAME.registerComponent('hearts', {
   init: function () {
     const d = this.data;
     const colors = ['#ff3d7f','#ff8fb3','#ffc93c','#3cc8ff','#a06bff','#3fe0a8','#ff7a45','#ff5ad1'];
-    const material = new THREE.MeshStandardMaterial({
-      color: 0xffffff, metalness: 1, roughness: 0.1, side: THREE.DoubleSide,
-      envMap: this._studio(), envMapIntensity: 1.7
-    });
-    if (!material.envMap) { material.metalness = 0.3; material.roughness = 0.25; }
-    this.mesh = new THREE.InstancedMesh(this._heart(d.size), material, d.count);
+    const material = foilMaterial(this.el.sceneEl.renderer, 0xffffff);
+    this.mesh = new THREE.InstancedMesh(heartGeometry(d.size), material, d.count);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.frustumCulled = false;
     const color = new THREE.Color();
@@ -155,83 +248,107 @@ AFRAME.registerComponent('hearts', {
       this.mesh.setMatrixAt(i, this.matrix.compose(h.pos, h.q, this.scaleV.setScalar(Math.max(h.scale, 0.0001))));
     });
     this.mesh.instanceMatrix.needsUpdate = true;
-  },
-  /* Srdce podle klasické křivky: dva oblé laloky a špička. Je ploché a tenké
-     jako fóliová konfeta. Kolmice jsou u okraje jen nepatrně vykloněné, jako
-     u lehce prohnutého plíšku, aby po něm odlesk při otáčení přejel. */
-  _heart: function (size) {
-    const N = 48, outline = [];
-    for (let i = 0; i < N; i++) {
-      const t = (i / N) * Math.PI * 2;
-      outline.push([
-        16 * Math.pow(Math.sin(t), 3),
-        13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5
-      ]);
-    }
-    outline.reverse();   /* proti směru hodin, aby přední strana mířila k +Z */
-    const k = size / 32, bend = 0.1;   /* náklon kolmice na okraji v radiánech */
-    const position = [0, 0, 0], normal = [0, 0, 1], index = [];
-    for (let i = 0; i < N; i++) {
-      const [x, y] = outline[i], len = Math.hypot(x, y) || 1;
-      position.push(x * k, y * k, 0);
-      normal.push((x / len) * Math.sin(bend), (y / len) * Math.sin(bend), Math.cos(bend));
-      index.push(0, 1 + i, 1 + (i + 1) % N);
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
-    g.setAttribute('normal', new THREE.Float32BufferAttribute(normal, 3));
-    g.setIndex(index);
-    return g;
-  },
-  /* Malé „studio“, které se v konfetách zrcadlí: tmavší pozadí a pár jasných
-     světel. Čím větší kontrast, tím zřetelnější záblesky. */
-  _studio: function () {
-    const renderer = this.el.sceneEl.renderer;
-    if (!renderer) return null;
-    try {
-      const cv = document.createElement('canvas'); cv.width = 512; cv.height = 256;
-      const g = cv.getContext('2d');
-      const back = g.createLinearGradient(0, 0, 0, 256);
-      back.addColorStop(0, '#e9ecff'); back.addColorStop(0.3, '#8f95c4');
-      back.addColorStop(0.55, '#6a6796'); back.addColorStop(1, '#3b3158');
-      g.fillStyle = back; g.fillRect(0, 0, 512, 256);
-      g.fillStyle = '#ffffff';
-      for (const [x, y, w, h] of [[30, 34, 86, 44], [186, 58, 44, 66], [300, 28, 96, 36], [440, 64, 40, 60]]) g.fillRect(x, y, w, h);
-      g.fillRect(0, 124, 512, 5);                                   /* světlý pruh na obzoru */
-      g.fillStyle = '#ffd0e4'; g.fillRect(120, 150, 70, 26); g.fillRect(360, 156, 60, 22);
-      const sheet = new THREE.CanvasTexture(cv);
-      sheet.mapping = THREE.EquirectangularReflectionMapping; sheet.encoding = THREE.sRGBEncoding;
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      const env = pmrem.fromEquirectangular(sheet).texture;
-      pmrem.dispose(); sheet.dispose();
-      return env;
-    } catch (e) {
-      return null;   /* bez zrcadlení zůstanou srdíčka barevná, jen méně lesklá */
-    }
   }
 });
 
 /* ---- cedulka nad modelem ----
-   Bublina s nápisem a srdíčkem, otočená vždy ke kameře. Když se model načte,
-   posadí se kousek nad jeho hlavu. */
+   Bublina otočená vždy ke kameře. Když se model načte, posadí se kousek nad
+   jeho hlavu. Napřed říká „Klikni“ a vedle ní se třpytí srdíčko stejné jako
+   konfety. Po ťuknutí se „Klikni“ smaže, napíše se 3107, otočí se vzhůru
+   nohama na LOVE a připíše se YOU. Další ťuknutí všechno zhasne jako starou
+   televizi: nápis se slisuje do čárky, čárka do tečky a z tečky se rozroste
+   stůl ze hry, na kterém hra vyjede svým oknem. */
+
+/* Časy v milisekundách od ťuknutí. */
+const LOVE = {
+  eraseStep: 45, eraseLength: 120,     /* „Klikni“ mizí od konce, písmeno po písmenu */
+  typeAt: 380, typeStep: 110, popLength: 180,
+  turnAt: 900, turnLength: 750,        /* 3107 se převrátí na LOVE */
+  youAt: 1750,
+  readyAt: 2150,                       /* odtud další ťuknutí vede do hry */
+  caretEnd: 3000
+};
+const OFF = {
+  flicker: 160,
+  squashAt: 140, squashLength: 160,    /* slisuje se do vodorovné čárky */
+  shrinkAt: 300, shrinkLength: 140,    /* čárka se stáhne do tečky */
+  fadeAt: 440, fadeLength: 90,
+  othersLength: 380,                   /* medvěd a srdíčka se zatím schovají */
+  veilAt: 400, veilLength: 560         /* z tečky se rozroste stůl ze hry */
+};
+const SIGN = {
+  font: '800 92px ui-rounded, "Arial Rounded MT Bold", "Nunito", "Baloo 2", "Trebuchet MS", system-ui, sans-serif',
+  ink: '#4a1e54', love: '#e8336f', paper: '#fffafc', line: '#ff8fb3',
+  heart: 100, space: 30, padX: 58, border: 10, tail: 44, bodyH: 176
+};
+
+/* Barva mezi dvěma #rrggbb. */
+function mix(a, b, p) {
+  const at = (hex, i) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  return 'rgb(' + [0, 1, 2].map((i) => Math.round(lerp(at(a, i), at(b, i), p))).join(',') + ')';
+}
+
+/* Zhasne stránku do stolu ze hry a hru otevře. */
+function leaveTo(url, x, y, length) {
+  document.body.classList.add('leaving');
+  const veil = document.getElementById('veil');
+  veil.hidden = false;
+  const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 4;
+  const iris = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('clip-path', 'circle(1px at 0 0)');
+  if (veil.animate) {
+    veil.animate(iris
+      ? [{ clipPath: `circle(3px at ${x}px ${y}px)` }, { clipPath: `circle(${r}px at ${x}px ${y}px)` }]
+      : [{ opacity: 0 }, { opacity: 1 }],
+      { duration: length, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' });
+  }
+  setTimeout(() => { window.location.href = url; }, length + 60);
+}
+/* Po návratu zpět z hry ukáže prohlížeč stránku tak, jak ji opustil. */
+window.addEventListener('pageshow', (event) => {
+  if (!event.persisted) return;
+  const veil = document.getElementById('veil');
+  if (veil.getAnimations) veil.getAnimations().forEach((a) => a.cancel());
+  veil.hidden = true;
+  document.body.classList.remove('leaving');
+});
+
 AFRAME.registerComponent('sign', {
   schema: {
-    text:  { type: 'string', default: 'Klikni na mě' },
-    above: { type: 'selector' },
-    width: { type: 'number', default: 1.3 },
-    gap:   { type: 'number', default: 0.14 },
-    y:     { type: 'number', default: 1.3 }    /* výška, dokud se model nenačte */
+    above:  { type: 'selector' },
+    others: { type: 'selectorAll' },               /* co se při odchodu schová spolu s cedulkou */
+    url:    { type: 'string' },
+    pixel:  { type: 'number', default: 0.00165 },  /* velikost jednoho bodu obrázku ve scéně */
+    gap:    { type: 'number', default: 0.14 },
+    y:      { type: 'number', default: 1.3 }       /* výška, dokud se model nenačte */
   },
   init: function () {
-    const canvas = this._draw(this.data.text);
-    const map = new THREE.CanvasTexture(canvas); map.encoding = THREE.sRGBEncoding;
-    this.height = this.data.width * canvas.height / canvas.width;
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.data.width, this.height),
-      new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, toneMapped: false })
+    const probe = document.createElement('canvas').getContext('2d'); probe.font = SIGN.font;
+    const width = (text) => probe.measureText(text).width;
+    this.widthOf = width;
+    this.wordSpace = width(' ') * 1.1;
+    this.capHeight = probe.measureText('K3Y').actualBoundingBoxAscent || 66;
+    const longest = Math.max(width('Klikni'), width('3107') + this.wordSpace + width('YOU'));
+    const W = Math.ceil(longest + 24 + SIGN.space + SIGN.heart + SIGN.padX * 2 + SIGN.border * 2);
+    const H = SIGN.bodyH + SIGN.tail + SIGN.border * 2;
+    this.canvas = document.createElement('canvas'); this.canvas.width = W; this.canvas.height = H;
+    this.ctx = this.canvas.getContext('2d');
+    this.map = new THREE.CanvasTexture(this.canvas); this.map.encoding = THREE.sRGBEncoding;
+    this.height = H * this.data.pixel;
+    this.mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(W * this.data.pixel, this.height),
+      new THREE.MeshBasicMaterial({ map: this.map, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide, toneMapped: false })
     );
-    mesh.renderOrder = 10;   /* cedulka se kreslí poslední a přes všechno, aby ji srdíčka nezakrývala */
-    this.el.setObject3D('mesh', mesh);
+    this.mesh.renderOrder = 10;   /* cedulka se kreslí poslední a přes všechno, aby ji srdíčka nezakrývala */
+    this.el.setObject3D('mesh', this.mesh);
+
+    /* srdíčko jako konfeta, třpytí se, jak se natáčí */
+    const foil = foilMaterial(this.el.sceneEl.renderer, new THREE.Color('#ff3d7f').convertSRGBToLinear());
+    /* průhledné jen naoko: three.js kreslí neprůhledné věci dřív a cedulka by srdíčko překryla */
+    foil.transparent = true; foil.depthTest = false; foil.depthWrite = false;
+    this.heart = new THREE.Mesh(heartGeometry(SIGN.heart * this.data.pixel), foil);
+    this.heart.renderOrder = 11;
+    this.mesh.add(this.heart);
+
     this.baseY = this.data.y;
     this.parentQ = new THREE.Quaternion(); this.cameraQ = new THREE.Quaternion();
     if (this.data.above) {
@@ -240,53 +357,171 @@ AFRAME.registerComponent('sign', {
         if (!box.isEmpty()) this.baseY = box.max.y + this.data.gap + this.height / 2;
       });
     }
+    this.el.parentEl.addEventListener('tap', () => this._tap());
+    window.addEventListener('pageshow', (event) => { if (event.persisted) this._reset(); });
+    this._reset();
   },
-  tick: function (time) {
-    const o = this.el.object3D, camera = this.el.sceneEl.camera;
-    o.position.y = this.baseY + Math.sin(time / 700) * 0.04;
-    if (!camera || !o.parent) return;
-    o.parent.getWorldQuaternion(this.parentQ).invert();
-    o.quaternion.copy(this.parentQ.multiply(camera.getWorldQuaternion(this.cameraQ)));
+
+  _tap: function () {
+    const now = performance.now();
+    if (this.mode === 'ask') {
+      this.mode = 'love'; this.since = now; this.popAt = now; this.still = false;
+    } else if (this.mode === 'love' && (now - this.since) * PACE >= LOVE.readyAt) {
+      this.mode = 'off'; this.since = now; this.veiled = false;
+      this.scales = this.data.others.map((el) => el.object3D.scale.clone());
+      const motion = document.getElementById('motion'); if (motion) motion.hidden = true;
+    }
   },
-  _draw: function (text) {
-    const font = '700 88px "Arial Rounded MT Bold", "Nunito", "Baloo 2", "Trebuchet MS", system-ui, sans-serif';
-    const probe = document.createElement('canvas').getContext('2d'); probe.font = font;
-    const textW = Math.ceil(probe.measureText(text).width);
-    const heart = 84, space = 26, padX = 56, border = 10, tail = 44, bodyH = 176;
-    const W = textW + space + heart + padX * 2 + border * 2, H = bodyH + tail + border * 2;
-    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    const g = cv.getContext('2d');
-    /* bublina se špičkou dolů */
-    const x0 = border, y0 = border, x1 = W - border, y1 = border + bodyH, r = bodyH / 2, cx = W / 2;
+
+  _reset: function () {
+    if (this.scales) this.data.others.forEach((el, i) => el.object3D.scale.copy(this.scales[i]));
+    this.mode = 'ask'; this.still = true; this.popAt = -1e9; this.since = 0;
+    this.mesh.scale.set(1, 1, 1);
+    this.mesh.material.color.setScalar(1); this.mesh.material.opacity = 1;
+    this.heart.visible = true;
+    this._render(this._ask(), 1);
+  },
+
+  /* Co je na cedulce: písmena za sebou, každé s tím, nakolik už je vidět. */
+  _ask: function () {
+    return { glyphs: [...'Klikni'].map((ch) => ({ ch, shown: 1, scale: 1 })), turn: 0, caret: 0 };
+  },
+  _love: function (t) {
+    const L = LOVE, glyphs = [];
+    const ask = [...'Klikni'];
+    ask.forEach((ch, i) => {
+      const p = progress(t, (ask.length - 1 - i) * L.eraseStep, L.eraseLength);
+      if (p < 1) glyphs.push({ ch, shown: 1 - p, scale: 1 - 0.5 * p });
+    });
+    const type = (text, at, group) => [...text].forEach((ch, i) => {
+      const p = progress(t, at + i * L.typeStep, L.popLength);
+      if (p > 0) glyphs.push({ ch, shown: ease.outCubic(p), scale: 0.4 + 0.6 * ease.outBack(p), group });
+    });
+    type('3107', L.typeAt, 'love');
+    if (t >= L.youAt - 60) glyphs.push({ ch: ' ', space: true, shown: 1, scale: 1 });
+    type('YOU', L.youAt, 'you');
+    const turnP = progress(t, L.turnAt, L.turnLength);
+    let caret = 0;
+    if (t < L.turnAt) caret = 1;
+    else if (t >= L.turnAt + L.turnLength && t < L.readyAt) caret = 1;
+    else if (t >= L.readyAt && t < L.caretEnd) caret = Math.floor((t - L.readyAt) / 220) % 2 ? 0 : 1;
+    return { glyphs, turn: ease.inOutBack(turnP), bump: Math.sin(Math.PI * turnP), tint: ease.outCubic(turnP), caret };
+  },
+
+  /* Nakreslí bublinu a nápis a posadí srdíčko za poslední písmeno. */
+  _render: function (pose, alpha) {
+    const g = this.ctx, W = this.canvas.width, H = this.canvas.height, S = SIGN;
+    g.clearRect(0, 0, W, H);
+    g.globalAlpha = alpha;
+    let x = 0;
+    for (const glyph of pose.glyphs) {
+      glyph.w = glyph.space ? this.wordSpace : this.widthOf(glyph.ch);
+      glyph.x = x; x += glyph.w * glyph.shown;
+    }
+    const content = x, gap = S.space * Math.min(1, content / 40);
+    const bw = content + gap + S.heart + S.padX * 2;
+    const x0 = (W - bw) / 2, x1 = x0 + bw, y0 = S.border, y1 = S.border + S.bodyH, r = S.bodyH / 2, cx = W / 2;
     g.beginPath();
     g.moveTo(x0 + r, y0); g.lineTo(x1 - r, y0); g.arcTo(x1, y0, x1, y0 + r, r);
     g.arcTo(x1, y1, x1 - r, y1, r);
-    g.lineTo(cx + 34, y1); g.lineTo(cx, y1 + tail); g.lineTo(cx - 34, y1);
+    g.lineTo(cx + 34, y1); g.lineTo(cx, y1 + S.tail); g.lineTo(cx - 34, y1);
     g.lineTo(x0 + r, y1); g.arcTo(x0, y1, x0, y1 - r, r); g.arcTo(x0, y0, x0 + r, y0, r);
     g.closePath();
-    g.fillStyle = '#fffafc'; g.fill();
-    g.lineWidth = border; g.lineJoin = 'round'; g.strokeStyle = '#ff8fb3'; g.stroke();
-    /* nápis */
-    g.font = font; g.fillStyle = '#4a1e54'; g.textBaseline = 'middle'; g.textAlign = 'left';
-    const midY = y0 + bodyH / 2 + 4;
-    g.fillText(text, border + padX, midY);
-    /* srdíčko místo <3 */
-    const hx = border + padX + textW + space + heart / 2, top = midY - heart * 0.42, w = heart * 0.5, h = heart * 0.86;
-    g.beginPath();
-    g.moveTo(hx, top + h * 0.25);
-    g.bezierCurveTo(hx - w, top - h * 0.5, hx - w * 1.1, top + h * 0.6, hx, top + h);
-    g.bezierCurveTo(hx + w * 1.1, top + h * 0.6, hx + w, top - h * 0.5, hx, top + h * 0.25);
-    g.closePath(); g.fillStyle = '#ff5a8a'; g.fill();
-    return cv;
+    g.fillStyle = S.paper; g.fill();
+    g.lineWidth = S.border; g.lineJoin = 'round'; g.strokeStyle = S.line; g.stroke();
+
+    const left = x0 + S.padX, midY = y0 + S.bodyH / 2, baseline = midY + this.capHeight / 2;
+    g.font = S.font; g.textBaseline = 'alphabetic'; g.textAlign = 'center';
+    const draw = (glyph, colour) => {
+      if (glyph.space || glyph.shown <= 0) return;
+      g.save();
+      g.globalAlpha = alpha * Math.min(1, glyph.shown * 1.5);
+      g.translate(left + glyph.x + (glyph.w * glyph.shown) / 2, midY);
+      g.scale(glyph.scale, glyph.scale);
+      g.fillStyle = colour;
+      g.fillText(glyph.ch, 0, baseline - midY);
+      g.restore();
+    };
+    /* 3107 se točí jako celek kolem svého středu, takže vzhůru nohama čte LOVE */
+    const love = pose.glyphs.filter((glyph) => glyph.group === 'love');
+    if (love.length) {
+      const last = love[love.length - 1];
+      const centre = left + (love[0].x + last.x + last.w * last.shown) / 2;
+      /* napříč by se do bubliny nevešlo, proto se v půli otočky zmenší */
+      const s = 1 - 0.42 * (pose.bump || 0);
+      g.save();
+      g.translate(centre, midY); g.rotate(Math.PI * pose.turn); g.scale(s, s); g.translate(-centre, -midY);
+      const tinted = mix(S.ink, S.love, pose.tint || 0);
+      love.forEach((glyph) => draw(glyph, tinted));
+      g.restore();
+    }
+    pose.glyphs.filter((glyph) => glyph.group !== 'love').forEach((glyph) => draw(glyph, S.ink));
+    if (pose.caret > 0) {
+      g.globalAlpha = alpha * pose.caret; g.fillStyle = S.ink;
+      g.fillRect(left + content + 5, midY - this.capHeight / 2 - 10, 7, this.capHeight + 20);
+    }
+    g.globalAlpha = 1;
+    this.map.needsUpdate = true;
+    const hx = left + content + gap + S.heart / 2;
+    this.heart.position.set((hx - W / 2) * this.data.pixel, (H / 2 - midY) * this.data.pixel, 0.005);
+  },
+
+  /* Kde na displeji je střed cedulky; tam se slisuje do tečky. */
+  _onScreen: function () {
+    const scene = this.el.sceneEl, rect = scene.canvas.getBoundingClientRect();
+    const v = new THREE.Vector3().setFromMatrixPosition(this.mesh.matrixWorld).project(scene.camera);
+    const x = rect.left + ((v.x + 1) / 2) * rect.width, y = rect.top + ((1 - v.y) / 2) * rect.height;
+    if (!isFinite(x) || !isFinite(y) || v.z > 1) return [innerWidth / 2, innerHeight / 2];
+    return [Math.min(innerWidth, Math.max(0, x)), Math.min(innerHeight, Math.max(0, y))];
+  },
+
+  _switchOff: function (t) {
+    const O = OFF, m = this.mesh;
+    if (t < O.flicker + 32) {
+      const flicker = [1, 0.3, 1, 0.15, 0.9][Math.floor(t / 32)];
+      this._render(this._love(Infinity), flicker === undefined ? 1 : flicker);
+    }
+    const squash = ease.inCubic(progress(t, O.squashAt, O.squashLength));
+    const shrink = ease.inCubic(progress(t, O.shrinkAt, O.shrinkLength));
+    m.scale.set(lerp(lerp(1, 1.08, squash), 0.012, shrink), lerp(1, 0.035, squash), 1);
+    m.material.color.setScalar(1 + 1.6 * squash);   /* rozsvítí se do bíla jako obrazovka, která zhasíná */
+    m.material.opacity = 1 - progress(t, O.fadeAt, O.fadeLength);
+    this.heart.visible = shrink <= 0;
+    const k = Math.max(0.0001, 1 - ease.inBack(progress(t, 0, O.othersLength)));
+    this.data.others.forEach((el, i) => el.object3D.scale.copy(this.scales[i]).multiplyScalar(k));
+    if (!this.veiled && t >= O.veilAt) {
+      this.veiled = true;
+      const [x, y] = this._onScreen();
+      leaveTo(this.data.url, x, y, O.veilLength / PACE);
+    }
+  },
+
+  tick: function (time) {
+    const o = this.el.object3D, camera = this.el.sceneEl.camera, now = performance.now();
+    o.position.y = this.baseY + Math.sin(time / 700) * 0.04;
+    const t = (now - this.since) * PACE;
+    if (this.mode === 'love' && !this.still) {
+      if (t > LOVE.caretEnd) { this._render(this._love(Infinity), 1); this.still = true; }
+      else this._render(this._love(t), 1);
+    } else if (this.mode === 'off') this._switchOff(t);
+    /* srdíčko se kolébá jako padající konfeta; po ťuknutí poskočí a po dopsání se celé otočí */
+    const pop = Math.sin(Math.PI * progress((now - this.popAt) * PACE, 0, 260));
+    const spin = this.mode === 'love' ? Math.PI * 2 * ease.outCubic(progress(t, LOVE.readyAt - 100, 700)) : 0;
+    this.heart.rotation.set(0, Math.sin(now / 620) * 0.75 + spin, Math.sin(now / 900) * 0.12);
+    this.heart.scale.setScalar(1 + 0.2 * pop);
+    if (!camera || !o.parent) return;
+    o.parent.getWorldQuaternion(this.parentQ).invert();
+    o.quaternion.copy(this.parentQ.multiply(camera.getWorldQuaternion(this.cameraQ)));
   }
 });
 
-/* ---- ťuknutí na model otevře stránku ----
+/* ---- ťuknutí na model nebo cedulku ----
    Paprsek se počítá tady, ne přes A-Frame kurzor: AR.js přepisuje projekci
    kamery napřímo a kurzor pak míří vedle. Cílem jsou kvádry kolem modelu
-   a kolem cedulky, o kousek větší, aby se daly trefit prstem. */
-AFRAME.registerComponent('tap-opens', {
-  schema: { url: { type: 'string' }, marker: { type: 'selector' }, padding: { type: 'number', default: 0.15 } },
+   a kolem cedulky, o kousek větší, aby se daly trefit prstem. Zásah pošle
+   událost `tap`; co se pak stane, řeší cedulka. */
+AFRAME.registerComponent('tap-target', {
+  schema: { marker: { type: 'selector' }, padding: { type: 'number', default: 0.15 } },
   init: function () {
     const ray = new THREE.Raycaster(), point = new THREE.Vector2();
     const box = new THREE.Box3(), size = new THREE.Vector3();
@@ -307,7 +542,7 @@ AFRAME.registerComponent('tap-opens', {
         box.expandByVector(box.getSize(size).multiplyScalar(this.data.padding));
         /* Než AR.js značku poprvé umístí, sedí model přímo v kameře a trefil by ho každý dotyk. */
         if (box.containsPoint(ray.ray.origin)) continue;
-        if (ray.ray.intersectsBox(box)) { window.location.href = this.data.url; return; }
+        if (ray.ray.intersectsBox(box)) { this.el.emit('tap', null, false); return; }
       }
     };
     window.addEventListener('click', this.onTap);
@@ -432,8 +667,8 @@ AFRAME.registerComponent('hint-text', {
          Tohle jedno číslo zvětší medvěda, srdíčka i cedulku dohromady. -->
     <a-entity scale="0.85 0.85 0.85">
 
-      <!-- Na co se dá ťuknout: medvěd a cedulka. -->
-      <a-entity tap-opens="marker: #printMarker">
+      <!-- Na co se dá ťuknout: medvěd a cedulka. První ťuknutí přepíše cedulku na LOVE YOU, druhé otevře hru. -->
+      <a-entity tap-target="marker: #printMarker">
         <!-- Velikost samotného medvěda je scale. Posun v position ho usazuje
              středem na střed značky: model sám je v souboru kousek mimo střed. -->
         <a-entity
@@ -443,11 +678,11 @@ AFRAME.registerComponent('hint-text', {
           scale="1.1 1.1 1.1"
           animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
         </a-entity>
-        <a-entity sign="text: Klikni na mě; above: #printBear"></a-entity>
+        <a-entity sign="above: #printBear; others: #printBear, #printHearts"></a-entity>
       </a-entity>
 
       <!-- srdíčka prší kolem něj -->
-      <a-entity hearts="around: #printBear"></a-entity>
+      <a-entity id="printHearts" hearts="around: #printBear"></a-entity>
     </a-entity>
   </a-marker>
 
@@ -463,7 +698,7 @@ AFRAME.registerComponent('hint-text', {
     hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
 
     <a-entity scale="0.85 0.85 0.85" upright>
-      <a-entity tap-opens="marker: #screenMarker">
+      <a-entity tap-target="marker: #screenMarker">
         <a-entity
           id="screenBear"
           gltf-model="#bearModel"
@@ -471,9 +706,9 @@ AFRAME.registerComponent('hint-text', {
           scale="1.1 1.1 1.1"
           animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
         </a-entity>
-        <a-entity sign="text: Klikni na mě; above: #screenBear"></a-entity>
+        <a-entity sign="above: #screenBear; others: #screenBear, #screenHearts"></a-entity>
       </a-entity>
-      <a-entity hearts="around: #screenBear"></a-entity>
+      <a-entity id="screenHearts" hearts="around: #screenBear"></a-entity>
     </a-entity>
   </a-marker>
 
@@ -481,7 +716,7 @@ AFRAME.registerComponent('hint-text', {
 </a-scene>
 
 <script>
-  for (const target of document.querySelectorAll('[tap-opens]')) target.setAttribute('tap-opens', 'url', GAME_URL);
+  for (const sign of document.querySelectorAll('[sign]')) sign.setAttribute('sign', 'url', GAME_URL);
 </script>
 </body>
 </html>
