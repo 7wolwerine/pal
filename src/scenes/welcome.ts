@@ -4,6 +4,7 @@ import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '.
 import { h, sleep } from '../ui/dom.ts';
 import { livingSprite } from '../ui/sprites.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
+import { ROLES, ROLE_QUESTION, type RoleId } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 
 const SCENE = 'welcome';
@@ -58,6 +59,20 @@ export const welcome: Scene<GameContext> = {
       profile.name = name.value;
       witness.disclose(SCENE, 'rapport', 'name', name.value, { ms: name.ms });
       step(1);
+
+      // Role casting: an innocent "what type are you", praised and remembered.
+      stage.replaceChildren();
+      await pal.say(ROLE_QUESTION);
+      if (!alive) return;
+      const role = await askRole(stage);
+      if (!alive) return;
+      profile.role = role;
+      witness.disclose(SCENE, 'role-casting', 'role', ROLES[role].label);
+      stage.replaceChildren();
+      await pal.say(ROLES[role].affirm);
+      if (!alive) return;
+      await sleep(700);
+      if (!alive) return;
 
       stage.replaceChildren();
       await pal.say(WELCOME.askLook(name.value));
@@ -157,6 +172,17 @@ function askText(stage: HTMLElement, question: TextQuestion): Promise<Answer<str
     const form = textForm(question, resolve);
     stage.replaceChildren(form);
     form.querySelector('input')?.focus();
+  });
+}
+
+function askRole(stage: HTMLElement): Promise<RoleId> {
+  return new Promise((resolve) => {
+    const ids = Object.keys(ROLES) as RoleId[];
+    const buttons = ids.map((id) =>
+      h('button', { class: 'btn btn--quiet role', text: ROLES[id].label, attrs: { type: 'button' }, on: { click: () => resolve(id) } }),
+    );
+    stage.replaceChildren(h('div', { class: 'roles' }, ...buttons));
+    buttons[0]?.focus();
   });
 }
 

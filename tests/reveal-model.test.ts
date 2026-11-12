@@ -84,6 +84,15 @@ describe('buildReveal', () => {
     expect(model.stats.vigilance).toBe(1);
   });
 
+  it('reminds the player of the role they picked', () => {
+    const witness = new Witness(() => 0);
+    witness.disclose('welcome', 'role-casting', 'role', 'Vlk samotář');
+    const model = buildReveal(witness);
+    expect(model.disclosed).toEqual([{ label: 'Kým jsi', value: 'Vlk samotář' }]);
+    expect(model.tricks.find((t) => t.id === 'role-casting')?.detail).toContain('Vlk samotář');
+    expect(buildTimeline(witness.events)[0]?.text).toContain('Vlk samotář');
+  });
+
   it('skips trick ids that are not in the catalog', () => {
     const witness = new Witness();
     witness.record({ scene: 'x', kind: 'step', trick: 'not-a-real-trick' });

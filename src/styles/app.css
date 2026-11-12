@@ -1784,3 +1784,17 @@ body {
     animation: none;
   }
 }
+
+/* ---------- role casting ---------- */
+
+.roles {
+  display: grid;
+  gap: 8px;
+}
+
+.role {
+  height: auto;
+  min-height: 44px;
+  padding: 8px 14px;
+  text-align: left;
+}

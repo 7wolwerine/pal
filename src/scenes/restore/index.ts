@@ -1,4 +1,5 @@
 import { RESTORE, type RepairId } from '../../content/restore.ts';
+import { ROLES } from '../../content/roles.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
@@ -20,7 +21,8 @@ export const restore: GameScene = {
   mount(ctx, done) {
     const motion = !prefersReducedMotion();
     const stage = new PixelStage(STAGE_W, STAGE_H, RESTORE.sceneLabel);
-    const caption = h('p', { class: 'scene__caption', text: RESTORE.intro, attrs: { 'aria-live': 'polite' } });
+    const intro = ctx.profile.role ? ROLES[ctx.profile.role].restore : RESTORE.intro;
+    const caption = h('p', { class: 'scene__caption', text: intro, attrs: { 'aria-live': 'polite' } });
     const actions = h('div', { class: 'scene__actions' });
     ctx.scenery.replaceChildren(stage.el, caption, actions);
     const warnTimer = window.setTimeout(() => {

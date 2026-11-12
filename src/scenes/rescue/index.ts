@@ -1,4 +1,5 @@
 import { RESCUE } from '../../content/rescue.ts';
+import { ROLES } from '../../content/roles.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
@@ -102,7 +103,8 @@ export const rescue: GameScene = {
     let threatened = false;
     let lastT = 0;
 
-    caption.textContent = RESCUE.intro[0] ?? '';
+    // The first plea leans on the role the player accepted at the start.
+    caption.textContent = ctx.profile.role ? ROLES[ctx.profile.role].rescue : (RESCUE.intro[0] ?? '');
     witnessAttempt();
 
     function witnessAttempt(): void {

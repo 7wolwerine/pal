@@ -31,6 +31,7 @@ const FIELD_LABELS: Record<string, string> = {
   assistantName: 'Jméno, které ti něco říká',
   comfortFood: 'Jídlo z dětství',
   email: 'E-mail',
+  role: 'Kým jsi',
 };
 
 /** Average silent reading speed, used to say how long reading would have taken. */
@@ -42,6 +43,11 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
 }
 
 const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => string | undefined>> = {
+  'role-casting': (evidence) => {
+    const cast = evidence.find((e) => e.kind === 'disclose' && e.data?.field === 'role');
+    const label = cast?.data?.value;
+    return typeof label === 'string' ? `Vybral sis „${label}". Pak jsem ti to připomínal pokaždé, když jsem něco chtěl.` : undefined;
+  },
   'guilt-trip': (evidence) => {
     const refusals = Math.max(0, ...evidence.map((e) => number(e, 'refusals') ?? 0));
     return refusals > 0 ? `Počet ne, než z toho bylo ano: ${refusals}.` : undefined;
@@ -76,6 +82,7 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   assistantName: (v) => `Dal jsi mi jméno, které ti něco říká: ${v}.`,
   comfortFood: (v) => `Prozradil jsi jídlo z dětství: ${v}. Kontrolní otázka k heslu.`,
   email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}.`,
+  role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
 };
 
 /** Lines said once, the first time their event happens. */

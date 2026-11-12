@@ -4,6 +4,7 @@ import { hide } from '../core/stego.ts';
 import type { GameScene } from '../game.ts';
 import { drawCertificate } from '../ui/certificate.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
+import { ROLES } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 
@@ -47,7 +48,7 @@ export const prize: GameScene = {
     stage.replaceChildren(h('div', { class: 'prize' }, confetti(), score, preview, status, actions));
 
     async function run(): Promise<void> {
-      await pal.say(PRIZE.cheer);
+      await pal.say(profile.role ? ROLES[profile.role].prize : PRIZE.cheer);
       if (!alive) return;
       await countUp(scoreValue, PRIZE.score);
       if (!alive) return;

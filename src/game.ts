@@ -1,6 +1,7 @@
 import type { Scene } from './core/director.ts';
 import type { Witness } from './core/witness.ts';
 import type { Dialogue } from './ui/dialogue.ts';
+import type { RoleId } from './content/roles.ts';
 import type { SpriteId } from './ui/sprites.ts';
 import type { FakeWindow } from './ui/window.ts';
 
@@ -14,6 +15,8 @@ export interface Profile {
   assistantName?: string;
   /** True once the player has freed the assistant; closing the window then clings. */
   bonded?: boolean;
+  /** The type PAL told the player they are; reminded of whenever PAL wants something. */
+  role?: RoleId;
   /** The e-mail address given for the prize. Kept in memory only, never sent. */
   email?: string;
 }
