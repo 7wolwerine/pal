@@ -1,7 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { TRICKS } from '../src/content/tricks.ts';
 import { Witness } from '../src/core/witness.ts';
-import { buildReveal } from '../src/scenes/reveal-model.ts';
+import { buildReveal, buildTimeline } from '../src/scenes/reveal-model.ts';
+
+describe('buildTimeline', () => {
+  it('retells the game in order with mm:ss stamps, once per kind, with counts', () => {
+    let now = 0;
+    const w = new Witness(() => now);
+    now = 4_000;
+    w.record({ scene: 'mailbox', kind: 'opened-mail' });
+    now = 9_500;
+    w.disclose('welcome', 'rapport', 'name', 'Tester');
+    w.record({ scene: 'welcome', kind: 'step' });
+    now = 61_000;
+    w.record({ scene: 'fidgets', kind: 'tidied', data: { round: 1 } });
+    w.record({ scene: 'fidgets', kind: 'tidied', data: { round: 2 } });
+    w.record({ scene: 'fidgets', kind: 'tidied', data: { round: 3 } });
+    w.record({ scene: 'x', kind: 'window-button' });
+    w.record({ scene: 'x', kind: 'window-button' });
+    w.record({ scene: 'rescue', kind: 'death' });
+    w.record({ scene: 'rescue', kind: 'death' });
+
+    const lines = buildTimeline(w.events);
+    expect(lines.map((l) => l.time)).toEqual(['00:04', '00:09', '01:01', '01:01', '01:01', '01:01']);
+    expect(lines[0]?.text).toMatch(/dopis/);
+    expect(lines[1]?.text).toContain('Tester');
+    expect(lines[2]?.text).toMatch(/znovu/);
+    expect(lines.filter((l) => /odejít/.test(l.text))).toHaveLength(1);
+    expect(lines[5]?.text).toContain('2×');
+  });
+
+  it('is empty for a player who did nothing', () => {
+    expect(buildTimeline(new Witness().events)).toEqual([]);
+  });
+});
 
 describe('buildReveal', () => {
   it('shows what was disclosed and names each trick once, in order', () => {
