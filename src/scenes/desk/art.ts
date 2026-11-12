@@ -1,4 +1,5 @@
-import { INK, paintFace } from '../../pixel/cast.ts';
+import { INK } from '../../pixel/cast.ts';
+import { palFaceImage } from '../../ui/pal-face.ts';
 import { px } from '../../pixel/stage.ts';
 
 type G = CanvasRenderingContext2D;
@@ -74,7 +75,8 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   px(g, C.taskbar, s.x, s.y + 48, s.w, 6);
   px(g, C.start, s.x + 1, s.y + 49, 9, 4);
   px(g, C.white, s.x + 80, s.y + 50, 7, 2);
-  paintFace(g, look.sad, s.x + 4, s.y + 4, 2);
+  // The same cute PAL as in its window; teary when the player refuses.
+  g.drawImage(palFaceImage(look.sad ? 'sad' : 'happy'), s.x + 4, s.y + 3, 22, 22);
   px(g, C.white, s.x + 6, s.y + 28, 6, 6);
   px(g, C.yellow, s.x + 16, s.y + 28, 6, 6);
 

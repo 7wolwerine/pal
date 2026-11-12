@@ -1407,3 +1407,38 @@ body {
     animation: none;
   }
 }
+
+/* ---------- boot star ---------- */
+
+.win {
+  position: relative;
+}
+
+.boot-star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 5;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  background: #ffffff;
+  clip-path: polygon(50% 0, 57% 43%, 100% 50%, 57% 57%, 50% 100%, 43% 57%, 0 50%, 43% 43%);
+  pointer-events: none;
+  animation: boot-star 760ms 160ms ease-out both;
+}
+
+@keyframes boot-star {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.1) rotate(25deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.1) rotate(70deg);
+  }
+}

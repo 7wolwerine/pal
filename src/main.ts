@@ -106,6 +106,12 @@ function boot(): void {
       win.el.classList.remove('win--boot');
       void win.el.offsetWidth;
       win.el.classList.add('win--boot');
+      // A four-pointed star flashes in the middle as the window powers on.
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        const star = h('span', { class: 'boot-star', attrs: { 'aria-hidden': 'true' } });
+        star.addEventListener('animationend', () => star.remove());
+        win.el.append(star);
+      }
     }
     winWasHidden = onScenery;
     // Each scene has its own calm theme; the reveal turns it dark.

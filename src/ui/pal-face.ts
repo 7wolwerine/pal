@@ -6,7 +6,7 @@ import { prefersReducedMotion } from './dom.ts';
  * from the 12x12 cast sprites. It blinks on its own and can switch between a
  * neutral mood, a happy one, and the sinister face kept for the horror replay.
  */
-export type PalMood = 'neutral' | 'happy' | 'dark';
+export type PalMood = 'neutral' | 'happy' | 'sad' | 'dark';
 
 const SIZE = 16;
 
@@ -103,6 +103,19 @@ function paint(g: CanvasRenderingContext2D, mood: PalMood, blink: boolean): void
     for (let x = 4; x <= 11; x++) g.fillRect(x, 11, 1, 1);
     for (let x = 5; x <= 11; x += 2) dot(g, p.body, x, 11);
     for (let x = 4; x <= 10; x += 2) g.fillRect(x, 12, 1, 1);
+  } else if (mood === 'sad') {
+    // A wobbly frown and a fat tear.
+    for (const [x, y] of [
+      [6, 12],
+      [7, 11],
+      [8, 11],
+      [9, 12],
+    ] as const) {
+      g.fillRect(x, y, 1, 1);
+    }
+    g.fillStyle = '#7fb2e5';
+    g.fillRect(4, 10, 1, 2);
+    g.fillRect(4, 12, 2, 1);
   } else if (mood === 'happy') {
     // An open, curved smile with a hint of tongue.
     for (const [x, y] of [
@@ -177,4 +190,22 @@ export function createPalFace(initial: PalMood = 'neutral'): PalFace {
       window.clearTimeout(openTimer);
     },
   };
+}
+
+const stills = new Map<string, HTMLCanvasElement>();
+
+/** A static (non-blinking) 16x16 face, cached per mood, for drawing into scenes. */
+export function palFaceImage(mood: PalMood): HTMLCanvasElement {
+  const cached = stills.get(mood);
+  if (cached) return cached;
+  const el = document.createElement('canvas');
+  el.width = SIZE;
+  el.height = SIZE;
+  const g = el.getContext('2d');
+  if (g) {
+    g.imageSmoothingEnabled = false;
+    paint(g, mood, false);
+  }
+  stills.set(mood, el);
+  return el;
 }
