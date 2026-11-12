@@ -6,19 +6,21 @@ import type { GameScene } from '../../game.ts';
 import { PixelStage, progress } from '../../pixel/stage.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import { printSurprise, surprise } from '../../ui/print.ts';
+import { audio } from '../../audio/engine.ts';
 import {
+  DRIVE_RECT,
   SCREEN_RECT,
   STAGE_HEIGHT,
   STAGE_WIDTH,
   USB_RECT,
   paintDesk,
-  paintDriveLure,
+  paintDriveTwinkle,
   paintPortGlow,
 } from './art.ts';
 import { PrintFlow, REFUSALS_BEFORE_WAY_OUT, type PrintAction } from './model.ts';
 
 const SCENE = 'desk';
-const PLUG_MS = 600;
+const PLUG_MS = 900;
 const TOAST_MS = 1500;
 
 interface Choice {
@@ -27,22 +29,28 @@ interface Choice {
   readonly quiet?: boolean;
 }
 
-/** A little flash-drive image, used as the mouse cursor while carrying it. */
+/** The flash drive as the mouse cursor while carrying it: tip to the right, where it points. */
 function flashkaCursorUrl(): string {
   const c = document.createElement('canvas');
-  c.width = 30;
+  c.width = 32;
   c.height = 16;
   const g = c.getContext('2d');
   if (!g) return '';
   g.imageSmoothingEnabled = false;
-  g.fillStyle = '#c9c9d1'; // metal tip
-  g.fillRect(0, 6, 7, 5);
-  g.fillStyle = '#993556'; // body edge
-  g.fillRect(7, 3, 22, 11);
+  g.fillStyle = '#4b1528'; // outline
+  g.fillRect(0, 2, 24, 12);
+  g.fillRect(22, 4, 10, 8);
+  g.fillStyle = '#d4537e'; // body edge
+  g.fillRect(1, 3, 22, 10);
   g.fillStyle = '#ed93b1'; // body
-  g.fillRect(7, 3, 20, 9);
+  g.fillRect(1, 3, 20, 8);
+  g.fillStyle = '#c9c9d1'; // metal tip
+  g.fillRect(23, 5, 8, 6);
+  g.fillStyle = '#4b1528';
+  g.fillRect(25, 7, 2, 2);
+  g.fillRect(28, 7, 2, 2);
   g.fillStyle = '#ffffff'; // glint
-  g.fillRect(12, 5, 4, 3);
+  g.fillRect(4, 5, 8, 2);
   return c.toDataURL();
 }
 
@@ -58,8 +66,7 @@ export const desk: GameScene = {
     const { witness } = ctx;
     const motion = !prefersReducedMotion();
     const stage = new PixelStage(STAGE_WIDTH, STAGE_HEIGHT, DESK.sceneLabel);
-    const caption = h('p', { class: 'scene__caption', text: DESK.start, attrs: { 'aria-live': 'polite' } });
-    ctx.scenery.replaceChildren(stage.el, caption);
+    ctx.scenery.replaceChildren(stage.el);
     const stopAnomaly = anomaly(witness, stage.el, {
       what: 'rec-dot',
       scene: SCENE,
@@ -81,13 +88,13 @@ export const desk: GameScene = {
 
     // Pick the drive up: it leaves the desk and becomes the cursor; the ports
     // then light up, inviting it in.
-    const flashka = stage.hotspot({ x: 106, y: 80, w: 20, h: 12 }, DESK.flashkaLabel, () => {
+    const flashka = stage.hotspot(DRIVE_RECT, DESK.flashkaLabel, () => {
       if (step !== 'pick') return;
       step = 'holding';
+      audio.click(79, 0.35);
       void bugWarns(ctx, stage.el, 'desk', { side: 'left', mood: 'angry' });
       flashka.hidden = true;
-      caption.textContent = DESK.grabbed;
-      stage.el.style.cursor = `url(${cursorUrl}) 3 10, pointer`;
+      stage.el.style.cursor = `url(${cursorUrl}) 30 8, pointer`;
       witness.record({ scene: SCENE, kind: 'grab-flashka', trick: 'baiting' });
     });
 
@@ -97,7 +104,7 @@ export const desk: GameScene = {
       pluggedAt = now;
       usb.hidden = true;
       stage.el.style.cursor = '';
-      caption.textContent = '';
+      window.setTimeout(() => audio.snap(84), PLUG_MS);
       witness.record({ scene: SCENE, kind: 'plugged', trick: 'baiting', data: { ms: Math.round(now) } });
       timers.push(
         window.setTimeout(() => {
@@ -194,8 +201,9 @@ export const desk: GameScene = {
       const plug = pluggedAt === undefined ? 0 : progress(t, pluggedAt, pluggedAt + PLUG_MS);
       paintDesk(g, t, { plug, sad: flow.state === 'sad', held: step === 'holding' && pluggedAt === undefined }, motion);
       if (pluggedAt === undefined) {
-        if (step === 'pick') paintDriveLure(g, motion ? t : 0);
-        else paintPortGlow(g, motion ? t : 0);
+        if (step === 'pick') {
+          if (motion) paintDriveTwinkle(g, t);
+        } else paintPortGlow(g, motion ? t : 0);
       }
     });
 

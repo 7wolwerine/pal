@@ -1,5 +1,5 @@
 import { INK } from '../../pixel/cast.ts';
-import { palFaceImage } from '../../ui/pal-face.ts';
+import { paintWallpaper } from '../../pixel/wallpaper.ts';
 import { px } from '../../pixel/stage.ts';
 
 type G = CanvasRenderingContext2D;
@@ -12,8 +12,12 @@ export const SCREEN_RECT = { x: 18, y: 12, w: 90, h: 54 };
 /** Generous click area around the two USB ports. */
 export const USB_RECT = { x: 122, y: 50, w: 32, h: 26 };
 
-const DRIVE_ON_DESK = { x: 112, y: 84 };
-const DRIVE_IN_PORT = { x: 130, y: 58 };
+const DRIVE_ON_DESK = { x: 110, y: 85 };
+/** Lined up just left of the upper port, then pushed in. */
+const DRIVE_READY = { x: 114, y: 58 };
+const DRIVE_IN_PORT = { x: 119, y: 58 };
+/** Click area of the drive lying on the desk. */
+export const DRIVE_RECT = { x: 104, y: 80, w: 22, h: 12 };
 
 const C = {
   wall: '#f3e3c7',
@@ -23,10 +27,6 @@ const C = {
   deskDark: '#a06f44',
   bezel: '#3b3a44',
   bezelDark: '#2f2e37',
-  wallpaper: '#8fd3cd',
-  wallpaperHill: '#7cc66b',
-  taskbar: '#3a6fb0',
-  start: '#5dcaa5',
   white: '#ffffff',
   beige: '#d9d4c7',
   beigeLight: '#f1eee6',
@@ -67,18 +67,9 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   px(g, C.note, 100, 2, 9, 8);
   px(g, INK, 102, 5, 5, 1);
 
-  // What the monitor shows.
-  const s = { x: 18, y: 12, w: 90, h: 54 };
-  px(g, C.wallpaper, s.x, s.y, s.w, s.h);
-  px(g, C.wallpaperHill, s.x, s.y + 36, s.w, 12);
-  px(g, C.wallpaperHill, s.x + 50, s.y + 31, 30, 5);
-  px(g, C.taskbar, s.x, s.y + 48, s.w, 6);
-  px(g, C.start, s.x + 1, s.y + 49, 9, 4);
-  px(g, C.white, s.x + 80, s.y + 50, 7, 2);
-  // The same cute PAL as in its window; teary when the player refuses.
-  g.drawImage(palFaceImage(look.sad ? 'sad' : 'happy'), s.x + 4, s.y + 3, 22, 22);
-  px(g, C.white, s.x + 6, s.y + 28, 6, 6);
-  px(g, C.yellow, s.x + 16, s.y + 28, 6, 6);
+  // What the monitor shows: an ordinary, pretty desktop.
+  const s = SCREEN_RECT;
+  paintWallpaper(g, s.x, s.y, s.w, s.h, { gloomy: look.sad, drive: look.plug >= 1, t: motion ? t : 0 });
 
   // Keyboard, mouse and a mug.
   px(g, C.beigeShade, 38, 85, 54, 10);
@@ -109,49 +100,64 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   px(g, C.beigeLight, 141, 65, 4, 1);
   for (let y = 73; y < 80; y += 2) px(g, C.beigeDark, 128, y, 20, 1);
 
-  // The flash drive: on the desk, on its way, or sticking out of the port.
+  // The flash drive: on the desk, carried to the port and pushed in, tip first.
   // While held it is the cursor, so it is not drawn here.
   if (!look.held) {
-    const x = DRIVE_ON_DESK.x + (DRIVE_IN_PORT.x - DRIVE_ON_DESK.x) * look.plug;
-    const y = DRIVE_ON_DESK.y + (DRIVE_IN_PORT.y - DRIVE_ON_DESK.y) * look.plug - Math.sin(look.plug * Math.PI) * 10;
-    if (look.plug < 1) px(g, C.metal, x - 3, y + 1, 3, 3);
-    px(g, C.pinkDark, x, y, 10, 5);
-    px(g, C.pink, x, y, 9, 4);
-    px(g, C.white, x + 2, y + 1, 2, 2);
-    if (look.plug >= 1 && blink) px(g, C.yellow, x + 7, y + 1, 1, 1);
-  }
-}
-
-const LURE = '#2fb0a0';
-
-/** A marching-ants dashed outline: the quiet lure that pulls at a tidy eye. */
-function dashedRect(g: G, x: number, y: number, w: number, h: number, t: number, colour: string): void {
-  const period = 6;
-  const off = Math.floor(t / 70) % period;
-  g.fillStyle = colour;
-  for (let i = -off; i < w + period; i++) {
-    if (i % period < 3 && i >= 0 && i < w) {
-      px(g, colour, x + i, y, 1, 1);
-      px(g, colour, x + i, y + h - 1, 1, 1);
+    let x: number = DRIVE_ON_DESK.x;
+    let y: number = DRIVE_ON_DESK.y;
+    if (look.plug > 0) {
+      const lift = Math.min(1, look.plug / 0.6);
+      const ease = 1 - (1 - lift) * (1 - lift);
+      x = DRIVE_ON_DESK.x + (DRIVE_READY.x - DRIVE_ON_DESK.x) * ease;
+      y = DRIVE_ON_DESK.y + (DRIVE_READY.y - DRIVE_ON_DESK.y) * ease - Math.sin(lift * Math.PI) * 6;
+      if (look.plug > 0.6) {
+        const push = (look.plug - 0.6) / 0.4;
+        x = DRIVE_READY.x + (DRIVE_IN_PORT.x - DRIVE_READY.x) * push * push;
+      }
     }
-  }
-  for (let i = -off; i < h + period; i++) {
-    if (i % period < 3 && i >= 0 && i < h) {
-      px(g, colour, x, y + i, 1, 1);
-      px(g, colour, x + w - 1, y + i, 1, 1);
-    }
+    paintDriveSide(g, Math.round(x), Math.round(y), look.plug);
+    if (look.plug >= 1 && blink) px(g, C.yellow, Math.round(x) + 2, Math.round(y) + 1, 1, 1);
   }
 }
 
-/** The thin animated outline around the drive lying on the desk. */
-export function paintDriveLure(g: G, t: number): void {
-  dashedRect(g, DRIVE_ON_DESK.x - 2, DRIVE_ON_DESK.y - 2, 15, 9, t, LURE);
+/** The drive seen from the side, tip pointing right; the tip vanishes into the port as it goes in. */
+function paintDriveSide(g: G, x: number, y: number, plug: number): void {
+  if (plug < 1) {
+    px(g, '#8a8a96', x + 10, y + 1, 4, 4);
+    px(g, C.metal, x + 10, y + 1, 4, 3);
+    px(g, INK, x + 11, y + 2, 1, 1);
+    px(g, INK, x + 12, y + 2, 1, 1);
+  }
+  px(g, C.pinkDark, x, y, 11, 6);
+  px(g, C.pink, x, y, 10, 5);
+  px(g, '#f7bfd2', x + 1, y + 1, 7, 1);
+  // a tiny heart on the side
+  px(g, C.white, x + 3, y + 2, 1, 1);
+  px(g, C.white, x + 5, y + 2, 1, 1);
+  px(g, C.white, x + 4, y + 3, 1, 1);
 }
 
-/** The ports glow and march with light — but only while the drive is held. */
+/** Now and then a four-pointed twinkle catches the light on the drive: something precious. */
+export function paintDriveTwinkle(g: G, t: number): void {
+  const cycle = t % 2600;
+  if (cycle > 700) return;
+  const size = cycle < 350 ? Math.round((cycle / 350) * 3) : Math.round(((700 - cycle) / 350) * 3);
+  if (size <= 0) return;
+  const x = DRIVE_ON_DESK.x + 9;
+  const y = DRIVE_ON_DESK.y - 1;
+  px(g, '#fff6c8', x, y - size, 1, size * 2 + 1);
+  px(g, '#fff6c8', x - size, y, size * 2 + 1, 1);
+  px(g, C.white, x, y, 1, 1);
+}
+
+/** Once the drive is picked up, the ports light up, inviting it in. */
 export function paintPortGlow(g: G, t: number): void {
-  const bright = Math.sin(t / 260) > 0 ? '#ffe08a' : LURE;
-  dashedRect(g, 126, 56, 24, 16, t, bright);
-  px(g, bright, 130, 58, 9, 1);
-  px(g, bright, 130, 63, 9, 1);
+  const pulse = 0.35 + 0.25 * Math.sin(t / 240);
+  g.globalAlpha = pulse;
+  px(g, '#ffe08a', 127, 55, 24, 15);
+  g.globalAlpha = 1;
+  px(g, '#ffe08a', 131, 59, 7, 3);
+  px(g, '#ffe08a', 131, 64, 7, 3);
+  px(g, '#fff6c8', 132, 60, 5, 1);
+  px(g, '#fff6c8', 132, 65, 5, 1);
 }
