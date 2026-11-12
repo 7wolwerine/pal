@@ -42,7 +42,8 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
   return typeof value === 'number' ? value : undefined;
 }
 
-const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => string | undefined>> = {
+/** Builds a trick's personal line from its evidence (and, when needed, everything else that happened). */
+const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: readonly WitnessEvent[]) => string | undefined>> = {
   irreversible: (evidence) => {
     const fill = evidence.find((e) => e.kind === 'filled');
     const ms = number(fill, 'ms');
@@ -55,6 +56,10 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[]) => st
     const presses = number(evidence[0], 'presses');
     return presses === undefined ? undefined : `Brouk ho ${presses - 1}× pověsil zpátky. Ty jsi ho shodil ${presses}×.`;
   },
+  'knows-too-much': (_evidence, all) =>
+    all.some((e) => e.kind === 'vigilance' && e.data?.what === 'flower-knew')
+      ? 'Všiml sis toho a zeptal ses. Odpověď jsi nedostal.'
+      : 'Nepřišlo ti divné, že suchá kytka pod sklem ví, kdo to sklo rozbil.',
   'romance-scam': (evidence) => {
     const choice = evidence.find((e) => e.kind === 'plea-choice');
     const refusals = number(choice, 'refusals') ?? 0;
@@ -137,6 +142,9 @@ const ONCE: Record<string, string> = {
   'forbidden-press': 'Klikl jsi na tlačítko „Neklikej na mě". Samozřejmě.',
   'guard-off': 'Vypnul jsi pojistku. Prý ji tam pověsili „oni".',
   'left-alone': 'Tlačítko „Neklikej na mě" jsi nechal být. To mě zarazilo.',
+  'glass-broken': 'Rozbil jsi sklo, které tu kytku chránilo.',
+  'flower-thanks': 'Kytka ti poděkovala za něco, co nemohla vidět.',
+  'flower-left': 'Kytku pod sklem jsi nechal být.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };
@@ -195,7 +203,7 @@ export function buildReveal(witness: Witness): RevealModel {
     .filter(isTrickId)
     .map((id) => {
       const evidence = witness.evidenceFor(id);
-      return { id, ...TRICKS[id], evidence: evidence.length, detail: DETAILS[id]?.(evidence) };
+      return { id, ...TRICKS[id], evidence: evidence.length, detail: DETAILS[id]?.(evidence, witness.events) };
     });
   const events = witness.events;
   return {

@@ -94,6 +94,11 @@ export const TRICKS = {
     inGame: 'Řekl jsem ti, že tlačítko tam pověsili „oni" a že my dva víme své. Brouka, který tě varoval, jsem udělal jejich. Pojistku jsi vypnul.',
     realWorld: 'Podvodníci, sekty i dezinformace: nejdřív společný nepřítel (banka, úřady, „systém"), pak „věř jen mně". Kdo varuje, je z druhé strany.',
   },
+  'knows-too-much': {
+    name: 'Ví víc, než by měla',
+    inGame: 'Kytka ti poděkovala, žes rozbil sklo. Byla suchá a schoulená pod poklopem, nemohla to vidět. Někdo tě celou dobu sledoval — a tobě to přišlo dojemné.',
+    realWorld: 'Podvodník zná detaily, které by znát neměl (z úniku dat, ze sítí, z tvých odpovědí), a podá je jako náhodu nebo osud. Místo „odkud to ví?" si člověk řekne „to je milé".',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

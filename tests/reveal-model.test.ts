@@ -93,6 +93,23 @@ describe('buildReveal', () => {
     expect(buildTimeline(witness.events)[0]?.text).toContain('Vlk samotář');
   });
 
+  it('notices when the player questioned the flower, and counts the button presses', () => {
+    const witness = new Witness(() => 0);
+    witness.record({ scene: 'flower', kind: 'flower-thanks', trick: 'knows-too-much' });
+    for (let n = 1; n <= 5; n++) witness.record({ scene: 'dontclick', kind: 'forbidden-press', trick: 'reactance', data: { n } });
+    witness.record({ scene: 'dontclick', kind: 'guard-off', trick: 'us-vs-them', data: { presses: 5 } });
+    witness.record({ scene: 'paint', kind: 'filled', trick: 'irreversible', data: { tool: 'bucket', ms: 4200 } });
+    const detail = (id: string) => buildReveal(witness).tricks.find((t) => t.id === id)?.detail;
+
+    expect(detail('knows-too-much')).toMatch(/Nepřišlo ti divné/);
+    expect(detail('reactance')).toBe('Klikl jsi 5×, i když tě tlačítko prosilo, ať to neděláš.');
+    expect(detail('us-vs-them')).toBe('Brouk ho 4× pověsil zpátky. Ty jsi ho shodil 5×.');
+    expect(detail('irreversible')).toMatch(/za 4 s/);
+
+    witness.record({ scene: 'flower', kind: 'vigilance', data: { what: 'flower-knew' } });
+    expect(detail('knows-too-much')).toMatch(/zeptal ses/);
+  });
+
   it('skips trick ids that are not in the catalog', () => {
     const witness = new Witness();
     witness.record({ scene: 'x', kind: 'step', trick: 'not-a-real-trick' });

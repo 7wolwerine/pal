@@ -9,6 +9,7 @@ export const BUG_WARNINGS = {
   paint: 'Nesahej na to! To nejde vrátit!',
   rescue: 'Nedej se! Vydírá tě!',
   restore: 'Zase opravuješ cizí věci? Nikdo tě neprosil!',
+  flower: 'To sklo ji chrání! Nech ho být!',
   prize: 'Nedávej mu e-mail!!',
 } as const;
 
