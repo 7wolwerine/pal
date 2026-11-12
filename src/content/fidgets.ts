@@ -17,7 +17,7 @@ export const FIDGETS = {
   /** The beetle tells the truth the whole time. Nobody listens to a beetle. */
   bug: [
     { before: 'Hej! Co to děláš?!', after: 'Tak… a nesahej na to.' },
-    { before: 'Přestaň, prosím tě!', after: 'Řekl ti vůbec někdo, ať to opravuješ?' },
+    { before: 'Přestaň, prosím tě!', after: 'Proč mě nikdo neposlouchá?!' },
     { before: 'Ne! To fakt nedělej!', after: 'Naposledy. Prosím.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */

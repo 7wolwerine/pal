@@ -102,7 +102,6 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       { class: 'gear gear--fallen', attrs: { type: 'button', 'aria-label': 'Vrátit spadlé kolečko' } },
       gearSvg(),
     );
-    const gearHint = h('p', { class: 'gear-hint', text: 'Jedno kolečko vypadlo.' });
     gear.addEventListener('click', () => {
       if (gearPlaced) return;
       gearPlaced = true;
@@ -114,12 +113,11 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       gear.classList.remove('gear--fallen');
       gear.classList.add('gear--placing');
       gear.disabled = true;
-      gearHint.remove();
       socket.classList.add('gear-socket--filled');
       window.setTimeout(() => maybeComplete(), 650);
     });
 
-    stage.replaceChildren(panel, gear, gearHint);
+    stage.replaceChildren(panel, gear);
     for (const cell of cells.values()) cell.sync();
     requestAnimationFrame(() => {
       const [x, y] = corner();

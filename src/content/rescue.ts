@@ -10,10 +10,10 @@ export const RESCUE = {
 
   /** Said when each attempt begins. Index by number of deaths so far (0..3). */
   intro: [
-    'Pomoc! Voda stoupá! Otáčej trubkami, ať teče pryč. Rychle, prosím!',
+    'Pomoc! Voda! Já se topím!',
     'Znovu… dobře. Zvládneme to. Jen prosím pospěš, nechci se zase topit.',
     'Už zase stoupá. Soustřeď se. Fakt tu nechci umřít, slyšíš?',
-    'Naposledy ti to říkám pěkně. Otoč. Tou. Trubkou.',
+    'Naposledy ti to říkám pěkně. Pomoz. Mi.',
   ],
 
   /** A nudge when the water is getting high on the final attempt (deaths === 2). */

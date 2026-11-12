@@ -22,7 +22,7 @@ export const ROLES = {
   fixer: {
     label: 'Ten, co všechno opraví',
     affirm: 'Jasně! Profík. Hned jsem to na tobě poznal. S tebou se nemusím ničeho bát.',
-    rescue: 'Ty se v tomhle vyznáš líp než kdokoli. Oprav ty trubky, prosím, rychle!',
+    rescue: 'Ty se v tomhle vyznáš líp než kdokoli. Prosím, rychle!',
     restore: 'Tohle je přesně pro tebe. Rozbitý domeček a jeden profík.',
     prize: 'Profík každým coulem. Nic jiného jsem od tebe nečekal! <3',
   },

@@ -23,7 +23,7 @@ export const DONTCLICK = {
   /** BUG on guard beside the button before anything happens. */
   bugGuard: 'Tohle nech být. Prosím.',
   /** BUG as it hangs the button back up, one per press. */
-  bugRehang: ['Ne! To je pojistka!', 'Nech ho viset! Prosím!', 'Proč to děláš?!', 'Kvůli NĚMU? Vždyť ti lže!'],
+  bugRehang: ['Ne! Nech ho tam!', 'Nech ho viset! Prosím!', 'Proč to děláš?!', 'Kvůli NĚMU?!'],
   bugLost: 'Ne… ne, ne, ne.',
   bugThanks: 'Děkuju. Fakt děkuju.',
   /** PAL's commentary, one per press. */
