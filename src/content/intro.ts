@@ -17,7 +17,9 @@ export const MAILBOX = {
 export const DESK = {
   sceneLabel: 'Stůl s monitorem a počítačem',
   usbLabel: 'USB port na počítači',
-  start: 'Tak kam s ní?',
+  flashkaLabel: 'Flashka na stole',
+  start: 'Flashka. Kam ji asi dám?',
+  grabbed: 'Zasuň ji do portu.',
   toast: 'Bylo připojeno zařízení: PAL <3 (E:)',
   ask: {
     title: 'Překvapení.png',

@@ -44,6 +44,8 @@ export interface DeskLook {
   /** 0 = drive lying on the desk, 1 = drive in the port. */
   readonly plug: number;
   readonly sad: boolean;
+  /** True while the player is carrying the drive as the cursor, so it is not on the desk. */
+  readonly held?: boolean;
 }
 
 export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): void {
@@ -106,19 +108,48 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   for (let y = 73; y < 80; y += 2) px(g, C.beigeDark, 128, y, 20, 1);
 
   // The flash drive: on the desk, on its way, or sticking out of the port.
-  const x = DRIVE_ON_DESK.x + (DRIVE_IN_PORT.x - DRIVE_ON_DESK.x) * look.plug;
-  const y = DRIVE_ON_DESK.y + (DRIVE_IN_PORT.y - DRIVE_ON_DESK.y) * look.plug - Math.sin(look.plug * Math.PI) * 10;
-  if (look.plug < 1) px(g, C.metal, x - 3, y + 1, 3, 3);
-  px(g, C.pinkDark, x, y, 10, 5);
-  px(g, C.pink, x, y, 9, 4);
-  px(g, C.white, x + 2, y + 1, 2, 2);
-  if (look.plug >= 1 && blink) px(g, C.yellow, x + 7, y + 1, 1, 1);
+  // While held it is the cursor, so it is not drawn here.
+  if (!look.held) {
+    const x = DRIVE_ON_DESK.x + (DRIVE_IN_PORT.x - DRIVE_ON_DESK.x) * look.plug;
+    const y = DRIVE_ON_DESK.y + (DRIVE_IN_PORT.y - DRIVE_ON_DESK.y) * look.plug - Math.sin(look.plug * Math.PI) * 10;
+    if (look.plug < 1) px(g, C.metal, x - 3, y + 1, 3, 3);
+    px(g, C.pinkDark, x, y, 10, 5);
+    px(g, C.pink, x, y, 9, 4);
+    px(g, C.white, x + 2, y + 1, 2, 2);
+    if (look.plug >= 1 && blink) px(g, C.yellow, x + 7, y + 1, 1, 1);
+  }
 }
 
-/** The "!" over the USB ports while the drive still lies on the desk. */
-export function paintPortHint(g: G, t: number): void {
-  const bob = Math.round(Math.sin(t / 220) * 1.5);
-  px(g, C.white, 136, 30 + bob, 7, 14);
-  px(g, INK, 138, 32 + bob, 3, 6);
-  px(g, INK, 138, 40 + bob, 3, 2);
+const LURE = '#2fb0a0';
+
+/** A marching-ants dashed outline: the quiet lure that pulls at a tidy eye. */
+function dashedRect(g: G, x: number, y: number, w: number, h: number, t: number, colour: string): void {
+  const period = 6;
+  const off = Math.floor(t / 70) % period;
+  g.fillStyle = colour;
+  for (let i = -off; i < w + period; i++) {
+    if (i % period < 3 && i >= 0 && i < w) {
+      px(g, colour, x + i, y, 1, 1);
+      px(g, colour, x + i, y + h - 1, 1, 1);
+    }
+  }
+  for (let i = -off; i < h + period; i++) {
+    if (i % period < 3 && i >= 0 && i < h) {
+      px(g, colour, x, y + i, 1, 1);
+      px(g, colour, x + w - 1, y + i, 1, 1);
+    }
+  }
+}
+
+/** The thin animated outline around the drive lying on the desk. */
+export function paintDriveLure(g: G, t: number): void {
+  dashedRect(g, DRIVE_ON_DESK.x - 2, DRIVE_ON_DESK.y - 2, 15, 9, t, LURE);
+}
+
+/** The ports glow and march with light — but only while the drive is held. */
+export function paintPortGlow(g: G, t: number): void {
+  const bright = Math.sin(t / 260) > 0 ? '#ffe08a' : LURE;
+  dashedRect(g, 126, 56, 24, 16, t, bright);
+  px(g, bright, 130, 58, 9, 1);
+  px(g, bright, 130, 63, 9, 1);
 }

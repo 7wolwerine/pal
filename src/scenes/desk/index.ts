@@ -3,7 +3,15 @@ import type { GameScene } from '../../game.ts';
 import { PixelStage, progress } from '../../pixel/stage.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import { printSurprise, surprise } from '../../ui/print.ts';
-import { SCREEN_RECT, STAGE_HEIGHT, STAGE_WIDTH, USB_RECT, paintDesk, paintPortHint } from './art.ts';
+import {
+  SCREEN_RECT,
+  STAGE_HEIGHT,
+  STAGE_WIDTH,
+  USB_RECT,
+  paintDesk,
+  paintDriveLure,
+  paintPortGlow,
+} from './art.ts';
 import { PrintFlow, REFUSALS_BEFORE_WAY_OUT, type PrintAction } from './model.ts';
 
 const SCENE = 'desk';
@@ -14,6 +22,25 @@ interface Choice {
   readonly label: string;
   readonly action: PrintAction;
   readonly quiet?: boolean;
+}
+
+/** A little flash-drive image, used as the mouse cursor while carrying it. */
+function flashkaCursorUrl(): string {
+  const c = document.createElement('canvas');
+  c.width = 30;
+  c.height = 16;
+  const g = c.getContext('2d');
+  if (!g) return '';
+  g.imageSmoothingEnabled = false;
+  g.fillStyle = '#c9c9d1'; // metal tip
+  g.fillRect(0, 6, 7, 5);
+  g.fillStyle = '#993556'; // body edge
+  g.fillRect(7, 3, 22, 11);
+  g.fillStyle = '#ed93b1'; // body
+  g.fillRect(7, 3, 20, 9);
+  g.fillStyle = '#ffffff'; // glint
+  g.fillRect(12, 5, 4, 3);
+  return c.toDataURL();
 }
 
 /**
@@ -36,11 +63,27 @@ export const desk: GameScene = {
     const timers: number[] = [];
     let now = 0;
     let pluggedAt: number | undefined;
+    // 'pick' = drive on the desk, 'holding' = carrying it as the cursor.
+    let step: 'pick' | 'holding' = 'pick';
+    const cursorUrl = flashkaCursorUrl();
+
+    // Pick the drive up: it leaves the desk and becomes the cursor; the ports
+    // then light up, inviting it in.
+    const flashka = stage.hotspot({ x: 106, y: 80, w: 20, h: 12 }, DESK.flashkaLabel, () => {
+      if (step !== 'pick') return;
+      step = 'holding';
+      flashka.hidden = true;
+      caption.textContent = DESK.grabbed;
+      stage.el.style.cursor = `url(${cursorUrl}) 3 10, pointer`;
+      witness.record({ scene: SCENE, kind: 'grab-flashka', trick: 'baiting' });
+    });
 
     const usb = stage.hotspot(USB_RECT, DESK.usbLabel, () => {
-      if (pluggedAt !== undefined) return;
+      // Only accepts the drive once you are actually holding it.
+      if (step !== 'holding' || pluggedAt !== undefined) return;
       pluggedAt = now;
       usb.hidden = true;
+      stage.el.style.cursor = '';
       caption.textContent = '';
       witness.record({ scene: SCENE, kind: 'plugged', trick: 'baiting', data: { ms: Math.round(now) } });
       timers.push(
@@ -136,12 +179,16 @@ export const desk: GameScene = {
     stage.run((g, t) => {
       now = t;
       const plug = pluggedAt === undefined ? 0 : progress(t, pluggedAt, pluggedAt + PLUG_MS);
-      paintDesk(g, t, { plug, sad: flow.state === 'sad' }, motion);
-      if (pluggedAt === undefined) paintPortHint(g, motion ? t : 0);
+      paintDesk(g, t, { plug, sad: flow.state === 'sad', held: step === 'holding' && pluggedAt === undefined }, motion);
+      if (pluggedAt === undefined) {
+        if (step === 'pick') paintDriveLure(g, motion ? t : 0);
+        else paintPortGlow(g, motion ? t : 0);
+      }
     });
 
     return () => {
       stage.stop();
+      stage.el.style.cursor = '';
       for (const timer of timers) window.clearTimeout(timer);
       ctx.scenery.replaceChildren();
     };
