@@ -1,3 +1,5 @@
+import { ANOMALY_TEXT } from '../content/anomalies.ts';
+import { anomaly } from '../ui/anomaly.ts';
 import type { Scene } from '../core/director.ts';
 import type { GameContext } from '../game.ts';
 import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '../content/welcome.ts';
@@ -115,8 +117,18 @@ export const welcome: Scene<GameContext> = {
     }
 
     void run();
+    const stopAnomaly = anomaly(witness, ctx.window.el, {
+      what: 'title-flicker',
+      scene: SCENE,
+      text: ANOMALY_TEXT.title,
+      className: 'anomaly--title',
+      place: { left: '40px', top: '6px' },
+      after: 9000,
+      ms: 1100,
+    });
     return () => {
       alive = false;
+      stopAnomaly();
       stage.replaceChildren();
     };
   },

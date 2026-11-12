@@ -159,6 +159,13 @@ export const reveal: Scene<GameContext> = {
               ? `Body za ostražitost: ${vigilance}. Něco nesedělo a šlo se to prověřit. To dělá málokdo.`
               : 'Body za ostražitost: 0. Pár věcí nesedělo a šlo na ně sáhnout. Nikdo to neřekl nahlas.',
         }),
+        h(
+          'ul',
+          { class: 'anomalies' },
+          ...model.anomalies.map((a) =>
+            h('li', { class: a.found ? 'anomalies__found' : 'anomalies__missed' }, h('span', { text: a.found ? '✓ ' : '· ' }), a.text),
+          ),
+        ),
         h('h2', { text: 'Pro klid duše' }),
         h('p', {
           text: 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',

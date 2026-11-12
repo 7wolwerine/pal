@@ -110,6 +110,16 @@ describe('buildReveal', () => {
     expect(detail('knows-too-much')).toMatch(/zeptal ses/);
   });
 
+  it('lists every hidden inconsistency, marking the ones the player caught', () => {
+    const witness = new Witness(() => 0);
+    witness.record({ scene: 'welcome', kind: 'vigilance', data: { what: 'title-flicker' } });
+    witness.record({ scene: 'popup', kind: 'vigilance', data: { what: 'inverted-popup' } });
+    const { anomalies, stats } = buildReveal(witness);
+    expect(anomalies.length).toBeGreaterThanOrEqual(8);
+    expect(anomalies.filter((a) => a.found).map((a) => a.id).sort()).toEqual(['inverted-popup', 'title-flicker']);
+    expect(stats.vigilance).toBe(2);
+  });
+
   it('skips trick ids that are not in the catalog', () => {
     const witness = new Witness();
     witness.record({ scene: 'x', kind: 'step', trick: 'not-a-real-trick' });

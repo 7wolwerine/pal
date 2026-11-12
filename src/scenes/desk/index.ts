@@ -1,3 +1,5 @@
+import { ANOMALY_TEXT } from '../../content/anomalies.ts';
+import { anomaly } from '../../ui/anomaly.ts';
 import { DESK } from '../../content/intro.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
 import type { GameScene } from '../../game.ts';
@@ -58,6 +60,15 @@ export const desk: GameScene = {
     const stage = new PixelStage(STAGE_WIDTH, STAGE_HEIGHT, DESK.sceneLabel);
     const caption = h('p', { class: 'scene__caption', text: DESK.start, attrs: { 'aria-live': 'polite' } });
     ctx.scenery.replaceChildren(stage.el, caption);
+    const stopAnomaly = anomaly(witness, stage.el, {
+      what: 'rec-dot',
+      scene: SCENE,
+      text: ANOMALY_TEXT.rec,
+      className: 'anomaly--rec',
+      place: { right: '2%', top: '3%' },
+      after: 7000,
+      ms: 1300,
+    });
 
     const screen = stage.overlay(SCREEN_RECT, 'scene__screen');
     const flow = new PrintFlow();
@@ -189,6 +200,7 @@ export const desk: GameScene = {
     });
 
     return () => {
+      stopAnomaly();
       stage.stop();
       stage.el.style.cursor = '';
       for (const timer of timers) window.clearTimeout(timer);

@@ -2,6 +2,7 @@ import { DONTCLICK } from '../content/dontclick.ts';
 import type { GameScene } from '../game.ts';
 import { BUG_PX, Beetle } from '../ui/beetle.ts';
 import { h, sleep } from '../ui/dom.ts';
+import { anomaly } from '../ui/anomaly.ts';
 import { DontClickModel } from './dontclick-model.ts';
 
 const SCENE = 'dontclick';
@@ -58,6 +59,14 @@ export const dontclick: GameScene = {
       FLOOR_Y - BUG_PX,
     ];
     const atNail = (): [number, number] => [width() / 2 - BUG_PX / 2, 22];
+    const stopAnomaly = anomaly(witness, board, {
+      what: 'led-flicker',
+      scene: SCENE,
+      className: 'anomaly--led',
+      place: { left: '4px', top: '8px', width: '9px', height: '9px' },
+      after: 2500,
+      ms: 600,
+    });
     beetle.jump(...guardSpot());
     beetle.say(DONTCLICK.bugGuard);
 
@@ -159,6 +168,7 @@ export const dontclick: GameScene = {
     void intro();
     return () => {
       alive = false;
+      stopAnomaly();
       window.clearTimeout(leaveTimer);
       beetle.stop();
       stage.replaceChildren();

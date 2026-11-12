@@ -2763,3 +2763,70 @@ body {
     white-space: normal;
   }
 }
+
+/* ---------- the hidden vigilance layer ---------- */
+
+.anomaly {
+  position: absolute;
+  z-index: 6;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.anomaly--title {
+  padding: 2px 4px;
+  background: var(--bar);
+  font-weight: 700;
+}
+
+.anomaly--rec {
+  padding: 1px 5px;
+  color: #ff3b3b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.anomaly--led {
+  border-radius: 50%;
+  background: #ff3b3b;
+  box-shadow: 0 0 6px #ff3b3b;
+}
+
+.anomaly--impatient {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--bubble);
+  color: var(--bubble-ink);
+  text-align: left;
+}
+
+.anomaly--caught {
+  outline: 2px solid var(--ok);
+  outline-offset: 2px;
+}
+
+.anomalies {
+  margin: 0 0 12px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.anomalies li {
+  margin: 2px 0;
+}
+
+.anomalies__missed {
+  opacity: 0.55;
+}
+
+.anomalies__found {
+  font-weight: 700;
+}

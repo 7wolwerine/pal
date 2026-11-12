@@ -1,4 +1,5 @@
 import type { Witness, WitnessEvent } from '../core/witness.ts';
+import { ANOMALIES } from '../content/anomalies.ts';
 import { TRICKS, type Trick, type TrickId } from '../content/tricks.ts';
 
 export interface RevealedTrick extends Trick {
@@ -14,6 +15,8 @@ export interface RevealModel {
   readonly disclosed: readonly { label: string; value: string }[];
   /** The tricks that worked, in the order they first worked. */
   readonly tricks: readonly RevealedTrick[];
+  /** Every small inconsistency in the game, and whether the player caught it. */
+  readonly anomalies: readonly { id: string; text: string; found: boolean }[];
   readonly stats: {
     seconds: number;
     clicks: number;
@@ -243,9 +246,12 @@ export function buildReveal(witness: Witness): RevealModel {
       return { id, ...TRICKS[id], evidence: evidence.length, detail: DETAILS[id]?.(evidence, witness.events) };
     });
   const events = witness.events;
+  const caught = new Set(events.filter((e) => e.kind === 'vigilance').map((e) => e.data?.what));
+  const anomalies = Object.entries(ANOMALIES).map(([id, text]) => ({ id, text, found: caught.has(id) }));
   return {
     disclosed,
     tricks,
+    anomalies,
     stats: {
       seconds: Math.round(witness.elapsed / 1000),
       clicks: witness.count('click'),
