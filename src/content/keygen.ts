@@ -14,7 +14,7 @@ export const EGGS: readonly Egg[] = [
   { id: 'stego', label: 'Text schovaný v pixelech uloženého obrázku' },
   { id: 'flower', label: 'Kytka, která ví víc, než by měla' },
   { id: 'bug', label: 'BUG — nešika s velkými emocemi, jediný, kdo nelhal' },
-  { id: 'smiley', label: 'Usměváček z kartičky, co ožije v kameře' },
+  { id: 'smiley', label: 'Medvěd z kartičky, co ožije v kameře a napíše 3107' },
   { id: 'matrix', label: 'Brouk rozsypaný na zelená písmenka' },
   { id: 'bsod', label: 'Modrá obrazovka s číslem na „podporu“' },
   { id: 'keygen', label: 'Tahle obrazovka i s hudbou' },

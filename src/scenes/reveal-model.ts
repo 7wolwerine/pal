@@ -186,6 +186,7 @@ const ONCE: Record<string, string> = {
   'called-support': 'Zavolal jsi na číslo z modré obrazovky.',
   'bsod-restart': 'Modrou obrazovku jsi nebral vážně. Správně.',
   remembered: 'Přinesl jsi mi obrázek z minulé hry. Vzpomněl jsem si na všechno.',
+  'ar-code': 'Zadal jsi kód, který ti ukázal medvěd v kameře. Kameru jsi pustil stránce od cizího člověka.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
 };

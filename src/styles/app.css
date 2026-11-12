@@ -2847,3 +2847,21 @@ body {
 #memory-file:focus-visible + .memory-load {
   opacity: 1;
 }
+
+.quiet-links {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.card-code .row {
+  margin-top: 8px;
+}
+
+button.memory-load {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+}

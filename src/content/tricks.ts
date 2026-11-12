@@ -134,6 +134,11 @@ export const TRICKS = {
     inGame: 'Vrátil jsi mi obrázek z minulé hry a já si pamatoval, cos dělal. Reset nic nesmazal: data cestovala s tebou, schovaná v pixelech.',
     realWorld: 'Smazaný příspěvek, zavřená aplikace, nový účet — data o tobě mezitím žijí jinde a vracejí se. Na internetu se nic nevezme zpátky.',
   },
+  'camera-permission': {
+    name: 'Kamera pro cizí stránku',
+    inGame: 'Naskenoval jsi QR kód z kartičky od cizího člověka a stránce, kterou ti podstrčil, jsi pustil kameru. Medvěd byl roztomilý. Dveře byly otevřené.',
+    realWorld: 'Quishing: QR kódy na parkovacích automatech, letácích a v e-mailech vedou na podvodné stránky. Kameru, polohu i notifikace povoluješ stránce, ne kódu. Před povolením se podívej na adresu.',
+  },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
     inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',

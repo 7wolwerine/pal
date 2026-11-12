@@ -4,7 +4,7 @@ import { ANOMALY_TEXT } from '../content/anomalies.ts';
 import { anomaly } from '../ui/anomaly.ts';
 import type { Scene } from '../core/director.ts';
 import type { GameContext } from '../game.ts';
-import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '../content/welcome.ts';
+import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, isCardCode, type AssistantKind } from '../content/welcome.ts';
 import { h, sleep } from '../ui/dom.ts';
 import { livingSprite } from '../ui/sprites.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
@@ -149,8 +149,41 @@ export const welcome: Scene<GameContext> = {
           if (memory) resolve(memory);
           else void pal.say(WELCOME.notMine);
         });
-        stage.replaceChildren(input, label);
+        stage.replaceChildren(h('div', { class: 'quiet-links' }, input, label, cardCode()));
       });
+    }
+
+    /** "I have a code from the card": what the AR bear's sign showed. */
+    function cardCode(): HTMLElement {
+      const box = h('div', { class: 'card-code' });
+      const open = h('button', { class: 'memory-load', text: WELCOME.cardLink, attrs: { type: 'button' } });
+      open.addEventListener('click', () => {
+        const input = h('input', {
+          class: 'field',
+          attrs: { type: 'text', autocomplete: 'off', maxlength: '12', 'aria-label': WELCOME.cardLabel, placeholder: WELCOME.cardLabel },
+        });
+        const form = h('form', { class: 'row', attrs: { novalidate: '' } }, input, h('button', { class: 'btn', text: WELCOME.cardSubmit, attrs: { type: 'submit' } }));
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if (!isCardCode(input.value)) {
+            void pal.say(WELCOME.cardWrong);
+            input.focus();
+            return;
+          }
+          witness.record({ scene: SCENE, kind: 'ar-code', trick: 'camera-permission' });
+          box.replaceChildren();
+          void (async () => {
+            await pal.say(WELCOME.cardRight);
+            if (!alive) return;
+            await sleep(900);
+            if (alive) await pal.say(WELCOME.cardCamera);
+          })();
+        });
+        box.replaceChildren(form);
+        input.focus();
+      });
+      box.append(open);
+      return box;
     }
 
     void run();

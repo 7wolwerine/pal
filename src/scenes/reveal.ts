@@ -124,6 +124,7 @@ export const reveal: Scene<GameContext> = {
             const found = new Set<string>(['keygen']);
             if (ctx.witness.events.some((e) => e.kind === 'consent' && e.data?.egg === true)) found.add('contract');
             if (decoded) found.add('stego');
+            if (ctx.witness.events.some((e) => e.kind === 'ar-code')) found.add('smiley');
             closeKeygen = openKeygen({
               name: ctx.profile.name ?? 'Ty',
               events: ctx.witness.events,

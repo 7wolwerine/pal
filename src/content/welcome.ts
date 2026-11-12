@@ -15,10 +15,22 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
   { id: 'dog', label: 'pes', names: ['Bobík', 'Azor', 'Kamarád'] },
 ];
 
+/** The AR bear's sign shows 3107, which upside down reads LOVE, then adds YOU. */
+export function isCardCode(text: string): boolean {
+  const t = text.trim().toUpperCase().replace(/\s+/g, ' ');
+  return t === '3107' || t === 'LOVE' || t === 'LOVE YOU' || t === '3107 YOU';
+}
+
 export const WELCOME = {
   greeting: 'Čauky! <3',
   load: 'Načíst uložený postup',
   notMine: 'Hm. Tenhle obrázek ode mě není.',
+  cardLink: 'Mám kód z kartičky',
+  cardLabel: 'Kód z kartičky',
+  cardSubmit: 'Zadat',
+  cardWrong: 'Tohle na kartičce nebylo.',
+  cardRight: 'LOVE YOU! Ty jsi mě viděl v kameře! <3',
+  cardCamera: 'Pustil jsi mě k sobě do kamery. Kvůli kartičce od cizího člověka. To se mi líbí.',
   askName: 'Jak ti mám říkat?',
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',
