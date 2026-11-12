@@ -23,18 +23,49 @@ const PALETTE: Record<string, string> = {
 };
 
 export const SPRITES = {
+  // PAL smiling: big sparkly eyes, rosy cheeks, a happy mouth.
   pal: [
     '............',
     '...pppppp...',
     '..pppppppp..',
     '.pppppppppp.',
-    '.ppkppppkpp.',
-    '.ppkppppkpp.',
+    '.ppwkppkwpp.',
+    '.ppkkppkkpp.',
     '.pppppppppp.',
-    '.pkppppppkp.',
+    '.rppppppppr.',
     '.ppkkkkkkpp.',
     '..pppppppp..',
     '...pppppp...',
+    '............',
+  ],
+  // PAL before it notices you: same face, a flat little mouth, no cheeks.
+  palNeutral: [
+    '............',
+    '...pppppp...',
+    '..pppppppp..',
+    '.pppppppppp.',
+    '.ppwkppkwpp.',
+    '.ppkkppkkpp.',
+    '.pppppppppp.',
+    '.pppppppppp.',
+    '..ppkkkkpp..',
+    '..pppppppp..',
+    '...pppppp...',
+    '............',
+  ],
+  // PAL's true face, kept for the horror replay: narrowed eyes, a jagged grin.
+  palDark: [
+    '............',
+    '...vvvvvv...',
+    '..vvvvvvvv..',
+    '.vvvvvvvvvv.',
+    '.vkvvvvvvkv.',
+    '.vkkvvvkkvv.',
+    '.vvvvvvvvvv.',
+    '.vvvvvvvvvv.',
+    '.vkkkkkkkkv.',
+    '.vkvkvkvkvv.',
+    '...vvvvvv...',
     '............',
   ],
   girl: [
@@ -149,8 +180,10 @@ export type Frame = 'base' | 'blink' | 'quirk';
 type Patch = Readonly<Record<number, string>>;
 
 export const FRAMES: Readonly<Record<SpriteId, { blink: Patch; quirk: Patch }>> = {
-  // Laughs.
-  pal: { blink: { 4: '.pppppppppp.' }, quirk: { 9: '..ppkkkkpp..' } },
+  // Blinks, then grins wider.
+  pal: { blink: { 4: '.pppppppppp.', 5: '.ppkkppkkpp.' }, quirk: { 8: '.pkkkkkkkkp.' } },
+  palNeutral: { blink: { 4: '.pppppppppp.', 5: '.ppkkppkkpp.' }, quirk: { 8: '..pppkkppp..' } },
+  palDark: { blink: { 4: '.vvvvvvvvvv.' }, quirk: { 4: '.vkkvvvvkkv.' } },
   // Her bows bounce.
   girl: { blink: { 4: '.hhsssssshh.' }, quirk: { 1: '.phhhhhhhhp.', 3: '..hssssssh..' } },
   // The baby dozes off.

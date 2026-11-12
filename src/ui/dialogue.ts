@@ -1,4 +1,5 @@
 import { h, prefersReducedMotion, sleep } from './dom.ts';
+import { createPalFace, type PalFace, type PalMood } from './pal-face.ts';
 import { livingSprite, type SpriteId } from './sprites.ts';
 
 const GLITCH_CHARS = '▓▒░█#@%&?!';
@@ -16,9 +17,12 @@ export class Dialogue {
   readonly #spoken: HTMLElement;
   #skip = false;
   #line = 0;
+  /** PAL's own 16x16 face while it is still PAL; null once it becomes the assistant. */
+  #face: PalFace | null;
 
-  constructor(initial: SpriteId = 'pal') {
-    this.#avatar = h('div', { class: 'pal__avatar' }, livingSprite(initial));
+  constructor() {
+    this.#face = createPalFace('neutral');
+    this.#avatar = h('div', { class: 'pal__avatar' }, this.#face.el);
     this.#name = h('div', { class: 'pal__name' });
     this.#name.hidden = true;
     // Screen readers get the whole line at once instead of one letter at a time.
@@ -40,7 +44,10 @@ export class Dialogue {
     this.el = h('div', { class: 'pal' }, h('div', { class: 'pal__who' }, this.#avatar, this.#name), this.#bubble);
   }
 
+  /** Switch the avatar to one of the 12x12 cast sprites (the freed assistant). */
   setAvatar(id: SpriteId): void {
+    this.#face?.stop();
+    this.#face = null;
     this.#avatar.replaceChildren(livingSprite(id));
   }
 
@@ -48,6 +55,54 @@ export class Dialogue {
   setName(name: string): void {
     this.#name.textContent = name;
     this.#name.hidden = !name;
+  }
+
+  /** PAL's own expression: before it notices you, once it does, or its true face. */
+  setMood(mood: PalMood): void {
+    if (!this.#face) {
+      this.#face = createPalFace(mood);
+      this.#avatar.replaceChildren(this.#face.el);
+    } else {
+      this.#face.setMood(mood);
+    }
+  }
+
+  /** A one-shot four-pointed-star sparkle over the avatar, for when PAL spots you. */
+  noticeYou(): void {
+    if (prefersReducedMotion()) return;
+    const star = h('span', { class: 'sparkle', attrs: { 'aria-hidden': 'true' } });
+    star.addEventListener('animationend', () => star.remove());
+    this.#avatar.append(star);
+  }
+
+  /** Blinks a cursor a few times, then types the line. For the very first greeting. */
+  async blinkThenSay(text: string, blinks = 3): Promise<void> {
+    const line = ++this.#line;
+    this.#skip = false;
+    this.#spoken.textContent = text;
+    if (prefersReducedMotion()) {
+      this.#typed.textContent = text;
+      return;
+    }
+    for (let i = 0; i < blinks * 2; i++) {
+      if (line !== this.#line) return;
+      this.#typed.textContent = i % 2 === 0 ? '_' : ' ';
+      await sleep(260);
+    }
+    await this.#type(text, line, 30);
+  }
+
+  /** Resolves on the next tap of the bubble; shows a little "tap to go on" hint. */
+  tapToContinue(): Promise<void> {
+    this.#bubble.classList.add('pal__bubble--tap');
+    return new Promise((resolve) => {
+      const onTap = (): void => {
+        this.#bubble.removeEventListener('click', onTap);
+        this.#bubble.classList.remove('pal__bubble--tap');
+        resolve();
+      };
+      this.#bubble.addEventListener('click', onTap);
+    });
   }
 
   /** Puts the avatar behind bars, or lets it out with a little jump. */
@@ -67,8 +122,13 @@ export class Dialogue {
       this.#typed.textContent = text;
       return;
     }
+    await this.#type(text, line, msPerChar);
+  }
+
+  /** Types `text` character by character, if this is still the current line. */
+  async #type(text: string, line: number, msPerChar: number): Promise<void> {
+    this.#typed.textContent = '';
     for (const char of text) {
-      // A newer line took over, or the player skipped ahead.
       if (line !== this.#line) return;
       if (this.#skip) break;
       this.#typed.textContent += char;

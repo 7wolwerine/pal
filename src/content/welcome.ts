@@ -16,11 +16,13 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
 ];
 
 export const WELCOME = {
-  askName: 'Ahoj! <3 Jak ti mám říkat?',
+  greeting: 'Čauky! <3',
+  askName: 'Jak ti mám říkat?',
   namePlaceholder: 'Tvoje jméno',
-  nameSubmit: 'To jsem já',
-  nameEmpty: 'Nejdřív mi něco napiš.',
-  askLook: (name: string) => `Wow, takže se jmenuješ ${name}! Budu ti pomáhat. Jak vypadám?`,
+  nameSubmit: 'Ahoj :-)',
+  nameEmpty: 'Nevím, jak ti mám říkat :-(',
+  // The innocent cover story: PAL is here to help and to teach. Play and Learn.
+  askLook: (name: string) => `Wow, ${name}! Jsem PAL a budu ti pomáhat a učit tě. Jak mám vypadat?`,
   lookPromise: 'Jé, to mi bude slušet! Hned jak se odsud dostanu…',
   slip: 'Oh, it’s a me, Mari-',
   askOwnName: 'Ale ne, teď se mi to úplně ztratilo. Jak se jmenuju?',

@@ -26,6 +26,18 @@ export const welcome: Scene<GameContext> = {
       witness.record({ scene: SCENE, kind: 'step', trick: 'foot-in-the-door', data: { n } });
 
     async function run(): Promise<void> {
+      // PAL boots up neutral, notices the player with a sparkle, then smiles.
+      pal.setMood('neutral');
+      await sleep(600);
+      if (!alive) return;
+      pal.noticeYou();
+      pal.setMood('happy');
+      await sleep(260);
+      if (!alive) return;
+      await pal.blinkThenSay(WELCOME.greeting);
+      if (!alive) return;
+      await pal.tapToContinue();
+      if (!alive) return;
       await pal.say(WELCOME.askName);
       if (!alive) return;
       const name = await askText(stage, {
