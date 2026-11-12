@@ -3111,3 +3111,194 @@ body {
     opacity: 0;
   }
 }
+
+/* ---------- the computer PAL's window lives on ---------- */
+
+body.on-pc {
+  background-color: #f3e3c7;
+  background-image:
+    linear-gradient(to bottom, transparent calc(100% - 64px), #cf9a6a calc(100% - 64px), #cf9a6a calc(100% - 62px), #b98556 calc(100% - 62px), #b98556 calc(100% - 6px), #a06f44 calc(100% - 6px)),
+    repeating-linear-gradient(to right, #f3e3c7 0 34px, #ecd8b8 34px 40px);
+  background-size: 100% 100%, 100% 100%;
+  background-attachment: fixed;
+}
+
+.pc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 640px);
+}
+
+.pc[hidden] {
+  display: none;
+}
+
+.pc__monitor {
+  position: relative;
+  width: 100%;
+  padding: 16px 16px 22px;
+  border-radius: 14px;
+  background: #3b3a44;
+  box-shadow: inset 0 -4px 0 #2f2e37, 0 6px 0 rgba(0, 0, 0, 0.12);
+}
+
+.pc__led {
+  position: absolute;
+  right: 18px;
+  bottom: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 1px;
+  background: #5dcaa5;
+}
+
+.pc__screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  padding: 22px 18px 40px;
+  border-radius: 4px;
+  background-color: #8fd0ee;
+  background-position: center;
+  background-size: cover;
+  image-rendering: pixelated;
+  overflow: hidden;
+}
+
+.pc__taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 22px;
+  padding: 0 6px;
+  background: #3a6fb0;
+  border-top: 2px solid #5a8fd0;
+}
+
+.pc__start {
+  width: 38px;
+  height: 14px;
+  border-radius: 3px;
+  background: #5dcaa5;
+}
+
+.pc__clock {
+  padding: 0 6px;
+  border-radius: 3px;
+  background: #2c5a92;
+  color: #fff;
+  font: 700 11px/16px ui-monospace, Consolas, monospace;
+}
+
+.pc__stand {
+  width: 70px;
+  height: 18px;
+  background: #2f2e37;
+  border-radius: 0 0 4px 4px;
+}
+
+.pc__stand::after {
+  content: '';
+  display: block;
+  width: 150px;
+  height: 8px;
+  margin: 18px 0 0 -40px;
+  border-radius: 3px;
+  background: #2f2e37;
+}
+
+.pc__tower {
+  position: absolute;
+  right: -150px;
+  bottom: -26px;
+  width: 110px;
+  height: 260px;
+  border: 3px solid #bdb7a8;
+  border-radius: 6px;
+  background:
+    linear-gradient(#bdb7a8, #bdb7a8) 14px 22px / 76px 20px no-repeat,
+    linear-gradient(#bdb7a8, #bdb7a8) 14px 50px / 76px 12px no-repeat,
+    linear-gradient(#a9a394, #a9a394) 16px 150px / 72px 52px no-repeat,
+    #d9d4c7;
+}
+
+.pc__tower::before,
+.pc__tower::after {
+  content: '';
+  position: absolute;
+  left: 26px;
+  width: 26px;
+  height: 10px;
+  background: #3b2a3a;
+}
+
+.pc__tower::before {
+  top: 162px;
+}
+
+.pc__tower::after {
+  top: 180px;
+}
+
+.pc__drive {
+  position: absolute;
+  z-index: 1;
+  left: -12px;
+  top: 158px;
+  width: 42px;
+  height: 18px;
+  border: 3px solid #d4537e;
+  border-radius: 3px;
+  background: #ed93b1;
+}
+
+:root[data-theme='revealed'] body.on-pc {
+  background: var(--desk);
+}
+
+:root[data-theme='revealed'] .pc__monitor {
+  background: #000;
+  box-shadow: none;
+}
+
+:root[data-theme='revealed'] .pc__screen {
+  background: #000 !important;
+}
+
+:root[data-theme='revealed'] .pc__taskbar,
+:root[data-theme='revealed'] .pc__stand,
+:root[data-theme='revealed'] .pc__tower {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .pc__tower {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .pc__monitor {
+    padding: 8px 8px 14px;
+    border-radius: 10px;
+  }
+
+  .pc__screen {
+    min-height: 0;
+    padding: 10px 6px 30px;
+  }
+
+  .pc__led {
+    right: 10px;
+    bottom: 4px;
+  }
+}

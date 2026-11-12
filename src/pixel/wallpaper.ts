@@ -13,6 +13,8 @@ export interface WallpaperLook {
   readonly gloomy?: boolean;
   /** Shows the new drive's icon on the desktop. */
   readonly drive?: boolean;
+  /** Leave the taskbar out (the page draws its own). */
+  readonly taskbar?: boolean;
   /** Milliseconds, for drifting clouds; 0 keeps everything still. */
   readonly t?: number;
 }
@@ -22,7 +24,7 @@ export function paintWallpaper(g: G, x: number, y: number, w: number, h: number,
   const X = (f: number): number => x + Math.round(f * w);
   const W = (f: number): number => Math.max(1, Math.round(f * w));
   const H = (f: number): number => Math.max(1, Math.round(f * h));
-  const taskbar = Math.max(4, Math.round(h * 0.1));
+  const taskbar = look.taskbar === false ? 0 : Math.max(4, Math.round(h * 0.1));
   const sceneH = h - taskbar;
   const S = (f: number): number => y + Math.round(f * sceneH);
 
@@ -102,6 +104,7 @@ export function paintWallpaper(g: G, x: number, y: number, w: number, h: number,
   if (look.drive) icon(2, '#ed93b1', '#d4537e'); // the new drive
 
   // Taskbar.
+  if (!taskbar) return;
   const ty = y + h - taskbar;
   px(g, '#3a6fb0', x, ty, w, taskbar);
   px(g, '#5a8fd0', x, ty, w, 1);

@@ -23,6 +23,7 @@ import { reveal } from './scenes/reveal.ts';
 import { welcome } from './scenes/welcome.ts';
 import { Dialogue } from './ui/dialogue.ts';
 import { h } from './ui/dom.ts';
+import { createPc } from './ui/pc.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
@@ -69,7 +70,8 @@ function boot(): void {
   const stage = h('div', { class: 'stage' });
   win.body.append(pal.el, stage);
   const scenery = h('div', { class: 'scenery' });
-  app.append(scenery, win.el);
+  const pc = createPc(win.el);
+  app.append(scenery, pc);
 
   document.addEventListener('pointerdown', () => witness.tally('click'));
 
@@ -109,7 +111,8 @@ function boot(): void {
     // Pixel scenes take the whole view; everything else happens in PAL's window.
     const onScenery = scene.surface === 'scenery';
     scenery.hidden = !onScenery;
-    win.el.hidden = onScenery;
+    pc.hidden = onScenery;
+    document.body.classList.toggle('on-pc', !onScenery);
     // Power the window on with a boot animation each time it reappears.
     if (!onScenery && winWasHidden) {
       win.el.classList.remove('win--boot');
