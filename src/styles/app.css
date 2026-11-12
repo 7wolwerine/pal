@@ -2622,3 +2622,144 @@ body {
     opacity: 0;
   }
 }
+
+/* ---------- the keygen outro: black, green, mono, sharp corners ---------- */
+
+.btn--keygen {
+  margin: 18px 0 8px;
+  border-radius: 0;
+  background: #000;
+  box-shadow: 0 4px 0 #0a5a22;
+  color: #28e05a;
+  font-family: 'Courier New', monospace;
+}
+
+.keygen {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 16px;
+  background: #000;
+  overflow: auto;
+}
+
+.keygen__rain {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.keygen__panel {
+  position: relative;
+  width: min(520px, 100%);
+  min-width: 0;
+  border: 2px solid #28e05a;
+  background: rgba(0, 0, 0, 0.88);
+  color: #28e05a;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  box-shadow: 0 0 24px rgba(40, 224, 90, 0.35);
+}
+
+.keygen__bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #28e05a;
+  color: #000;
+}
+
+.keygen__form {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 10px;
+  padding: 14px 14px 4px;
+}
+
+.keygen__name,
+.keygen__serial {
+  padding: 2px 6px;
+  border: 1px solid #1a8a3a;
+  color: #d8ffd8;
+  letter-spacing: 0.05em;
+}
+
+.keygen__note {
+  margin: 0 14px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.keygen__row {
+  display: flex;
+  gap: 10px;
+  padding: 10px 14px;
+}
+
+.keygen__btn {
+  padding: 4px 14px;
+  border: 1px solid #28e05a;
+  border-radius: 0;
+  background: #000;
+  color: #28e05a;
+  font: inherit;
+  cursor: pointer;
+}
+
+.keygen__btn:hover,
+.keygen__btn:focus-visible {
+  background: #28e05a;
+  color: #000;
+}
+
+.keygen__scroll {
+  overflow: hidden;
+  border-top: 1px solid #1a8a3a;
+  border-bottom: 1px solid #1a8a3a;
+  white-space: nowrap;
+}
+
+.keygen__scroll span {
+  display: inline-block;
+  padding: 4px 0 4px 100%;
+  animation: dl-marquee 22s linear infinite;
+}
+
+.keygen__h {
+  margin: 12px 14px 4px;
+  font-size: 14px;
+}
+
+.keygen__eggs {
+  margin: 0;
+  padding: 0 14px;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.keygen__eggs input {
+  accent-color: #28e05a;
+}
+
+.keygen__eggs em {
+  opacity: 0.7;
+}
+
+.keygen__score {
+  margin: 8px 14px 14px;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keygen__scroll span {
+    animation: none;
+    padding-left: 0;
+    white-space: normal;
+  }
+}

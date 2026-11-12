@@ -1,8 +1,11 @@
+import { audio } from '../audio/engine.ts';
+import { KEYGEN } from '../content/keygen.ts';
 import type { Scene } from '../core/director.ts';
 import { collectDevice } from '../core/device.ts';
 import { reveal as readHidden } from '../core/stego.ts';
 import type { GameContext } from '../game.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
+import { openKeygen } from '../ui/keygen.ts';
 import { createPalFace } from '../ui/pal-face.ts';
 import { buildReveal, buildTimeline } from './reveal-model.ts';
 
@@ -18,6 +21,8 @@ export const reveal: Scene<GameContext> = {
   final: true,
   mount(ctx) {
     let alive = true;
+    let decoded = false;
+    let closeKeygen: (() => void) | undefined;
     const model = buildReveal(ctx.witness);
     const timeline = buildTimeline(ctx.witness.events);
 
@@ -110,6 +115,25 @@ export const reveal: Scene<GameContext> = {
         on: { click: () => location.reload() },
       });
 
+      const keygen = h('button', {
+        class: 'btn btn--keygen',
+        text: KEYGEN.open,
+        attrs: { type: 'button' },
+        on: {
+          click: () => {
+            const found = new Set<string>(['keygen']);
+            if (ctx.witness.events.some((e) => e.kind === 'consent' && e.data?.egg === true)) found.add('contract');
+            if (decoded) found.add('stego');
+            closeKeygen = openKeygen({
+              name: ctx.profile.name ?? 'Ty',
+              events: ctx.witness.events,
+              found,
+              onClose: () => audio.play('dark'),
+            });
+          },
+        },
+      });
+
       const nodes: (Node | false)[] = [
         h('h1', { text: 'Congratz, you’ve been scammed!' }),
         h('p', { text: `Trvalo to ${seconds} s a ${clicks} kliknutí. Nic z toho jsem si nemusel brát.` }),
@@ -139,6 +163,7 @@ export const reveal: Scene<GameContext> = {
         h('p', {
           text: 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
         }),
+        keygen,
         again,
       ];
       return nodes.filter((n): n is Node => n !== false);
@@ -161,6 +186,7 @@ export const reveal: Scene<GameContext> = {
           g.drawImage(bmp, 0, 0);
           const px = g.getImageData(0, 0, c.width, c.height);
           const text = readHidden({ data: px.data, width: px.width, height: px.height });
+          if (text) decoded = true;
           out.textContent = text
             ? `${text}\n\n— Tohle bylo schované v pixelech. Dropper by ten kód spustil; já ho jen ukazuju.`
             : 'V tomhle obrázku nic schovaného není.';
@@ -192,6 +218,7 @@ export const reveal: Scene<GameContext> = {
     void play();
     return () => {
       alive = false;
+      closeKeygen?.();
       face.stop();
     };
   },

@@ -3,7 +3,7 @@
  * by a synthesizer. Nothing is downloaded; it is all generated in the browser.
  */
 
-export type ThemeId = 'garden' | 'desk' | 'window' | 'tense' | 'cozy' | 'dark';
+export type ThemeId = 'garden' | 'desk' | 'window' | 'tense' | 'cozy' | 'dark' | 'keygen';
 
 export interface Theme {
   readonly bpm: number;
@@ -109,6 +109,20 @@ export const THEMES: Record<ThemeId, Theme> = {
     leadLevel: 0.5,
     drone: 0,
     sour: 35,
+  },
+  // The keygen outro: a fast 8-bit arpeggio, minor and bright, like the 90s cracks.
+  keygen: {
+    bpm: 152,
+    root: 57,
+    scale: MINOR,
+    melody: [0, 2, 4, 7, 4, 2, 7, 9, 5, 7, 9, 12, 9, 7, 6, 4],
+    chords: [
+      [0, 2, 4],
+      [5, 0, 2],
+    ],
+    lead: 'square',
+    leadLevel: 0.28,
+    drone: 0,
   },
 };
 
