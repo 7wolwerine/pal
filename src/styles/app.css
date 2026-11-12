@@ -503,7 +503,7 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 46px;
   padding: 12px;
   border: 3px solid var(--line);
   border-radius: var(--radius);
@@ -511,14 +511,21 @@ body {
 }
 
 .cell {
+  position: relative;
   display: grid;
   justify-items: center;
   align-content: center;
-  gap: 10px;
-  min-height: 92px;
-  padding: 10px 8px;
+  gap: 8px;
+  min-height: 96px;
+  padding: 16px 8px 10px;
+  border: 2px solid transparent;
   border-radius: var(--radius-sm);
   background: var(--win);
+  transition: border-color 200ms;
+}
+
+.cell--done {
+  border-color: var(--ok);
 }
 
 .cell--kicked {
@@ -526,9 +533,12 @@ body {
 }
 
 .lamp {
-  width: 12px;
-  height: 12px;
-  border: 3px solid var(--line);
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--line);
   border-radius: 50%;
   transition: background-color 160ms, border-color 160ms;
 }
@@ -542,76 +552,246 @@ body {
   animation: pulse 500ms ease-in-out 3;
 }
 
-.slider {
-  width: 100%;
-  height: 32px;
-  margin: 0;
-  accent-color: var(--btn);
-  background: linear-gradient(var(--line), var(--line)) center / 3px 18px no-repeat;
-  cursor: grab;
-}
-
-.toggle {
-  width: 64px;
-  height: 34px;
-  padding: 4px;
-  border: 3px solid var(--line);
-  border-radius: 999px;
-  background: var(--pick);
+.cell button {
+  color: inherit;
+  font: inherit;
   cursor: pointer;
-  transition: background-color 160ms;
 }
 
-.toggle__knob {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--ink-soft);
-  transition: transform 160ms cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-
-.toggle[aria-checked='true'] {
-  background: var(--bar);
-}
-
-.toggle[aria-checked='true'] .toggle__knob {
-  transform: translateX(30px);
-}
-
-.dial {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  padding: 0;
-  border: 3px solid var(--line);
-  border-radius: 50%;
-  background: var(--pick);
-  cursor: pointer;
-  transform: rotate(calc(var(--turns, 0) * 45deg));
-  transition: transform 220ms cubic-bezier(0.2, 1.4, 0.4, 1);
-}
-
-.dial__hand {
-  position: absolute;
-  left: 50%;
-  top: 4px;
-  width: 6px;
-  height: 16px;
-  margin-left: -3px;
-  border-radius: 3px;
-  background: var(--ink-soft);
-}
-
-.slider:focus-visible,
-.toggle:focus-visible,
-.dial:focus-visible,
+.cell button:focus-visible,
 .lampbtn:focus-visible,
 .agree:focus-visible,
 .doc:focus-visible {
   outline: 3px solid var(--ink-soft);
   outline-offset: 2px;
 }
+
+/* A progress bar stuck at 99 %. */
+.bar {
+  position: relative;
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background: var(--field);
+}
+
+.bar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: repeating-linear-gradient(45deg, var(--btn) 0 6px, #e27aa0 6px 12px);
+  transition: width 500ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.bar--full .bar__fill {
+  background: var(--ok);
+}
+
+.bar__text {
+  position: relative;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* A bell with unread notifications. */
+.bell {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  padding: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft) !important;
+}
+
+.bell svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 12%;
+}
+
+.bell--ring svg {
+  animation: ring 900ms ease-in-out;
+}
+
+.bell__badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--danger);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+/* A checklist with exactly one box left unticked. */
+.checks {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 2px;
+  border: 0;
+  background: transparent;
+  font-size: 12px !important;
+  font-weight: 700;
+  text-align: left;
+}
+
+.check__box {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--ink-soft);
+  border-radius: 3px;
+  background: var(--field);
+}
+
+.check[aria-checked='true'] .check__box {
+  border-color: var(--ok);
+  background: var(--ok);
+  box-shadow: inset 0 0 0 2px var(--field);
+}
+
+.check[aria-checked='false'] {
+  color: var(--danger) !important;
+}
+
+/* A picture hanging crooked on its nail. */
+.frame {
+  position: relative;
+  width: 60px;
+  height: 54px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.frame__nail {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.frame__pic {
+  position: absolute;
+  inset: 6px 6px 4px;
+  border: 4px solid #a0703f;
+  border-radius: 2px;
+  background: linear-gradient(#8fd3f4 0 55%, #7cc66b 55%);
+  transform: rotate(var(--tilt, 0deg));
+  transform-origin: 50% -2px;
+  transition: transform 260ms cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+/* A row of status LEDs, one of them dark. */
+.leds {
+  display: flex;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #2e3243;
+}
+
+.led {
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: 2px solid #1b1e2a;
+  border-radius: 50%;
+  background: #c98a1e;
+}
+
+.led--on {
+  background: #3ee08a;
+  box-shadow: 0 0 6px #3ee08a;
+}
+
+/* A cable hanging out of its port. */
+.cable {
+  position: relative;
+  width: 66px;
+  height: 52px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.cable__port {
+  position: absolute;
+  left: 6px;
+  top: 14px;
+  width: 22px;
+  height: 16px;
+  border-radius: 3px;
+  background: #3a3e4c;
+  box-shadow: inset 0 0 0 3px #555a6b;
+}
+
+.cable__link {
+  position: absolute;
+  left: 8px;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6a6f7e;
+}
+
+.cable__wire {
+  position: absolute;
+  left: 46px;
+  top: 30px;
+  width: 18px;
+  height: 18px;
+  border-bottom: 4px solid #444a58;
+  border-left: 4px solid #444a58;
+  border-radius: 0 0 0 10px;
+}
+
+.cable__plug {
+  position: absolute;
+  left: 34px;
+  top: 26px;
+  width: 18px;
+  height: 12px;
+  border-radius: 2px;
+  background: #c9c9d1;
+  box-shadow: inset -4px 0 0 #9aa3ad;
+  transform: rotate(28deg);
+  transition: left 260ms cubic-bezier(0.3, 1.4, 0.4, 1), top 260ms, transform 260ms;
+}
+
+.cable--in .cable__plug {
+  left: 16px;
+  top: 16px;
+  transform: rotate(0deg);
+}
+
+.cable--in .cable__link {
+  background: #3ee08a;
+  box-shadow: 0 0 6px #3ee08a;
+}
+
+/* ---------- BUG ---------- */
 
 .bug {
   position: absolute;
@@ -621,27 +801,53 @@ body {
   width: 56px;
   height: 56px;
   pointer-events: none;
-  transition: transform 450ms cubic-bezier(0.5, 0, 0.3, 1), opacity 900ms;
+  transition: opacity 600ms;
+  will-change: transform;
+}
+
+.bug__flip {
+  width: 100%;
+  height: 100%;
 }
 
 .bug__body {
   width: 100%;
   height: 100%;
-  animation: bob 600ms steps(2, jump-none) infinite;
+  transform-origin: 50% 100%;
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+.bug__sprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 .bug__body--panic {
   animation: tremble 90ms steps(2) infinite;
 }
 
-/* A little speech bubble that sits above the beetle wherever it goes. */
+.bug__body--cry {
+  animation: sob 600ms ease-in-out infinite;
+}
+
+.bug__body--land {
+  animation: land 220ms ease-out;
+}
+
+.bug__flip--spin .bug__body {
+  animation: flung 700ms ease-out;
+}
+
+/* A little speech bubble that sits above BUG wherever it goes. */
 .bug__bubble {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 4px);
+  bottom: calc(100% + 2px);
   transform: translateX(-50%);
   width: max-content;
-  max-width: 120px;
+  max-width: 130px;
   padding: 3px 8px;
   border: 2px solid var(--line);
   border-radius: 10px;
@@ -669,18 +875,9 @@ body {
 
 .bug--gone {
   opacity: 0;
-  transform: translateY(8px) scale(0.6) !important;
 }
 
-.bug--flung .bug__body {
-  animation: flung 550ms ease-out;
-}
-
-/* A transparent catch-all over the grabbed control, clicked to shove the beetle. */
-.cell {
-  position: relative;
-}
-
+/* A transparent catch-all over the grabbed control, clicked to shove BUG off. */
 .shove {
   position: absolute;
   inset: 0;
@@ -697,15 +894,50 @@ body {
   outline-offset: -3px;
 }
 
+@keyframes breathe {
+  50% {
+    transform: scale(1.03, 0.97);
+  }
+}
+
+@keyframes land {
+  0% {
+    transform: scale(1.25, 0.72);
+  }
+  60% {
+    transform: scale(0.92, 1.08);
+  }
+}
+
+@keyframes sob {
+  50% {
+    transform: translateY(1px) scale(1.03, 0.95);
+  }
+}
+
+@keyframes ring {
+  10%,
+  30% {
+    transform: rotate(14deg);
+  }
+  20%,
+  40% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+}
+
 @keyframes flung {
   0% {
-    transform: translateY(0) rotate(0deg);
+    transform: rotate(0deg);
   }
-  45% {
-    transform: translateY(-22px) rotate(220deg);
+  50% {
+    transform: rotate(220deg) scale(0.9);
   }
   100% {
-    transform: translateY(0) rotate(360deg);
+    transform: rotate(360deg);
   }
 }
 
@@ -722,6 +954,16 @@ body {
   from {
     opacity: 0;
     transform: translateX(-50%) scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bug__body,
+  .bug__body--panic,
+  .bug__body--cry,
+  .bug__body--land,
+  .bell--ring svg {
+    animation: none;
   }
 }
 

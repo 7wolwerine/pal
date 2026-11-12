@@ -1,10 +1,12 @@
 /**
- * State of the fidget panel: a few controls that are slightly off and beg to
- * be straightened, and the plan for how often BUG knocks them out again.
- * No DOM in here, so the rules can be unit tested.
+ * The fidget panel: six things that are each *almost* right, the way a
+ * professional's eye cannot leave them — a progress bar stuck at 99 %, unread
+ * notifications, one unticked box in a checklist, a picture hanging crooked,
+ * one dark LED in a row, a cable hanging out of its port. Plus the plan for
+ * how often BUG knocks them out again. No DOM in here, so it is testable.
  */
 
-export type ControlKind = 'slider' | 'toggle' | 'dial';
+export type ControlKind = 'progress' | 'badge' | 'checks' | 'tilt' | 'leds' | 'plug';
 
 export interface Control {
   readonly id: string;
@@ -12,44 +14,84 @@ export interface Control {
   value: number;
 }
 
-export const SLIDER_TARGET = 50;
-export const SLIDER_TOLERANCE = 4;
-export const DIAL_STEPS = 8;
+export const CHECK_COUNT = 4;
+export const LED_COUNT = 6;
+export const TILT_MAX = 3;
+const ALL_CHECKS = (1 << CHECK_COUNT) - 1;
+const ALL_LEDS = (1 << LED_COUNT) - 1;
 
 /** How many controls BUG knocks out after the first, second and third tidy-up. */
 export const SABOTAGE_PLAN = [3, 2, 1] as const;
 
+/** The value at which a control of each kind is "done". */
+export function alignedValue(kind: ControlKind): number {
+  switch (kind) {
+    case 'progress':
+      return 100;
+    case 'badge':
+      return 0;
+    case 'checks':
+      return ALL_CHECKS;
+    case 'tilt':
+      return 0;
+    case 'leds':
+      return ALL_LEDS;
+    case 'plug':
+      return 1;
+  }
+}
+
 export function isAligned(control: Control): boolean {
-  switch (control.kind) {
-    case 'slider':
-      return Math.abs(control.value - SLIDER_TARGET) <= SLIDER_TOLERANCE;
-    case 'toggle':
-      return control.value === 1;
-    case 'dial':
-      return control.value === 0;
+  return control.value === alignedValue(control.kind);
+}
+
+/** What one click does to a control. `part` picks the checkbox or LED clicked. */
+export function poke(kind: ControlKind, value: number, part = 0): number {
+  switch (kind) {
+    case 'progress':
+      return 100;
+    case 'badge':
+      return Math.max(0, value - 1);
+    case 'checks':
+      return value | (1 << part);
+    case 'tilt':
+      return value - Math.sign(value);
+    case 'leds':
+      return value | (1 << part);
+    case 'plug':
+      return 1;
   }
 }
 
 function misalignedValue(kind: ControlKind, random: () => number): number {
+  const pick = (n: number): number => Math.min(n - 1, Math.floor(random() * n));
   switch (kind) {
-    case 'slider':
-      return random() < 0.5 ? Math.round(8 + random() * 25) : Math.round(67 + random() * 25);
-    case 'toggle':
+    case 'progress':
+      return 97 + pick(3);
+    case 'badge':
+      return 1 + pick(4);
+    case 'checks':
+      return ALL_CHECKS & ~(1 << pick(CHECK_COUNT));
+    case 'tilt': {
+      const steps = 1 + pick(TILT_MAX);
+      return random() < 0.5 ? -steps : steps;
+    }
+    case 'leds':
+      return ALL_LEDS & ~(1 << pick(LED_COUNT));
+    case 'plug':
       return 0;
-    case 'dial':
-      return 1 + Math.floor(random() * (DIAL_STEPS - 1));
   }
 }
 
 export class FidgetModel {
+  // Every one of them is nearly done. Nearly is what itches.
   readonly controls: Control[] = [
-    { id: 's1', kind: 'slider', value: 18 },
-    { id: 'd1', kind: 'dial', value: 3 },
-    { id: 't1', kind: 'toggle', value: 0 },
-    // One control starts out right. An almost finished whole pulls harder than a mess.
-    { id: 't2', kind: 'toggle', value: 1 },
-    { id: 'd2', kind: 'dial', value: 6 },
-    { id: 's2', kind: 'slider', value: 83 },
+    { id: 'progress', kind: 'progress', value: 99 },
+    { id: 'badge', kind: 'badge', value: 3 },
+    { id: 'checks', kind: 'checks', value: ALL_CHECKS & ~(1 << 2) },
+    { id: 'tilt', kind: 'tilt', value: 2 },
+    { id: 'leds', kind: 'leds', value: ALL_LEDS & ~(1 << 3) },
+    { id: 'plug', kind: 'plug', value: 0 },
   ];
   #rounds = 0;
 
@@ -63,11 +105,18 @@ export class FidgetModel {
     this.get(id).value = value;
   }
 
+  /** Applies one player click; returns true if that click finished this control. */
+  poke(id: string, part = 0): boolean {
+    const c = this.get(id);
+    const was = isAligned(c);
+    c.value = poke(c.kind, c.value, part);
+    return !was && isAligned(c);
+  }
+
   get allAligned(): boolean {
     return this.controls.every(isAligned);
   }
 
-  /** Number of times the player has straightened everything. */
   get rounds(): number {
     return this.#rounds;
   }
@@ -77,7 +126,6 @@ export class FidgetModel {
     return this.#rounds > SABOTAGE_PLAN.length;
   }
 
-  /** Call when everything is aligned. Returns the number of the round just completed. */
   completeRound(): number {
     if (!this.allAligned) throw new Error('Cannot complete a round while something is misaligned.');
     return ++this.#rounds;
@@ -89,7 +137,7 @@ export class FidgetModel {
     const pool = [...this.controls];
     const hits: { id: string; value: number }[] = [];
     while (hits.length < count && pool.length > 0) {
-      const [control] = pool.splice(Math.floor(random() * pool.length), 1);
+      const [control] = pool.splice(Math.min(pool.length - 1, Math.floor(random() * pool.length)), 1);
       if (control) hits.push({ id: control.id, value: misalignedValue(control.kind, random) });
     }
     return hits;

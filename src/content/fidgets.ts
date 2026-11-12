@@ -1,14 +1,27 @@
 export const FIDGETS = {
   /** A remark, not an instruction. Nobody ever tells the player to tidy up. */
-  remark: 'Jé. Tady to někdo pěkně rozházel.',
-  controlLabels: { slider: 'Posuvník', toggle: 'Přepínač', dial: 'Kolečko' },
+  remark: 'Hm. Skoro hotovo… skoro.',
+  /** PAL laughs the beetle off, every time. */
+  palMocks: ['Nevšímej si ho. Je to jen brouk.', 'Ten je zase hysterický, co?', 'Ty na něj máš. Pokračuj.'],
+  controlLabels: {
+    progress: 'Ukazatel průběhu',
+    badge: 'Neprečtená upozornění',
+    checks: 'Kontrolní seznam',
+    tilt: 'Obrázek visí nakřivo',
+    leds: 'Kontrolky',
+    plug: 'Vytažený kabel',
+  },
+  checkItems: ['Zálohy', 'Aktualizace', 'Antivirus', 'Firewall'],
+  led: (n: number) => `Kontrolka ${n}`,
 
   /** The beetle tells the truth the whole time. Nobody listens to a beetle. */
   bug: [
     { before: 'Hej! Co to děláš?!', after: 'Tak… a nesahej na to.' },
-    { before: 'Přestaň, prosím tě!', after: 'Řekl ti vůbec někdo, ať to rovnáš?' },
+    { before: 'Přestaň, prosím tě!', after: 'Řekl ti vůbec někdo, ať to opravuješ?' },
     { before: 'Ne! To fakt nedělej!', after: 'Naposledy. Prosím.' },
   ],
+  /** Desperate pleas when the player fixes something right in front of it. */
+  bugPlead: ['Ne, nech to!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Prosím… ne.', 'To není tvoje věc!'],
   /** Shown while the beetle clutches its head and undoes the player's work. */
   bugPanic: ['Néé!', 'Nesahej!', 'Pusť to!', 'Au!'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */

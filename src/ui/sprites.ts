@@ -138,36 +138,6 @@ export const SPRITES = {
     '....bbbb....',
     '............',
   ],
-  // Anthrobug: an upright little beetle with a face, arms and feet.
-  bug: [
-    '...k....k...',
-    '....k..k....',
-    '....dkkd....',
-    '...dkkkkd...',
-    '..dkwbbwkd..',
-    '..dkbbbbkd..',
-    '..dkbkkbkd..',
-    'k.dbbbbbbd.k',
-    'k.dbbbbbbd.k',
-    '..dbbbbbbd..',
-    '...dkbbkd...',
-    '...kk..kk...',
-  ],
-  // Arms thrown up to its head, antennae splayed, mouth open in alarm.
-  bugPanic: [
-    '.k........k.',
-    '..k......k..',
-    '..kdkkkkdk..',
-    '.kkdkkkkdkk.',
-    '..dkkbbkkd..',
-    '..dkbbbbkd..',
-    '..dkboobkd..',
-    '...dboobd...',
-    '..dbbbbbbd..',
-    '..dbbbbbbd..',
-    '...dkbbkd...',
-    '...kk..kk...',
-  ],
 } as const satisfies Record<string, readonly string[]>;
 
 export type SpriteId = keyof typeof SPRITES;
@@ -194,10 +164,6 @@ export const FRAMES: Readonly<Record<SpriteId, { blink: Patch; quirk: Patch }>> 
   cat: { blink: { 5: '.oooooooooo.' }, quirk: { 0: '..........o.', 1: '.o.......oo.' } },
   // Tongue out.
   dog: { blink: { 4: 'ddbbbbbbbbdd' }, quirk: { 10: '....brrb....' } },
-  // Blinks, and waves its antennae.
-  bug: { blink: { 4: '..dkkbbkkd..' }, quirk: { 0: '..k......k..', 1: '...k....k...' } },
-  // Squints harder, antennae quiver.
-  bugPanic: { blink: { 4: '..dkkkkkkd..' }, quirk: { 0: '..k......k..' } },
 };
 
 /** The rows of one frame of a sprite. */
