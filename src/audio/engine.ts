@@ -122,6 +122,28 @@ class AudioEngine {
     this.#pluck(out, midiToHz(96), t0 + 0.2, 0.25, 'sine', 0.25);
   }
 
+  /** Glass giving a little under a knock: a short, gritty crunch. */
+  crunch(): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.005;
+    const length = Math.floor(ctx.sampleRate * 0.12);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (Math.random() < 0.3 ? 1 : 0.2) * (1 - i / length) ** 2;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const high = ctx.createBiquadFilter();
+    high.type = 'highpass';
+    high.frequency.value = 1800;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.55;
+    noise.connect(high).connect(gain).connect(out);
+    noise.start(t0);
+    this.#pluck(out, midiToHz(96 + Math.floor(Math.random() * 4)), t0, 0.08, 'triangle', 0.25);
+  }
+
   /** A hammer tap on wood. */
   knock(): void {
     const ctx = this.#ctx;

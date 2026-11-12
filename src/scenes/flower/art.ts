@@ -15,7 +15,7 @@ export const BUBBLE_RECT: Rect = { x: 96, y: 4, w: 62, h: 34 };
 /** Base of the plant, on the soil in the pot. */
 const PLANT_X = 80;
 const SOIL_Y = 66;
-const TABLE_Y = 79;
+export const TABLE_Y = 79;
 
 /** How long the watering and the growing take, in ms. */
 export const WATER_MS = 1300;
@@ -25,6 +25,10 @@ export interface FlowerArt {
   readonly cracks: number;
   readonly shatterAt: number | undefined;
   readonly waterAt: number | undefined;
+  /** True once it has bloomed: a soft glow and stars around it, for good. */
+  readonly bloomed?: boolean;
+  /** Where to twinkle a hint, if anywhere. */
+  readonly hint?: 'dome' | 'can';
   readonly motion: boolean;
 }
 
@@ -37,11 +41,51 @@ function noise(n: number): number {
 
 export function paintFlower(g: G, t: number, s: FlowerArt): void {
   paintRoom(g);
+  if (s.bloomed) paintGlow(g, t, s.motion);
   paintPot(g);
   paintPlant(g, t, s);
   if (s.shatterAt === undefined) paintDome(g, s.cracks);
   else paintShards(g, t - s.shatterAt, s.motion);
   paintCan(g, t, s);
+  if (s.bloomed && s.motion) paintStars(g, t);
+  if (s.hint && s.motion) twinkle(g, s.hint === 'dome' ? 92 : 124, s.hint === 'dome' ? 24 : 60, t);
+}
+
+/** A soft pink glow behind the bloomed flower. */
+function paintGlow(g: G, t: number, motion: boolean): void {
+  const pulse = motion ? 0.06 * Math.sin(t / 500) : 0;
+  for (let r = 22; r > 4; r -= 3) {
+    g.globalAlpha = 0.05 + pulse * 0.3 + (22 - r) * 0.008;
+    for (let y = -r; y <= r; y++) {
+      const half = Math.round(Math.sqrt(r * r - y * y));
+      px(g, '#ffd1e6', PLANT_X - half, 44 + y, half * 2, 1);
+    }
+  }
+  g.globalAlpha = 1;
+}
+
+/** Little four-pointed stars drifting around the flower, for as long as it lives. */
+function paintStars(g: G, t: number): void {
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + t / 2400;
+    const r = 16 + 4 * Math.sin(t / 700 + i);
+    const x = Math.round(PLANT_X + Math.cos(a) * r);
+    const y = Math.round(44 + Math.sin(a) * r * 0.75);
+    const size = (Math.floor(t / 260) + i) % 3;
+    const c = i % 3 === 0 ? '#ffd75e' : i % 3 === 1 ? '#ffffff' : '#ff9cc8';
+    px(g, c, x, y - size, 1, size * 2 + 1);
+    px(g, c, x - size, y, size * 2 + 1, 1);
+  }
+}
+
+function twinkle(g: G, x: number, y: number, t: number): void {
+  const cycle = t % 1400;
+  if (cycle > 800) return;
+  const size = cycle < 400 ? Math.round((cycle / 400) * 4) : Math.round(((800 - cycle) / 400) * 4);
+  if (size <= 0) return;
+  px(g, '#fff6c8', x, y - size, 1, size * 2 + 1);
+  px(g, '#fff6c8', x - size, y, size * 2 + 1, 1);
+  px(g, '#ffffff', x, y, 1, 1);
 }
 
 function paintRoom(g: G): void {
@@ -181,7 +225,7 @@ function paintShards(g: G, since: number, motion: boolean): void {
     g.globalAlpha = 1;
   }
   const time = motion ? since : 5000;
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 64; i++) {
     const x0 = 60 + noise(i) * 40;
     const y0 = 22 + noise(i + 50) * 50;
     const vx = (noise(i + 100) - 0.5) * 0.09;
@@ -195,7 +239,8 @@ function paintShards(g: G, since: number, motion: boolean): void {
       x = x0 + vx * land;
       y = TABLE_Y - 1;
     }
-    px(g, i % 3 ? '#cfeeff' : '#ffffff', x, y, i % 2 ? 2 : 1, i % 2 ? 1 : 2);
+    const size = 1 + (i % 4 === 0 ? 2 : i % 3 === 0 ? 1 : 0);
+    px(g, i % 3 ? '#cfeeff' : '#ffffff', x, y, size, i % 2 ? 1 : size);
   }
 }
 

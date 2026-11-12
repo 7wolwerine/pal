@@ -4087,3 +4087,20 @@ body.on-pc {
 .shelter__pick:hover {
   background: var(--pick);
 }
+
+/* A small button that lives inside a picture, for the quiet way out. */
+.scene__chip {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 4;
+  padding: 4px 12px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 253, 248, 0.92);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: var(--cursor-hand);
+}
