@@ -1067,3 +1067,95 @@ body {
   white-space: nowrap;
   animation: rise 260ms ease-out both;
 }
+
+/* ---------- fidgets: the fallen cog ---------- */
+
+.gear-socket {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  color: var(--line);
+  opacity: 0.45;
+}
+
+.gear-socket svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gear-socket--filled {
+  opacity: 0;
+}
+
+.gear {
+  display: block;
+  width: 38px;
+  height: 38px;
+  margin: 10px auto 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.gear svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.gear--fallen {
+  animation: gear-wobble 1.8s ease-in-out infinite;
+}
+
+.gear--fallen:hover {
+  color: var(--btn);
+}
+
+.gear--placing {
+  animation: gear-fly 620ms cubic-bezier(0.3, 0.9, 0.3, 1) forwards;
+}
+
+.gear-hint {
+  margin: 4px 2px 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.gear:focus-visible {
+  outline: 3px solid var(--ink-soft);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+@keyframes gear-wobble {
+  0%, 100% {
+    transform: rotate(-12deg);
+  }
+  50% {
+    transform: rotate(8deg) translateY(-2px);
+  }
+}
+
+@keyframes gear-fly {
+  to {
+    transform: translate(var(--gx, 0), var(--gy, 0)) rotate(360deg);
+    color: var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gear--fallen,
+  .gear--placing {
+    animation: none;
+  }
+  .gear--placing {
+    transform: translate(var(--gx, 0), var(--gy, 0));
+  }
+}

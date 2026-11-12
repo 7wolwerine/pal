@@ -11,6 +11,33 @@ function alignedValue(kind: ControlKind): number {
   return kind === 'slider' ? SLIDER_TARGET : kind === 'toggle' ? 1 : 0;
 }
 
+/** An 8-tooth cog as inline SVG. */
+function gearSvg(): SVGSVGElement {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  let d = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    const b = a + Math.PI / 8;
+    const r1 = 11;
+    const r2 = 7.5;
+    const p = (r: number, t: number) => `${(12 + r * Math.cos(t)).toFixed(1)} ${(12 + r * Math.sin(t)).toFixed(1)}`;
+    d += `${i === 0 ? 'M' : 'L'} ${p(r1, a)} L ${p(r1, b)} L ${p(r2, b)} L ${p(r2, a + Math.PI / 4)} `;
+  }
+  const cog = document.createElementNS(NS, 'path');
+  cog.setAttribute('d', `${d}Z`);
+  cog.setAttribute('fill', 'currentColor');
+  const hole = document.createElementNS(NS, 'circle');
+  hole.setAttribute('cx', '12');
+  hole.setAttribute('cy', '12');
+  hole.setAttribute('r', '3');
+  hole.setAttribute('fill', 'var(--pick)');
+  svg.append(cog, hole);
+  return svg;
+}
+
 interface Cell {
   readonly el: HTMLElement;
   /** Makes the control on screen match the model. */
@@ -62,9 +89,16 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     let roundStartedAt = startedAt;
     let touched = false;
     let busy = false;
+    // A cog has fallen out from under the panel and has to be put back too.
+    let gearPlaced = false;
 
     const beetle = new Beetle();
     const panel = h('div', { class: 'fidgets' });
+
+    /** Everything is tidy once the controls are aligned and the cog is back. */
+    const maybeComplete = (): void => {
+      if (!busy && gearPlaced && model.allAligned) void tidied();
+    };
 
     const change = (id: string, value: number): void => {
       if (!touched) {
@@ -79,7 +113,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       witness.tally('fidget');
       model.set(id, value);
       cells.get(id)?.sync();
-      if (!busy && model.allAligned) void tidied();
+      maybeComplete();
     };
 
     model.controls.forEach((control, index) => {
@@ -87,8 +121,32 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       cells.set(control.id, cell);
       panel.append(cell.el);
     });
-    panel.append(beetle.el);
-    stage.replaceChildren(panel);
+    const socket = h('span', { class: 'gear-socket', attrs: { 'aria-hidden': 'true' } }, gearSvg());
+    panel.append(socket, beetle.el);
+
+    const gear = h('button', {
+      class: 'gear gear--fallen',
+      attrs: { type: 'button', 'aria-label': 'Vrátit spadlé kolečko' },
+    }, gearSvg());
+    const gearHint = h('p', { class: 'gear-hint', text: 'Jedno kolečko vypadlo.' });
+    gear.addEventListener('click', () => {
+      if (gearPlaced) return;
+      gearPlaced = true;
+      witness.record({ scene: SCENE, kind: 'gear-back', trick: 'completion-urge' });
+      // Fly the cog from where it lies up into its empty socket, then spin it.
+      const from = gear.getBoundingClientRect();
+      const to = socket.getBoundingClientRect();
+      gear.style.setProperty('--gx', `${Math.round(to.left - from.left + (to.width - from.width) / 2)}px`);
+      gear.style.setProperty('--gy', `${Math.round(to.top - from.top + (to.height - from.height) / 2)}px`);
+      gear.classList.remove('gear--fallen');
+      gear.classList.add('gear--placing');
+      gear.disabled = true;
+      gearHint.remove();
+      socket.classList.add('gear-socket--filled');
+      window.setTimeout(() => maybeComplete(), 650);
+    });
+
+    stage.replaceChildren(panel, gear, gearHint);
     for (const cell of cells.values()) cell.sync();
     requestAnimationFrame(() => perch(null));
 
@@ -156,7 +214,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       roundStartedAt = performance.now();
       busy = false;
       // A fast player may have fixed everything again while BUG was still at it.
-      if (model.allAligned) void tidied();
+      maybeComplete();
     }
 
     /** The beetle grabs one control; the player shoves it off by clicking. */
