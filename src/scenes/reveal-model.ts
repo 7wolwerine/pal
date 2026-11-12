@@ -36,6 +36,7 @@ const FIELD_LABELS: Record<string, string> = {
   email: 'E-mail',
   role: 'Kým jsi',
   firstPet: 'První mazlíček',
+  street: 'Ulice z dětství',
   signature: 'Tvůj podpis',
 };
 
@@ -140,6 +141,7 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}.`,
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
   firstPet: (v) => `Za pár bodů jsi mi prozradil prvního mazlíčka: ${v}. Kontrolní otázka k heslu.`,
+  street: (v) => `Za pár bodů jsi mi řekl, v jaké ulici jsi vyrůstal: ${v}. Kontrolní otázka k heslu.`,
 };
 
 /** Lines said once, the first time their event happens. */
@@ -175,7 +177,7 @@ const ONCE: Record<string, string> = {
   'flower-thanks': 'Kytka ti poděkovala za něco, co nemohla vidět.',
   'flower-left': 'Kytku pod sklem jsi nechal být.',
   'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
-  'gold-open': 'Zlatou truhlu sis zaplatil odpovědí o sobě.',
+  'gold-open': 'Zlatou truhlu sis zaplatil něčím o sobě. A pak tě odměnila, ať příště dáš zase.',
   'declined-points': 'Body za odpověď jsi odmítl.',
   'reflex-close': 'Zavřel jsi okno křížkem. Ten křížek sdílel tvoje data.',
   'popup-yes': 'Odsouhlasil jsi sdílení s 312 partnery.',

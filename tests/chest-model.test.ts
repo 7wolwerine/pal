@@ -1,41 +1,42 @@
 import { describe, expect, it } from 'vitest';
-import { ANSWER_POINTS, CHEST_COST, ChestModel, GOLD_COST, REWARDS, START_POINTS } from '../src/scenes/chest-model.ts';
+import { ANSWER_POINTS, ChestModel, GOLD_GOAL, REWARDS, TREASURE } from '../src/scenes/chest-model.ts';
 
 describe('ChestModel', () => {
-  it('affords exactly the small chests, and they give almost nothing, then a key', () => {
+  it('pays real, growing wins and then a near miss, leaving the goal just out of reach', () => {
     const m = new ChestModel();
-    expect(m.points).toBe(START_POINTS);
     const got = [m.open(), m.open(), m.open()];
     expect(got).toEqual([...REWARDS]);
-    expect(m.hasKey).toBe(true);
-    expect(m.points).toBe(START_POINTS - REWARDS.length * CHEST_COST + 1);
     expect(m.open()).toBeNull();
+    expect(m.points).toBeLessThan(GOLD_GOAL);
+    expect(m.missing).toBeGreaterThan(0);
+    expect(m.missing).toBeLessThanOrEqual(ANSWER_POINTS);
+    expect(m.canOpenGold).toBe(false);
   });
 
-  it('leaves the gold chest out of reach until the player pays with an answer', () => {
+  it('opens the golden chest after an answer, and it really pays', () => {
     const m = new ChestModel();
-    while (m.open()) {
+    while (m.open() !== null) {
       /* open them all */
     }
-    expect(m.canOpenGold).toBe(false);
-    expect(m.openGold()).toBe(false);
-    m.earn(ANSWER_POINTS);
-    expect(m.canOpenGold).toBe(true);
+    m.answer();
+    expect(m.unlockedBy).toBe('answer');
+    const before = m.points;
     expect(m.openGold()).toBe(true);
-    expect(m.goldOpened).toBe(true);
-    expect(m.points).toBe(1 + ANSWER_POINTS - GOLD_COST);
+    expect(m.points).toBe(before + TREASURE);
     expect(m.openGold()).toBe(false);
   });
 
-  it('needs the key for the gold chest', () => {
+  it('opens with the code from the card straight away', () => {
     const m = new ChestModel();
-    m.earn(1000);
-    expect(m.canOpenGold).toBe(false);
+    m.card();
+    expect(m.progress).toBe(1);
+    expect(m.openGold()).toBe(true);
+    expect(m.unlockedBy).toBe('card');
   });
 
-  it('ignores negative earnings', () => {
+  it('ignores negative answers', () => {
     const m = new ChestModel();
-    m.earn(-50);
-    expect(m.points).toBe(START_POINTS);
+    m.answer(-50);
+    expect(m.points).toBe(0);
   });
 });

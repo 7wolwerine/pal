@@ -19,6 +19,8 @@ export interface Profile {
   role?: RoleId;
   /** The e-mail address given for the prize. Kept in memory only, never sent. */
   email?: string;
+  /** Points collected in the game (chests and the like); they add up to the final score. */
+  points?: number;
   /** How much each answer so far leaned towards each role. The strongest one wins the certificate. */
   tendency?: Partial<Record<RoleId, number>>;
 }
