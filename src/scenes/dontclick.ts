@@ -38,7 +38,7 @@ export const dontclick: GameScene = {
       button,
     );
     const led = h('span', { class: 'guard__led', attrs: { 'aria-hidden': 'true' } });
-    const guardText = h('span', { text: DONTCLICK.guardOn });
+    const guardText = h('span', { class: 'sr-only', text: DONTCLICK.guardOn });
     const guard = h('p', { class: 'guard', attrs: { role: 'status' } }, led, guardText);
     const board = h(
       'div',
@@ -77,11 +77,8 @@ export const dontclick: GameScene = {
     }, LEAVE_AFTER_MS);
 
     async function intro(): Promise<void> {
-      for (const line of DONTCLICK.intro) {
-        if (!alive || model.presses > 0) return;
-        await pal.say(line);
-        await sleep(900);
-      }
+      await pal.say(DONTCLICK.intro);
+      await sleep(1200);
       if (alive && model.presses === 0) beetle.say('');
     }
 
@@ -96,26 +93,36 @@ export const dontclick: GameScene = {
       void (result === 'break' ? breakDown() : rehang(model.presses - 1));
     });
 
-    /** BUG scolds the player, then climbs up and hangs the button back on its nail. */
+    /**
+     * Everything happens right at the button, one thing at a time: BUG runs
+     * over, grumbles and stamps, then hauls the button back up with real
+     * effort. PAL says nothing meanwhile, so nothing competes for attention.
+     */
     async function rehang(i: number): Promise<void> {
-      void pal.say(DONTCLICK.palPress[i] ?? '');
+      await sleep(350);
       await beetle.moveTo(...besideFallen());
       if (!alive) return;
-      const angry = i >= 2;
-      beetle.setMood(angry ? 'angry' : 'panic');
+      beetle.grumble();
+      await beetle.stomp(3);
+      if (!alive) return;
       beetle.say(DONTCLICK.bugRehang[i] ?? '');
-      if (angry) await beetle.stomp(2);
-      await sleep(angry ? 900 : 1100);
+      beetle.setMood(i >= 1 ? 'angry' : 'panic');
+      await sleep(1300);
       if (!alive) return;
       beetle.say('');
-      beetle.setMood('stand');
+      await beetle.strain(900);
+      if (!alive) return;
       const climb = beetle.moveTo(...atNail());
       await sleep(180);
       hang.classList.remove('dontclick__hang--fallen');
       await climb;
-      await sleep(250);
+      await beetle.strain(600);
       if (!alive) return;
+      beetle.setMood('stand');
       await beetle.moveTo(...guardSpot());
+      beetle.grumble();
+      await sleep(700);
+      beetle.say('');
       busy = false;
       button.removeAttribute('aria-disabled');
     }

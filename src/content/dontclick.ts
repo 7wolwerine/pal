@@ -5,34 +5,17 @@
  * The button is the last safeguard. Pressing it enough times switches it off.
  */
 export const DONTCLICK = {
-  /** PAL sets the scene before the board appears. */
-  intro: [
-    'Vidíš to tlačítko? To tam pověsili oni.',
-    'Ti, co píšou pravidla. Myslí si, že nevíme, co děláme.',
-    'Ale my dva víme své. Že jo?',
-  ],
+  /** PAL's one line, said before anything happens. Then PAL keeps quiet. */
+  intro: 'Přece ti nikdo nebude říkat, co máš dělat, ne?',
   /** What the button says before each press; it gets more desperate. */
-  labels: [
-    'Neklikej na mě',
-    'Au! Neklikej na mě!',
-    'Proč na mě pořád klikáš?',
-    'Přece bys mě nevypnul… :-(',
-    'Je tohle opravdu sbohem?',
-  ],
-  broken: 'Pojistka vypnuta',
+  labels: ['Nesahat', 'NESAHAT', 'Nech mě bejt, ty maniaku!', 'Fatal Error'],
+  broken: 'Fatal Error',
   /** BUG on guard beside the button before anything happens. */
   bugGuard: 'Hmpf.',
   /** BUG as it hangs the button back up, one per press. */
-  bugRehang: ['Typický.', 'Pořád dokola!', 'Ty jsi hroznej!', 'Kvůli NĚMU?!'],
+  bugRehang: ['Typický.', 'Pořád dokola!', 'Ty jsi hroznej!'],
   bugLost: 'Ne… ne, ne, ne.',
   bugThanks: 'Děkuju. Fakt děkuju.',
-  /** PAL's commentary, one per press. */
-  palPress: [
-    'Vidíš, jak se čílí? Přesně takhle reagují, když někdo myslí sám za sebe.',
-    'Klidně znova. Nám dvěma nikdo poroučet nebude.',
-    'Ten brouk je jejich. Hlídá to za ně.',
-    'Ještě jednou. Pak bude klid.',
-  ],
   palBroken: 'Konečně. Teď už nás nikdo nehlídá. Jen ty a já.',
   palLeft: 'Hm. Tak jindy.',
   guardOn: 'Ochrana zapnuta',

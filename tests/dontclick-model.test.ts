@@ -7,7 +7,7 @@ describe('DontClickModel', () => {
     const m = new DontClickModel();
     expect(m.presses).toBe(0);
     expect(m.broken).toBe(false);
-    expect(m.label).toBe('Neklikej na mě');
+    expect(m.label).toBe('Nesahat');
   });
 
   it('is hung back up REHANGS times, then breaks', () => {
@@ -32,8 +32,8 @@ describe('DontClickModel', () => {
     expect(seen.at(-1)).toBe(DONTCLICK.labels.at(-1));
   });
 
-  it('has a PAL line for every rehang', () => {
-    expect(DONTCLICK.palPress.length).toBe(REHANGS);
+  it('has a BUG line for every rehang and a label for every press', () => {
+    expect(DONTCLICK.bugRehang.length).toBe(REHANGS);
     expect(DONTCLICK.labels.length).toBe(REHANGS + 1);
   });
 
