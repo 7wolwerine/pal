@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { E, N, S, W, createLayout, isConnected, rotateCW, rotatePiece, type PipeLayout } from '../src/scenes/rescue/model.ts';
+import { E, N, S, W, createLayout, isConnected, rotateCW, rotatePiece, wetPieces, type PipeLayout } from '../src/scenes/rescue/model.ts';
 
 describe('rotateCW', () => {
   it('moves every open side one quarter turn clockwise', () => {
@@ -19,48 +19,48 @@ describe('rotateCW', () => {
 });
 
 describe('pipe layout', () => {
-  it('does not let fixed pieces rotate', () => {
+  it('does not let the rusted blocks rotate', () => {
     const layout = createLayout();
-    expect(rotatePiece(layout, 'p00')).toBe(false);
+    expect(rotatePiece(layout, 'p13')).toBe(false);
     expect(rotatePiece(layout, 'p22')).toBe(false);
-    expect(rotatePiece(layout, 'p10')).toBe(true);
+    expect(rotatePiece(layout, 'p00')).toBe(true);
   });
 
-  it('starts unsolved', () => {
-    expect(isConnected(createLayout())).toBe(false);
-  });
-
-  it('is solvable: some set of rotations connects source to drain', () => {
+  it('feeds the bottom-left cell from the tank and drains under the bottom-right one', () => {
     const layout = createLayout();
-    const movable = layout.pieces.filter((p) => !p.fixed);
-    // Try every combination of 0-3 turns per movable piece (4^7).
-    const base = layout.pieces.map((p) => p.openings);
-    const solve = (i: number): boolean => {
-      if (i === movable.length) return isConnected(layout);
-      const piece = movable[i]!;
-      for (let t = 0; t < 4; t++) {
-        if (solve(i + 1)) return true;
-        piece.openings = rotateCW(piece.openings);
-      }
-      return false;
-    };
-    expect(solve(0)).toBe(true);
-    expect(base).toHaveLength(9);
+    expect(layout.inlet).toEqual({ col: 0, row: 3, side: W });
+    expect(layout.outlet).toEqual({ col: 3, row: 3, side: S });
   });
 
-  it('counts a connected straight path as solved', () => {
-    // A hand-built 2x1 layout: source opens E, drain opens W.
-    const layout: PipeLayout = {
-      cols: 2,
-      rows: 1,
-      pieces: [
-        { id: 'a', col: 0, row: 0, openings: E, fixed: true },
-        { id: 'b', col: 1, row: 0, openings: W, fixed: true },
-      ],
-      source: { col: 0, row: 0 },
-      drain: { col: 1, row: 0 },
+  it('is solvable by turning pieces, and the water climbs around the rust', () => {
+    const layout = createLayout();
+    const turn = (id: string, openings: number): void => {
+      const piece = layout.pieces.find((p) => p.id === id)!;
+      for (let i = 0; i < 4 && piece.openings !== openings; i++) rotatePiece(layout, id);
+      expect(piece.openings).toBe(openings);
     };
+    turn('p03', W | N);
+    turn('p02', S | E);
+    turn('p12', W | N);
+    turn('p11', S | E);
+    turn('p21', W | E);
+    turn('p31', W | S);
+    turn('p32', N | S);
+    turn('p33', N | S);
     expect(isConnected(layout)).toBe(true);
+    expect(wetPieces(layout).map((p) => p.id)).toEqual(['p03', 'p02', 'p12', 'p11', 'p21', 'p31', 'p32', 'p33']);
+  });
+
+  it('is dry when the first pipe does not face the tank', () => {
+    const layout: PipeLayout = {
+      cols: 1,
+      rows: 1,
+      pieces: [{ id: 'a', col: 0, row: 0, openings: N | S }],
+      inlet: { col: 0, row: 0, side: W },
+      outlet: { col: 0, row: 0, side: S },
+    };
+    expect(wetPieces(layout)).toEqual([]);
+    expect(isConnected(layout)).toBe(false);
   });
 
   it('is not solved when the neighbour is open on the wrong side', () => {
@@ -68,12 +68,14 @@ describe('pipe layout', () => {
       cols: 2,
       rows: 1,
       pieces: [
-        { id: 'a', col: 0, row: 0, openings: E, fixed: true },
-        { id: 'b', col: 1, row: 0, openings: E, fixed: true },
+        { id: 'a', col: 0, row: 0, openings: W | E },
+        { id: 'b', col: 1, row: 0, openings: N | S },
       ],
-      source: { col: 0, row: 0 },
-      drain: { col: 1, row: 0 },
+      inlet: { col: 0, row: 0, side: W },
+      outlet: { col: 1, row: 0, side: S },
     };
     expect(isConnected(layout)).toBe(false);
+    layout.pieces[1]!.openings = W | S;
+    expect(isConnected(layout)).toBe(true);
   });
 });

@@ -1,7 +1,9 @@
 /**
- * The pipe puzzle behind the drowning rescue. Water enters at a source and
- * must reach the drain; the player rotates pipe pieces to connect them. No
- * DOM and no timers in here, so the connectivity rules can be unit tested.
+ * The pipe puzzle behind the drowning rescue. A tap fills the tank the
+ * assistant is trapped in; the tank's outlet feeds into a grid of pipes and
+ * the grid must lead the water down into the floor drain. The player turns
+ * pipe pieces until the way out is open. No DOM and no timers in here, so the
+ * flow rules can be unit tested.
  *
  * Directions are a 4-bit mask: N=1, E=2, S=4, W=8. A piece's `openings` is the
  * set of sides it is open on. Rotating a quarter turn clockwise moves every
@@ -15,6 +17,7 @@ export const W = 8;
 
 export type Dir = typeof N | typeof E | typeof S | typeof W;
 
+export const DIRS: readonly Dir[] = [N, E, S, W];
 export const OPPOSITE: Record<Dir, Dir> = { [N]: S, [E]: W, [S]: N, [W]: E };
 const STEP: Record<Dir, [number, number]> = { [N]: [0, -1], [E]: [1, 0], [S]: [0, 1], [W]: [-1, 0] };
 
@@ -30,37 +33,55 @@ export interface Piece {
   readonly row: number;
   /** Current open sides. */
   openings: number;
-  /** Fixed pieces (source, drain, walls) cannot be rotated. */
+  /** Fixed pieces (rusted-in blocks) cannot be rotated. */
   readonly fixed?: boolean;
+}
+
+/** Where water crosses the edge of the grid: a cell and the side it crosses. */
+export interface Port {
+  readonly col: number;
+  readonly row: number;
+  readonly side: Dir;
 }
 
 export interface PipeLayout {
   readonly cols: number;
   readonly rows: number;
   readonly pieces: Piece[];
-  /** The cell water enters from, and the side it enters through. */
-  readonly source: { col: number; row: number };
-  /** The cell that drains the water away. */
-  readonly drain: { col: number; row: number };
+  /** The tank's outlet pours in here. */
+  readonly inlet: Port;
+  /** The floor drain takes the water away here. */
+  readonly outlet: Port;
 }
 
-/** A fixed 3x3 layout. Elbows and straights start scrambled; the player sorts them. */
+const EL = N | E; // elbow
+const ST = N | S; // straight
+const TEE = N | E | S;
+
+/**
+ * A fixed 4x4 grid. The tank's outlet enters the bottom-left cell from the
+ * west; the drain sits under the bottom-right cell. Two rusted blocks sit on
+ * the short way along the bottom, so the water has to climb around them.
+ */
 export function createLayout(): PipeLayout {
-  const EL = N | E; // elbow
-  const ST = N | S; // straight
-  const TEE = N | E | S;
-  const pieces: Piece[] = [
-    { id: 'p00', col: 0, row: 0, openings: E | S, fixed: true }, // source corner
-    { id: 'p10', col: 1, row: 0, openings: ST },
-    { id: 'p20', col: 2, row: 0, openings: EL },
-    { id: 'p01', col: 0, row: 1, openings: TEE },
-    { id: 'p11', col: 1, row: 1, openings: EL },
-    { id: 'p21', col: 2, row: 1, openings: ST },
-    { id: 'p02', col: 0, row: 2, openings: EL },
-    { id: 'p12', col: 1, row: 2, openings: ST },
-    { id: 'p22', col: 2, row: 2, openings: N | W, fixed: true }, // drain corner
-  ];
-  return { cols: 3, rows: 3, pieces, source: { col: 0, row: 0 }, drain: { col: 2, row: 2 } };
+  const shapes: Record<string, number> = {
+    // row 0
+    '0,0': EL, '1,0': ST, '2,0': TEE, '3,0': EL,
+    // row 1
+    '0,1': ST, '1,1': EL, '2,1': ST, '3,1': EL,
+    // row 2
+    '0,2': EL, '1,2': EL, '2,2': 0, '3,2': ST,
+    // row 3
+    '0,3': EL, '1,3': 0, '2,3': TEE, '3,3': ST,
+  };
+  const pieces: Piece[] = [];
+  for (let row = 0; row < 4; row++) {
+    for (let col = 0; col < 4; col++) {
+      const openings = shapes[`${col},${row}`] ?? 0;
+      pieces.push({ id: `p${col}${row}`, col, row, openings, ...(openings === 0 ? { fixed: true } : {}) });
+    }
+  }
+  return { cols: 4, rows: 4, pieces, inlet: { col: 0, row: 3, side: W }, outlet: { col: 3, row: 3, side: S } };
 }
 
 function at(layout: PipeLayout, col: number, row: number): Piece | undefined {
@@ -76,30 +97,34 @@ export function rotatePiece(layout: PipeLayout, id: string): boolean {
 }
 
 /**
- * True when water can flow from the source to the drain through connected,
- * mutually-open pipe sides. A flood fill across the grid.
+ * Every piece the water reaches from the inlet, in the order it gets there
+ * (so the picture can let it run along the pipes). Empty when the first
+ * piece does not even face the inlet.
  */
-export function isConnected(layout: PipeLayout): boolean {
-  const start = at(layout, layout.source.col, layout.source.row);
-  const target = at(layout, layout.drain.col, layout.drain.row);
-  if (!start || !target) return false;
-
-  const seen = new Set<string>();
-  const queue: Piece[] = [start];
-  seen.add(start.id);
-  while (queue.length > 0) {
-    const cell = queue.shift();
+export function wetPieces(layout: PipeLayout): Piece[] {
+  const start = at(layout, layout.inlet.col, layout.inlet.row);
+  if (!start || !(start.openings & layout.inlet.side)) return [];
+  const seen = new Set<string>([start.id]);
+  const order: Piece[] = [start];
+  for (let i = 0; i < order.length; i++) {
+    const cell = order[i];
     if (!cell) break;
-    if (cell === target) return true;
-    for (const dir of [N, E, S, W] as Dir[]) {
+    for (const dir of DIRS) {
       if (!(cell.openings & dir)) continue;
       const [dx, dy] = STEP[dir];
       const next = at(layout, cell.col + dx, cell.row + dy);
       // Both sides must be open to each other for water to pass.
       if (!next || seen.has(next.id) || !(next.openings & OPPOSITE[dir])) continue;
       seen.add(next.id);
-      queue.push(next);
+      order.push(next);
     }
   }
-  return false;
+  return order;
+}
+
+/** True when water from the tank reaches the drain. */
+export function isConnected(layout: PipeLayout): boolean {
+  const end = at(layout, layout.outlet.col, layout.outlet.row);
+  if (!end || !(end.openings & layout.outlet.side)) return false;
+  return wetPieces(layout).includes(end);
 }

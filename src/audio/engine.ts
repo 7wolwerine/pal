@@ -88,6 +88,61 @@ class AudioEngine {
     });
   }
 
+  /** A short tactile click; `pitch` in MIDI notes, so each control can sound its own. */
+  click(pitch = 72, level = 0.5): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.005;
+    this.#pluck(out, midiToHz(pitch), t0, 0.06, 'square', level * 0.6);
+    this.#pluck(out, midiToHz(pitch + 19), t0, 0.03, 'triangle', level * 0.4);
+  }
+
+  /** Something settling into place: a low thunk and a bright little ping. */
+  snap(pitch = 79): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.005;
+    this.#pluck(out, midiToHz(43), t0, 0.12, 'sine', 0.9);
+    this.#pluck(out, midiToHz(pitch), t0 + 0.03, 0.35, 'triangle', 0.5);
+    this.#pluck(out, midiToHz(pitch + 7), t0 + 0.09, 0.4, 'sine', 0.3);
+  }
+
+  /** A hammer tap on wood. */
+  knock(): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.005;
+    this.#pluck(out, midiToHz(50 + Math.floor(Math.random() * 3)), t0, 0.08, 'square', 0.5);
+    this.#pluck(out, midiToHz(38), t0, 0.1, 'sine', 0.9);
+  }
+
+  /** Water rushing away: filtered noise that fades. */
+  gurgle(seconds = 1.6): void {
+    const ctx = this.#ctx;
+    const out = this.#master;
+    if (!ctx || !out) return;
+    const t0 = ctx.currentTime + 0.01;
+    const length = Math.floor(ctx.sampleRate * seconds);
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / length);
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.setValueAtTime(500, t0);
+    band.frequency.linearRampToValueAtTime(180, t0 + seconds);
+    band.Q.value = 3;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.35;
+    noise.connect(band).connect(gain).connect(out);
+    noise.start(t0);
+    [67, 71, 74, 79].forEach((midi, i) => this.#pluck(out, midiToHz(midi), t0 + 0.1 + i * 0.18, 0.15, 'sine', 0.25));
+  }
+
   /** A rubbery "boing": a pitch that drops and wobbles. */
   boing(level = 0.45): void {
     const ctx = this.#ctx;

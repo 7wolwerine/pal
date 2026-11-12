@@ -5,7 +5,7 @@
  * winnable: death only restarts the puzzle.
  */
 export const RESCUE = {
-  sceneLabel: 'Asistent uvězněný v nádrži, do které stoupá voda, a mřížka potrubí',
+  sceneLabel: 'Asistent v nádrži, do které teče voda z kohoutku. Z nádrže vede potrubí k odtoku v podlaze.',
   pipeLabel: (n: number) => `Trubka ${n}`,
 
   /** Said when each attempt begins. Index by number of deaths so far (0..3). */
