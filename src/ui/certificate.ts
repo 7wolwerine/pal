@@ -12,6 +12,8 @@ export interface CertificateFacts {
   readonly score: number;
   readonly rank: number;
   readonly date: Date;
+  /** The player's own signature from the painting, if they signed it. */
+  readonly signature?: { text: string; style: string };
 }
 
 /**
@@ -50,6 +52,7 @@ export function certificateCard(f: CertificateFacts): HTMLElement {
         h('strong', { class: 'cert__value', text: f.score.toLocaleString('cs-CZ') }),
         h('span', { class: 'cert__rank', text: PRIZE.rank(f.rank) }),
       ),
+      f.signature ? h('p', { class: `cert__sig paint__name--${f.signature.style}`, text: f.signature.text }) : null,
       h('p', { class: 'cert__foot', text: `${f.date.toLocaleDateString('cs-CZ')} · ${PRIZE.certificate.footer}` }),
     ),
   );

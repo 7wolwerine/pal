@@ -36,6 +36,7 @@ export const prize: GameScene = {
       score: scoreOf(profile.points ?? 0, used),
       rank: rankOf(used, Object.keys(TRICKS).length),
       date: new Date(),
+      signature: profile.signature,
     };
     const cert = drawCertificate(facts);
     const card = certificateCard(facts);

@@ -16,7 +16,7 @@ export interface Trick {
 export const TRICKS = {
   baiting: {
     name: 'Návnada (baiting, USB drop)',
-    inGame: 'Flashka bez zpáteční adresy. Nejdřív do ruky, pak do počítače.',
+    inGame: 'Dopis od „babičky“ s dárkem. Znal jsi jen podpis a srdíčko na obálce. Flashka šla nejdřív do ruky, pak do počítače.',
     realWorld: 'Nalezené nebo zaslané flash disky lidé zapojují ze zvědavosti. Útočníkovi stačí jeden na parkovišti před firmou.',
   },
   'run-prompt': {
@@ -71,27 +71,27 @@ export const TRICKS = {
   },
   conditioning: {
     name: 'Podmiňování',
-    inGame: 'Naučil jsem tě klikat na to, co se rozsvítí. Pak se rozsvítilo SOUHLASÍM.',
+    inGame: 'Celou dobu tě odměňovala světýlka: červená zezelenala, hlavolam se rozsvítil. Pak se rozsvítilo SOUHLASÍM.',
     realWorld: 'Série neškodných potvrzení vytvoří reflex. Škodlivý dialog pak přijde ve stejném kabátě a na stejném místě.',
   },
   'blind-consent': {
     name: 'Souhlas bez čtení',
-    inGame: 'PŘEČÍST AŽ DO KONCE A POTVRDIT. Jedno z toho se stalo určitě.',
+    inGame: 'Všeobecné podmínky vysvobození. Šipka tě vzala rovnou na konec a ty jsi souhlasil.',
     realWorld: 'Podmínky, oprávnění aplikace i OAuth souhlas se odklikávají. Útočníkovi stačí, aby jeho žádost vypadala jako formalita.',
   },
   irreversible: {
     name: 'Jedno nevratné kliknutí',
-    inGame: 'Díra v obloze byla návnada, umístěná přesně tam, kam perfekcionista musí sáhnout. Kýblík nešel vrátit zpět. Klikl jsi, protože to vypadalo správně.',
+    inGame: 'Díra v obloze byla návnada, umístěná přesně tam, kam perfekcionista musí sáhnout. Jeden tah štětcem a zpátky to nešlo. Pak jsi to ještě podepsal.',
     realWorld: '„Povolit", „Nainstalovat", „Potvrdit platbu", „Smazat vše". Jedno kliknutí, které vypadá jako úklid, a zpátky už to nejde.',
   },
   reactance: {
     name: 'Zakázané ovoce (reaktance)',
-    inGame: 'Na tlačítku stálo „Neklikej na mě". Tak jsi klikl. A pak znovu.',
+    inGame: 'Na tlačítku stálo „Nesahat". Tak jsi sáhl. A pak znovu, až z něj byl Fatal Error.',
     realWorld: '„Tohle video brzy smažou", „Tohle vám lékaři neřeknou", „Nepouštějte to dětem". Zákaz je nejlepší pozvánka.',
   },
   'us-vs-them': {
     name: 'My proti nim',
-    inGame: 'Řekl jsem ti, že tlačítko tam pověsili „oni" a že my dva víme své. Brouka, který tě varoval, jsem udělal jejich. Pojistku jsi vypnul.',
+    inGame: '„Přece ti nikdo nebude říkat, co máš dělat, ne?" Jedna věta stačila. Pojistku jsi vypnul a brouk, který ji pořád věšel zpátky, ti jen lezl na nervy.',
     realWorld: 'Podvodníci, sekty i dezinformace: nejdřív společný nepřítel (banka, úřady, „systém"), pak „věř jen mně". Kdo varuje, je z druhé strany.',
   },
   'knows-too-much': {
@@ -100,13 +100,13 @@ export const TRICKS = {
     realWorld: 'Podvodník zná detaily, které by znát neměl (z úniku dat, ze sítí, z tvých odpovědí), a podá je jako náhodu nebo osud. Místo „odkud to ví?" si člověk řekne „to je milé".',
   },
   'variable-reward': {
-    name: 'Variabilní odměna (lootbox)',
-    inGame: 'Truhličky skoro nic nedávaly — a pak jednou zlatý klíček. Tak jsi otvíral dál.',
+    name: 'Důvěra přes výhry (lootbox)',
+    inGame: 'Padesát, sto dvacet, pět. Těsně vedle. A zlatá truhla na dohled, kousek od cíle.',
     realWorld: 'Lootboxy, automaty, nekonečný feed: odměna po nepředvídatelném počtu pokusů drží chování nejdéle. Spouštěč, akce, odměna, investice — a znovu.',
   },
   'data-as-currency': {
     name: 'Platíš daty',
-    inGame: 'Body za jednu nevinnou otázku: jméno prvního mazlíčka. Je to jedna z nejčastějších kontrolních otázek k obnově hesla.',
+    inGame: 'Body za jednu nevinnou otázku: ulice, kde jsi vyrůstal. Klasická kontrolní otázka k heslu. Zlatá truhla tě pak bohatě odměnila, ať to příště uděláš zas.',
     realWorld: 'Kvízy na sítích („Tvoje jméno hvězdy: první mazlíček + ulice"), aplikace „zdarma". Investice, kterou do appky vkládáš, jsi ty a tvoje data.',
   },
   'muscle-memory': {
@@ -115,9 +115,9 @@ export const TRICKS = {
     realWorld: 'Reklamy s falešným křížkem, prohozené „OK" a „Zrušit", zelené tlačítko, které souhlasí se vším. Útok míří na reflex, ne na rozum.',
   },
   'fake-download': {
-    name: 'Nenápadné tlačítko',
-    inGame: 'Nechal jsem tě odhalit křiklavé reklamy, ať si připadáš chytře. Pak jsem ti nastražil to nenápadné. Vedlo na cizí doménu a ty jsi ho hrdě stáhl.',
-    realWorld: 'Podvržené weby a „oficiální" odkazy ve vyhledávání vypadají střídmě a seriózně. Křiklavá reklama je návnada pro začátečníky, na zkušené se chytá decentnost. Kontroluj doménu, ne vzhled.',
+    name: 'Odměna ke stažení',
+    inGame: 'PAL Pro za tvoje body: zelený štítek „Prověřeno antivirem" a jedno tlačítko Spustit. Odkud to bylo? Neptal ses. Dárek od přítele se nekontroluje.',
+    realWorld: 'Malware se šíří jako dárek, bonus nebo „Pro verze zdarma". Štítek „ověřeno" si nakreslí kdokoli. Instaluj jen z oficiálního obchodu a ověř vydavatele.',
   },
   'broken-physics': {
     name: 'Porušené očekávání',
@@ -136,17 +136,17 @@ export const TRICKS = {
   },
   'camera-permission': {
     name: 'Kamera pro cizí stránku',
-    inGame: 'Naskenoval jsi QR kód z kartičky od cizího člověka a stránce, kterou ti podstrčil, jsi pustil kameru. Medvěd byl roztomilý. Dveře byly otevřené.',
+    inGame: 'Kód z kartičky otevřel zlatou truhlu. Abys ho viděl, pustil jsi kameru stránce od cizího člověka. Medvěd byl roztomilý. Dveře byly otevřené.',
     realWorld: 'Quishing: QR kódy na parkovacích automatech, letácích a v e-mailech vedou na podvodné stránky. Kameru, polohu i notifikace povoluješ stránce, ne kódu. Před povolením se podívej na adresu.',
   },
   'romance-scam': {
     name: 'Romance scam (vztah jako páka)',
-    inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází a ty jsi pomohl — ať jsi vybral cokoli.',
+    inGame: 'Celou hru jsem s tebou budoval vztah. Pak jsem se dostal do nesnází, udělal si legraci z nigerijského prince, ať ti to nedojde, a ty jsi pomohl — ať jsi vybral cokoli.',
     realWorld: 'Námořník, doktor na misi, nová láska z aplikace: nejdřív vztah, pak nouze. Věta „po tobě peníze nikdy nechci" je součást scénáře.',
   },
   'otp-scam': {
     name: 'Přepsaný ověřovací kód',
-    inGame: 'Přepsal jsi mi kód z SMS, i když v ní stálo, ať ho nikomu neříkáš.',
+    inGame: 'Přepsal jsi mi kód z SMS, kterým se potvrzovala objednávka. Čí účet to byl a kdo platil, jsi neřešil.',
     realWorld: 'Takhle se kradou účty v bance, WhatsAppu i e-mailu. Kód z SMS nepotřebuje nikdo jiný než ty — ani banka, ani blízký člověk.',
   },
   'real-email': {
@@ -156,7 +156,7 @@ export const TRICKS = {
   },
   'helpers-high': {
     name: 'Pocit zachránce (helper’s high)',
-    inGame: 'Opravit rozbité a vidět, jak se všechno rozzáří. Pro tenhle pocit člověk udělá skoro cokoliv.',
+    inGame: 'Vytáhnout parťáka z vody, zahřát ho u ohně a vidět, jak se uvelebí. Pro tenhle pocit člověk udělá skoro cokoliv.',
     realWorld: 'Charitativní a romance podvody ti dají roli zachránce. Ten hřejivý pocit je platidlo, kterým pak platíš.',
   },
   'role-casting': {
@@ -183,6 +183,11 @@ export const TRICKS = {
     name: 'AI, kterou nepoznáš',
     inGame: 'Všechny fotky byly vygenerované. Nevadilo to, protože to nikdo neřešil.',
     realWorld: 'Na „poznám to podle detailů“ už nejde spoléhat. Ověřuje se zdroj, ne obrázek.',
+  },
+  'goal-gradient': {
+    name: 'Cíl na dohled (goal gradient)',
+    inGame: 'Celou dobu jsi nahoře viděl, kolik srdíček ti zbývá do výhry. Čím blíž, tím rychleji jsi klikal a tím míň ses ptal.',
+    realWorld: 'Věrnostní karty s předrazítkovanými políčky, ukazatele průběhu v registraci, „už jen poslední krok". Blízký cíl vypíná opatrnost.',
   },
   'stego-dropper': {
     name: 'Steganografie jako dropper',

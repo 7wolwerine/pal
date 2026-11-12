@@ -191,6 +191,7 @@ export const paint: GameScene = {
       step = 'signing';
       held = null;
       ctx.witness.disclose(SCENE, 'osint', 'signature', text);
+      ctx.profile.signature = { text, style };
       const signature = stage.overlay({ x: 88, y: 66, w: 44, h: 14 }, `paint__sig paint__name--${style}`);
       signature.textContent = text;
       audio.click(88, 0.2);

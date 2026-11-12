@@ -22,11 +22,12 @@ import { reveal } from './scenes/reveal.ts';
 import { welcome } from './scenes/welcome.ts';
 import { Dialogue } from './ui/dialogue.ts';
 import { h } from './ui/dom.ts';
+import { createJourney } from './ui/journey.ts';
 import { createPc } from './ui/pc.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
-const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, shelter, dontclick, flower, plea, chest, download, prize, glass, crash, reveal];
+const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, shelter, flower, dontclick, chest, plea, download, prize, glass, crash, reveal];
 
 const THEME_COLOURS: Record<Theme, string> = { harmless: '#FBEAF0', revealed: '#060806' };
 
@@ -70,7 +71,9 @@ function boot(): void {
   win.body.append(pal.el, stage);
   const scenery = h('div', { class: 'scenery' });
   const pc = createPc(win.el);
+  const journey = createJourney(SCENES.map((s) => s.id), 'prize');
   app.append(scenery, pc);
+  document.body.append(journey.el);
 
   document.addEventListener('pointerdown', () => witness.tally('click'));
 
@@ -131,6 +134,9 @@ function boot(): void {
       }
     }
     winWasHidden = onScenery;
+    // The path of hearts to the prize, always in sight until the prize is reached.
+    journey.show(scene.id);
+    if (journey.left(scene.id) === 3) witness.record({ scene: scene.id, kind: 'near-goal', trick: 'goal-gradient' });
     // Each scene has its own calm theme; the reveal turns it dark.
     audio.play(SCENE_THEME[scene.id] ?? 'window');
   });

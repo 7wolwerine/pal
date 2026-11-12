@@ -142,6 +142,7 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
   firstPet: (v) => `Za pár bodů jsi mi prozradil prvního mazlíčka: ${v}. Kontrolní otázka k heslu.`,
   street: (v) => `Za pár bodů jsi mi řekl, v jaké ulici jsi vyrůstal: ${v}. Kontrolní otázka k heslu.`,
+  signature: (v) => `Podepsal ses mi: ${v}. Pod obraz, který jsi nikdy nechtěl malovat. A pak na certifikát.`,
 };
 
 /** Lines said once, the first time their event happens. */
