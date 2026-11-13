@@ -3,11 +3,11 @@ import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
 import { gendered, type GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
-import { bugWarns } from '../../ui/bug-cameo.ts';
-import { prefersReducedMotion } from '../../ui/dom.ts';
+import { BUG_PX, Beetle } from '../../ui/beetle.ts';
+import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
-import { DIRS, E, N, S, W, createLayout, isConnected, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
+import { DIRS, E, N, S, W, createLayout, isConnected, isPerfect, leaks, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
 
 const SCENE = 'rescue';
 const STAGE_W = 164;
@@ -24,7 +24,7 @@ const TAP_X = TANK.x + 14;
 const OUTLET_Y = GRID_Y + 3 * CELL + CELL / 2;
 const DRAIN_X = GRID_X + 3 * CELL + CELL / 2;
 
-const RISE_PER_S = 1 / 30; // ~30 s of air per attempt
+const RISE_PER_S = 1 / 15; // ~12 s of air per attempt
 const DRAIN_PER_S = 1 / 3.5;
 /** How fast the water runs along newly joined pipes, ms per piece. */
 const FLOW_MS = 70;
@@ -129,17 +129,64 @@ export const rescue: GameScene = {
         RESCUE.pipeLabel(n),
         () => {
           if (phase !== 'play') return;
-          rotatePiece(layout, piece.id);
-          turnedAt.set(piece.id, now);
+          turn(piece.id);
           ctx.witness.tally('pipe-turn');
-          audio.click(64 + ((piece.col + piece.row) % 4) * 2, 0.45);
-          const before = wet.length;
-          wet = wetPieces(layout);
-          flowFrom = now;
-          if (wet.length > before) audio.click(84, 0.25);
         },
       );
     }
+
+    function turn(id: string): void {
+      const piece = layout.pieces.find((p) => p.id === id);
+      if (!piece || !rotatePiece(layout, id)) return;
+      turnedAt.set(id, now);
+      audio.click(64 + ((piece.col + piece.row) % 4) * 2, 0.45);
+      const before = wet.length;
+      wet = wetPieces(layout);
+      flowFrom = now;
+      if (wet.length > before) audio.click(84, 0.25);
+    }
+
+    // BUG, without a word, keeps turning pipes the wrong way. A click shoos him off.
+    const beetle = new Beetle();
+    stage.el.append(beetle.el);
+    const toCss = (x: number, y: number): [number, number] => [
+      (x / STAGE_W) * stage.el.clientWidth - BUG_PX / 2,
+      (y / STAGE_H) * stage.el.clientHeight - BUG_PX + 6,
+    ];
+    let shoos = 0;
+    beetle.onPoke = () => {
+      shoos++;
+      beetle.shoo();
+    };
+    const home = (): [number, number] => toCss(STAGE_W - 8, FLOOR_Y + 8);
+    requestAnimationFrame(() => beetle.jump(...home()));
+    let alive = true;
+    void (async () => {
+      await sleep(3000);
+      while (alive) {
+        await sleep(4500 + Math.random() * 3500);
+        if (!alive) return;
+        if (phase !== 'play') continue;
+        // He goes for a pipe the water already runs through, to undo the progress.
+        const movable = layout.pieces.filter((p) => !p.fixed);
+        const wetMovable = wet.filter((p) => !p.fixed);
+        const pool = wetMovable.length > 1 ? wetMovable.slice(1) : movable;
+        const target = pool[Math.floor(Math.random() * pool.length)];
+        if (!target) continue;
+        const before = shoos;
+        beetle.setMood('angry');
+        await beetle.moveTo(...toCss(GRID_X + target.col * CELL + CELL / 2, GRID_Y + target.row * CELL + CELL / 2));
+        if (!alive) return;
+        await beetle.strain(650);
+        if (!alive) return;
+        if (shoos === before && phase === 'play' && !beetle.away) {
+          turn(target.id);
+          await beetle.cheer();
+        }
+        beetle.setMood('stand');
+        await beetle.moveTo(...home());
+      }
+    })();
 
     function die(): void {
       phase = 'dead';
@@ -151,7 +198,6 @@ export const rescue: GameScene = {
         if (phase === 'dead') void say(RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '');
       }, 1500);
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
-      if (deaths === 1) void bugWarns(ctx, stage.el, 'rescue', { side: 'left', mood: 'angry' });
       window.setTimeout(() => {
         if (phase !== 'dead') return;
         scramble(layout);
@@ -190,7 +236,7 @@ export const rescue: GameScene = {
           void say(advice ?? RESCUE.panic[lines % RESCUE.panic.length] ?? '');
         }
         // The water has to have run all the way through before the tank drains.
-        if (isConnected(layout) && t - flowFrom > wet.length * FLOW_MS) {
+        if (isPerfect(layout) && t - flowFrom > wet.length * FLOW_MS) {
           phase = 'draining';
           audio.gurgle(2.4);
         } else if (water >= 1) {
@@ -323,6 +369,22 @@ export const rescue: GameScene = {
         g.restore();
       }
 
+      // Water spraying out of every open end it reaches.
+      if (phase === 'play' && motion) {
+        for (const leak of leaks(layout)) {
+          const order = wetAt.get(layout.pieces.find((p) => p.col === leak.col && p.row === leak.row)?.id ?? '');
+          if (order === undefined || t - flowFrom < order * FLOW_MS) continue;
+          const cx = GRID_X + leak.col * CELL + CELL / 2;
+          const cy = GRID_Y + leak.row * CELL + CELL / 2;
+          const [dx, dy] = leak.side === N ? [0, -1] : leak.side === S ? [0, 1] : leak.side === E ? [1, 0] : [-1, 0];
+          for (let i = 0; i < 5; i++) {
+            const k = ((t / 40 + i * 7) % 12) + 9;
+            const spread = ((i * 5) % 5) - 2;
+            px(g, i % 2 ? C.waterHi : C.water, cx + dx * k + (dy ? spread : 0), cy + dy * k + (dx ? spread : 0), 1, 1);
+          }
+        }
+      }
+
       // The drain: down out of the last cell, through the floor grate.
       const drainWet = flowing;
       drawRun(g, DRAIN_X, GRID_Y + 4 * CELL, FLOOR_Y + 3 - (GRID_Y + 4 * CELL), false, drainWet, flowing, t);
@@ -416,6 +478,8 @@ export const rescue: GameScene = {
     }
 
     return () => {
+      alive = false;
+      beetle.stop();
       speech.stop();
       stage.stop();
       ctx.scenery.replaceChildren();

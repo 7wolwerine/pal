@@ -79,3 +79,35 @@ describe('pipe layout', () => {
     expect(isConnected(layout)).toBe(true);
   });
 });
+
+import { isPerfect, leaks } from '../src/scenes/rescue/model.ts';
+
+describe('leaks', () => {
+  it('finds open ends that spill, and passes a perfect run', () => {
+    const layout: PipeLayout = {
+      cols: 2,
+      rows: 1,
+      pieces: [
+        { id: 'a', col: 0, row: 0, openings: W | E | N },
+        { id: 'b', col: 1, row: 0, openings: W | S },
+      ],
+      inlet: { col: 0, row: 0, side: W },
+      outlet: { col: 1, row: 0, side: S },
+    };
+    expect(isConnected(layout)).toBe(true);
+    expect(leaks(layout)).toEqual([{ col: 0, row: 0, side: N }]);
+    expect(isPerfect(layout)).toBe(false);
+    layout.pieces[0]!.openings = W | E;
+    expect(isPerfect(layout)).toBe(true);
+  });
+
+  it('the solved game layout spills nowhere', () => {
+    const layout = createLayout();
+    const want: [string, number][] = [['p03', W | N], ['p02', S | E], ['p12', W | N], ['p11', S | E], ['p21', W | E], ['p31', W | S], ['p32', N | S], ['p33', N | S]];
+    for (const [id, o] of want) {
+      const p = layout.pieces.find((x) => x.id === id)!;
+      for (let i = 0; i < 4 && p.openings !== o; i++) rotatePiece(layout, id);
+    }
+    expect(isPerfect(layout)).toBe(true);
+  });
+});

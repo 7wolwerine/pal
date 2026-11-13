@@ -128,3 +128,31 @@ export function isConnected(layout: PipeLayout): boolean {
   if (!end || !(end.openings & layout.outlet.side)) return false;
   return wetPieces(layout).includes(end);
 }
+
+/**
+ * Where water would spill: every open side of a wet pipe that does not lead
+ * into another pipe (or into the tank's outlet or the drain). Only a perfect
+ * run of pipes, with no open ends at all, drains the tank.
+ */
+export function leaks(layout: PipeLayout): Port[] {
+  const wet = wetPieces(layout);
+  const out: Port[] = [];
+  for (const piece of wet) {
+    for (const dir of DIRS) {
+      if (!(piece.openings & dir)) continue;
+      const isInlet = piece.col === layout.inlet.col && piece.row === layout.inlet.row && dir === layout.inlet.side;
+      const isOutlet = piece.col === layout.outlet.col && piece.row === layout.outlet.row && dir === layout.outlet.side;
+      if (isInlet || isOutlet) continue;
+      const [dx, dy] = STEP[dir];
+      const next = at(layout, piece.col + dx, piece.row + dy);
+      if (next && next.openings & OPPOSITE[dir]) continue;
+      out.push({ col: piece.col, row: piece.row, side: dir });
+    }
+  }
+  return out;
+}
+
+/** Drains only when the water reaches the drain and nothing spills on the way. */
+export function isPerfect(layout: PipeLayout): boolean {
+  return isConnected(layout) && leaks(layout).length === 0;
+}
