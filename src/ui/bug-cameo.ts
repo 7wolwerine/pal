@@ -45,7 +45,15 @@ export async function bugCameo(host: HTMLElement, line: string, opts: CameoOptio
         draw(mood === 'angry' ? (frame % 2 ? 'stomp1' : 'stomp2') : frame % 4 === 3 ? 'stand' : mood);
       }, 180);
   if (!timer) draw(mood);
-  await sleep(opts.ms ?? 2600);
+  // A click on BUG sends him off early.
+  el.classList.add('cameo--clickable');
+  await new Promise<void>((resolve) => {
+    const timer = window.setTimeout(resolve, opts.ms ?? 2600);
+    el.addEventListener('click', () => {
+      window.clearTimeout(timer);
+      resolve();
+    }, { once: true });
+  });
   window.clearInterval(timer);
   draw('sad');
   el.classList.add('cameo--leave');

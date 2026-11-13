@@ -4703,3 +4703,50 @@ body.on-pc {
     filter: brightness(1);
   }
 }
+
+.say,
+.bug__bubble,
+.cameo__bubble,
+.pal__bubble,
+.scene,
+.night__caption {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* BUG can be shooed away with a click, wherever he is. */
+.bug__body {
+  pointer-events: auto;
+  cursor: var(--cursor-hand);
+}
+
+.bug--away .bug__flip {
+  animation: bug-flee 3500ms ease-in-out both;
+}
+
+.bug--away .bug__bubble {
+  display: none;
+}
+
+.cameo--clickable {
+  pointer-events: auto;
+  cursor: var(--cursor-hand);
+}
+
+@keyframes bug-flee {
+  0% {
+    transform: none;
+  }
+  12% {
+    transform: translate(60px, -30px) rotate(25deg);
+    opacity: 0;
+  }
+  85% {
+    transform: translate(60px, -30px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}

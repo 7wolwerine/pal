@@ -109,6 +109,11 @@ export class Speech {
       if (line === this.#line) this.#bubble.classList.remove('say--tap');
     } else if (opts.ms) {
       await sleep(opts.ms);
+    } else {
+      // A line nobody has to click away fades by itself, unless a newer one took its place.
+      window.setTimeout(() => {
+        if (line === this.#line && !this.#tap) this.#bubble.hidden = true;
+      }, 2200 + text.length * 55);
     }
   }
 

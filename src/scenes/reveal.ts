@@ -75,7 +75,8 @@ export const reveal: Scene<GameContext> = {
           await sleep(ch === ' ' ? 12 : 26);
         }
         text.textContent = line.text;
-        item.scrollIntoView({ block: 'nearest' });
+        // Follow the newest line inside the list only; the page itself stays put.
+        replayList.scrollTop = replayList.scrollHeight;
         if (!skipping) await sleep(420);
       }
       if (!alive) return;
@@ -87,7 +88,9 @@ export const reveal: Scene<GameContext> = {
     function showRest(): void {
       rest.hidden = false;
       rest.replaceChildren(...breakdown());
-      rest.querySelector<HTMLButtonElement>('.btn')?.focus();
+      // Start reading from the top of the summary, not from its last button.
+      rest.querySelector<HTMLButtonElement>('.btn')?.focus({ preventScroll: true });
+      rest.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     }
 
     function breakdown(): Node[] {

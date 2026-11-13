@@ -30,6 +30,12 @@ export class Beetle {
     this.#bubble = h('div', { class: 'bug__bubble', attrs: { 'aria-live': 'assertive' } });
     this.#bubble.hidden = true;
     this.el = h('div', { class: 'bug' }, this.#bubble, this.#flip);
+    // Clicking BUG shoos him away for a moment; whatever he was up to waits.
+    this.#body.addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (this.onPoke) this.onPoke();
+      else this.shoo();
+    });
     // Go back to breathing once a landing squash has played.
     this.#body.addEventListener('animationend', (e) => {
       if (e.animationName === 'land') this.#body.classList.remove('bug__body--land');
@@ -39,6 +45,34 @@ export class Beetle {
 
   get busy(): boolean {
     return this.#moving;
+  }
+
+  /** When set, a click on BUG does this instead of shooing him off. */
+  onPoke: (() => void) | undefined;
+
+  #awayUntil = 0;
+
+  /** True while BUG has been shooed off and is not back yet. */
+  get away(): boolean {
+    return performance.now() < this.#awayUntil;
+  }
+
+  /** Runs off for a few seconds, then comes back to where he was. */
+  shoo(ms = 3500): void {
+    if (this.away) return;
+    this.#awayUntil = performance.now() + ms;
+    this.#bubble.hidden = true;
+    this.#draw('panic');
+    this.el.classList.add('bug--away');
+    window.setTimeout(() => {
+      this.el.classList.remove('bug--away');
+      this.#draw(this.#mood);
+    }, ms);
+  }
+
+  /** Resolves once BUG is back from being shooed away. */
+  async whenBack(): Promise<void> {
+    while (this.away) await wait(120);
   }
 
   #draw(frame: BugFrame): void {
@@ -81,7 +115,8 @@ export class Beetle {
   }
 
   /** Scurries to (x, y) in a hopping arc. Resolves on landing. */
-  moveTo(x: number, y: number): Promise<void> {
+  async moveTo(x: number, y: number): Promise<void> {
+    await this.whenBack();
     cancelAnimationFrame(this.#raf);
     const fromX = this.#x;
     const fromY = this.#y;
@@ -122,6 +157,7 @@ export class Beetle {
 
   /** Stamps a foot, again and again, with a little puff of dust each time. */
   async stomp(times = 2): Promise<void> {
+    await this.whenBack();
     this.setMood('angry');
     if (!this.#motion) return;
     for (let i = 0; i < times; i++) {
@@ -136,6 +172,7 @@ export class Beetle {
 
   /** Strains at something for a while: leaning in, gritting its teeth, sweating. */
   async strain(ms: number): Promise<void> {
+    await this.whenBack();
     if (!this.#motion) {
       await wait(ms);
       return;
@@ -153,6 +190,7 @@ export class Beetle {
 
   /** A happy little hop. */
   async cheer(): Promise<void> {
+    await this.whenBack();
     this.setMood('happy');
     if (this.#motion) await this.#bounce(10, 260);
   }

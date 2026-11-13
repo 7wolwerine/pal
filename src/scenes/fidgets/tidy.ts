@@ -238,6 +238,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
           cell?.el.classList.add('cell--kicked');
           if (shoves < need) return;
           overlay.remove();
+          beetle.onPoke = undefined;
           witness.record({
             scene: SCENE,
             kind: 'beetle-overcome',
@@ -257,6 +258,8 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
           })();
         });
         cell?.el.append(overlay);
+        // Clicking BUG himself counts as a shove too.
+        beetle.onPoke = () => overlay.click();
         overlay.focus();
       });
     }

@@ -19,7 +19,17 @@ export interface WallpaperLook {
   readonly t?: number;
 }
 
+/** Paints the wallpaper, clipped to its own rectangle so nothing drifts off the screen. */
 export function paintWallpaper(g: G, x: number, y: number, w: number, h: number, look: WallpaperLook = {}): void {
+  g.save();
+  g.beginPath();
+  g.rect(x, y, w, h);
+  g.clip();
+  paintInside(g, x, y, w, h, look);
+  g.restore();
+}
+
+function paintInside(g: G, x: number, y: number, w: number, h: number, look: WallpaperLook): void {
   const t = look.t ?? 0;
   const X = (f: number): number => x + Math.round(f * w);
   const W = (f: number): number => Math.max(1, Math.round(f * w));
