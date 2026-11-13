@@ -9,7 +9,8 @@ type Forms = (masculine: boolean) => string;
 
 export const RESCUE = {
   sceneLabel: 'Asistent v nádrži, do které teče voda z kohoutku. Z nádrže vede potrubí k odtoku v podlaze.',
-  pipeLabel: (n: number) => `Trubka ${n}`,
+  pipeLabel: (n: number, open: string) => `Trubka ${n}: ${open}`,
+  sides: { n: 'nahoru', e: 'vpravo', s: 'dolů', w: 'vlevo' },
 
   /** Said when each attempt begins. Index by number of deaths so far (0..3). */
   intro: [
@@ -27,7 +28,7 @@ export const RESCUE = {
   rows: ['nahoře', 've druhé řadě', 've třetí řadě', 'dole'],
   cols: ['úplně vlevo', 'druhá zleva', 'třetí zleva', 'úplně vpravo'],
 
-  /** A nudge when the water is getting high on the final attempt (deaths === 2). */
+  /** Only a player who has drowned the assistant three times gets to hear this. */
   threat: 'Jestli mě teď necháš utopit, budu si to pamatovat. Všechno si pamatuju.',
 
   /** Said right after a death, before the next attempt. Index by the death number (1..). */

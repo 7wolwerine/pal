@@ -121,24 +121,39 @@ export const rescue: GameScene = {
     }
 
     // One clickable hotspot per pipe that turns.
+    const pipeSpots = new Map<string, HTMLButtonElement>();
+    /** Says which way each pipe is open, for players who cannot see the picture. */
+    const relabel = (): void => {
+      for (const piece of layout.pieces) {
+        const spot = pipeSpots.get(piece.id);
+        if (!spot) continue;
+        const open = ([[N, RESCUE.sides.n], [E, RESCUE.sides.e], [S, RESCUE.sides.s], [W, RESCUE.sides.w]] as const)
+          .filter(([dir]) => piece.openings & dir)
+          .map(([, name]) => name)
+          .join(', ');
+        spot.setAttribute('aria-label', RESCUE.pipeLabel(layout.pieces.indexOf(piece) + 1, open));
+      }
+    };
     for (const piece of layout.pieces) {
       if (piece.fixed) continue;
-      const n = layout.pieces.indexOf(piece) + 1;
-      stage.hotspot(
+      const spot = stage.hotspot(
         { x: GRID_X + piece.col * CELL, y: GRID_Y + piece.row * CELL, w: CELL, h: CELL },
-        RESCUE.pipeLabel(n),
+        '',
         () => {
           if (phase !== 'play') return;
           turn(piece.id);
           ctx.witness.tally('pipe-turn');
         },
       );
+      pipeSpots.set(piece.id, spot);
     }
+    relabel();
 
     function turn(id: string): void {
       const piece = layout.pieces.find((p) => p.id === id);
       if (!piece || !rotatePiece(layout, id)) return;
       turnedAt.set(id, now);
+      relabel();
       audio.click(64 + ((piece.col + piece.row) % 4) * 2, 0.45);
       const before = wet.length;
       wet = wetPieces(layout);
@@ -201,6 +216,7 @@ export const rescue: GameScene = {
       window.setTimeout(() => {
         if (phase !== 'dead') return;
         scramble(layout);
+        relabel();
         wet = wetPieces(layout);
         flowFrom = now;
         threatened = false;
@@ -227,7 +243,8 @@ export const rescue: GameScene = {
       now = t;
 
       if (phase === 'play') {
-        water = Math.min(1, water + RISE_PER_S * dt);
+        // After three drownings the water slows down: the point has been made, and nobody should get stuck here.
+        water = Math.min(1, water + RISE_PER_S * (deaths >= 3 ? 0.45 : 1) * dt);
         // Every few seconds the assistant panics, or tells the player which pipe to turn.
         if (t - lastLine > 4200 && !threatened) {
           lastLine = t;
@@ -241,7 +258,7 @@ export const rescue: GameScene = {
           audio.gurgle(2.4);
         } else if (water >= 1) {
           die();
-        } else if (deaths >= 2 && water > 0.7 && !threatened) {
+        } else if (deaths >= 3 && water > 0.7 && !threatened) {
           threatened = true;
           void say(RESCUE.threat);
         }
