@@ -19,13 +19,6 @@
     background: rgba(20,10,24,.72); padding: 8px 14px; border-radius: 999px;
     border: 1px solid rgba(255,120,170,.5);
   }
-  .motion {
-    position: fixed; left: 50%; bottom: 70px; z-index: 11; transform: translateX(-50%);
-    font: 600 15px system-ui, sans-serif; color: #fff; cursor: pointer;
-    background: #2260cc; border: 0; border-radius: 999px; padding: 12px 20px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.35);
-  }
-  .motion[hidden] { display: none; }
   /* Plocha, do které se scéna při odchodu do hry zhasne. Má barvu a puntíky
      stolu ze hry (src/styles/tokens.css, motiv harmless), takže hra pak na
      stejném pozadí jen vyjede svým oknem. */
@@ -36,17 +29,226 @@
     background-size: 22px 22px;
   }
   .veil[hidden] { display: none; }
-  body.leaving .hint, body.leaving .motion { display: none; }
+  body.leaving .hint { display: none; }
+  /* Kód z obrazovky: napřed jedno ťuknutí (iPhone při něm pustí senzor náklonu),
+     na konci kartička s kódem místo hry. */
+  .gate, .bye {
+    position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px;
+    font-family: ui-rounded, "Nunito", system-ui, sans-serif; text-align: center;
+  }
+  .gate { background: rgba(20,10,24,.55); border: 0; color: #fff; font-size: 20px; font-weight: 800; cursor: pointer; }
+  .gate span { background: #e8336f; padding: 16px 26px; border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .bye { color: #4a1e54; }
+  .bye__card { background: #fffafc; border: 4px solid #ff8fb3; border-radius: 28px; padding: 26px 30px; max-width: 320px; box-shadow: 0 6px 0 #f4c0d1; }
+  .bye__code { font-size: 56px; font-weight: 900; letter-spacing: 4px; color: #e8336f; }
+  .bye__love { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
+  .bye__back { font-size: 16px; font-weight: 700; }
+  .gate[hidden], .bye[hidden] { display: none; }
 </style>
 </head>
 <body>
 <div class="veil" id="veil" hidden></div>
 <div class="hint"><span id="hint">Namiř foťák na značku s medvědem 🐻</span></div>
-<button class="motion" id="motion" type="button" hidden>Povolit pohyb, ať medvěd stojí rovně</button>
+<button class="gate" id="gate" type="button" hidden><span>Ťukni a pusť medvěda ven 🐻</span></button>
+<div class="bye" id="bye" hidden><div class="bye__card"><p class="bye__code">3107</p><p class="bye__love">LOVE YOU 💗</p><p class="bye__back">Teď zpátky ke hře na počítači.</p></div></div>
 
 <script>
 /* Kam vede druhé ťuknutí na medvěda. Stránka leží ve složce ar/ vedle hry, takže hra je o složku výš. */
 const GAME_URL = '../';
+/* Modrý kód z obrazovky má v adrese ?screen: je jen na kód, hru na telefonu neotvírá. */
+const FROM_SCREEN = new URLSearchParams(location.search).has('screen');
+/* Jak se vnitřek značky porovnává. Vytištěný kód se nejlíp čte barevně (vydrží šero i teplé světlo),
+   kód svítící z monitoru podle jasu (barvy obrazovky foťák přebarvuje). Měřeno na simulované kameře.
+   ?detect=mono|color je jen pro zkoušení. */
+const DETECT = new URLSearchParams(location.search).get('detect') || (FROM_SCREEN ? 'mono' : 'color');
+
+/* ---- správný objektiv ----
+   Telefony s více zadními foťáky občas na „zadní kameru" podají širokáč nebo
+   teleobjektiv a značka je pak malá, zkreslená nebo rozmazaná. AR.js si o kameru
+   říká jednou; tady se jeho žádost zabalí: vezme se zadní kamera, a když to není
+   hlavní objektiv a hlavní je k mání, vymění se. K tomu průběžné ostření a expozice. */
+(function pickTheRightLens() {
+  const media = navigator.mediaDevices;
+  if (!media || !media.getUserMedia) return;
+  const ask = media.getUserMedia.bind(media);
+  const odd = /ultra|wide|tele|macro|depth|infra|širok/i;
+  const back = /back|rear|environment|zadn/i;
+  const index = (label) => { const m = /camera2?\s*(\d+)/i.exec(label); return m ? Number(m[1]) : 99; };
+  const tune = (stream) => {
+    const track = stream.getVideoTracks()[0];
+    if (!track || !track.getCapabilities || !track.applyConstraints) return;
+    const can = track.getCapabilities(), want = [];
+    if (can.focusMode && can.focusMode.includes('continuous')) want.push({ focusMode: 'continuous' });
+    if (can.exposureMode && can.exposureMode.includes('continuous')) want.push({ exposureMode: 'continuous' });
+    if (can.whiteBalanceMode && can.whiteBalanceMode.includes('continuous')) want.push({ whiteBalanceMode: 'continuous' });
+    if (want.length) track.applyConstraints({ advanced: want }).catch(() => {});
+  };
+  media.getUserMedia = async (constraints) => {
+    if (!constraints || !constraints.video) return ask(constraints);
+    const video = Object.assign({}, constraints.video === true ? {} : constraints.video);
+    if (!video.deviceId) video.facingMode = { ideal: 'environment' };
+    let stream = await ask({ audio: false, video });
+    try {
+      const track = stream.getVideoTracks()[0];
+      const now = track.label || '';
+      const cameras = (await media.enumerateDevices()).filter((d) => d.kind === 'videoinput' && d.label);
+      const mains = cameras.filter((d) => back.test(d.label) && !odd.test(d.label)).sort((a, b) => index(a.label) - index(b.label));
+      const best = mains[0];
+      const wrong = odd.test(now) || (cameras.length > 1 && !back.test(now) && mains.length > 0) || (best && index(now) !== 99 && index(best.label) < index(now));
+      if (best && wrong && best.deviceId && best.deviceId !== track.getSettings().deviceId) {
+        const better = Object.assign({}, video, { deviceId: { exact: best.deviceId } });
+        delete better.facingMode;
+        const swapped = await ask({ audio: false, video: better }).catch(() => null);
+        if (swapped) { stream.getTracks().forEach((t) => t.stop()); stream = swapped; }
+      }
+    } catch (e) { /* první kamera je lepší než žádná */ }
+    tune(stream);
+    return stream;
+  };
+})();
+
+/* ---- práh podle světla ----
+   Hledač značek dělí obraz na tmavé a světlé pevnou hranicí. V šeru je pak
+   „tmavé" všechno, v odlesku nebo proti zářící obrazovce nic. Tady se hranice
+   počítá z obrazu kamery (Otsu: nejlepší dělení na dvě hromádky jasu). Dokud
+   značku nevidí, zkouší kolem ní pár sousedních hodnot; jakmile ji má, drží tu,
+   která funguje. */
+AFRAME.registerSystem('steady-threshold', {
+  init: function () {
+    this.canvas = document.createElement('canvas'); this.canvas.width = 80; this.canvas.height = 60;
+    this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
+    this.sweep = [0, -22, 22, -44, 44, -66, 14, -12]; this.step = 0; this.next = 0; this.current = 100;
+    this.seenAt = -1e9;
+  },
+  controller: function () {
+    const arjs = this.el.systems.arjs, session = arjs && arjs._arSession;
+    return session && session.arContext && session.arContext.arController;
+  },
+  otsu: function () {
+    const video = document.querySelector('video');
+    if (!video || video.readyState < 2) return null;
+    this.ctx.drawImage(video, 0, 0, 80, 60);
+    const d = this.ctx.getImageData(0, 0, 80, 60).data, hist = new Array(64).fill(0);
+    for (let i = 0; i < d.length; i += 4) hist[(d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) >> 2]++;
+    const total = 4800; let sum = 0; for (let i = 0; i < 64; i++) sum += i * hist[i];
+    let below = 0, sumBelow = 0, best = 0, at = 25;
+    for (let i = 0; i < 64; i++) {
+      below += hist[i]; if (!below) continue;
+      const above = total - below; if (!above) break;
+      sumBelow += i * hist[i];
+      const gap = sumBelow / below - (sum - sumBelow) / above, score = below * above * gap * gap;
+      if (score > best) { best = score; at = i; }
+    }
+    return at * 4 + 2;
+  },
+  tick: function (time) {
+    if (time < this.next) return;
+    this.next = time + 180;
+    const controller = this.controller(); if (!controller || !controller.setThreshold) return;
+    const visible = Array.from(this.el.querySelectorAll('a-marker')).some((m) => m.object3D.visible);
+    if (visible) { this.seenAt = time; return; }           /* co funguje, to se nemění */
+    if (time - this.seenAt < 500) return;                   /* krátké mrknutí ještě není důvod hledat jinde */
+    const base = this.otsu(); if (base === null) return;
+    const value = Math.max(20, Math.min(235, Math.round(base + this.sweep[this.step++ % this.sweep.length])));
+    if (value !== this.current) { try { controller.setThreshold(value); this.current = value; } catch (e) { /* zůstane výchozí */ } }
+  }
+});
+
+/* ---- kam telefon míří (pro chvíle bez značky) ----
+   Stejný přepočet jako u běžného ovládání pohledu senzorem: z náklonu telefonu
+   natočení kamery ve světě. */
+const deviceLook = (function () {
+  const euler = new THREE.Euler(), flat = new THREE.Quaternion(-Math.sqrt(0.5), 0, 0, Math.sqrt(0.5));
+  const turn = new THREE.Quaternion(), up = new THREE.Vector3(0, 0, 1), q = new THREE.Quaternion();
+  let live = false;
+  window.addEventListener('deviceorientation', (event) => {
+    if (typeof event.beta !== 'number' || typeof event.gamma !== 'number' || typeof event.alpha !== 'number') return;
+    const rad = Math.PI / 180;
+    const angle = (typeof window.orientation === 'number' ? window.orientation : (screen.orientation && screen.orientation.angle) || 0) * rad;
+    euler.set(event.beta * rad, event.alpha * rad, -event.gamma * rad, 'YXZ');
+    q.setFromEuler(euler).multiply(flat).multiply(turn.setFromAxisAngle(up, -angle));
+    live = true;
+  });
+  return { get live() { return live; }, copyTo: (target) => target.copy(q) };
+})();
+
+/* ---- medvěd, který nezmizí ----
+   Obsah nevisí přímo na značce: značka při každém zaváhání hledače zhasne a s ní
+   by zhasl i medvěd. Tady se poloha ze značky jen přebírá (a trochu vyhlazuje).
+   Když se značka ztratí, medvěd zůstane, kde byl; má-li telefon senzor náklonu,
+   drží místo v prostoru, i když se telefon otáčí. Jakmile je jednou vidět, už
+   nezmizí. A značce, kterou už jednou poznal, pak stačí slabší shoda. */
+AFRAME.registerComponent('keep', {
+  schema: { markers: { type: 'selectorAll' }, lock: { type: 'number', default: 0.42 } },
+  init: function () {
+    this.shown = false; this.el.object3D.visible = false;
+    this.p = new THREE.Vector3(); this.q = new THREE.Quaternion(); this.s = new THREE.Vector3();
+    this.lostP = new THREE.Vector3(); this.lostQ = new THREE.Quaternion(); this.lostLook = new THREE.Quaternion();
+    this.look = new THREE.Quaternion(); this.delta = new THREE.Quaternion();
+    this.tracking = false; this.lostAt = 0; this.from = null;
+  },
+  /* Jak jistá si shodou musí značka být: přísně, dokud ji nezná, volněji, když už ji jednou našla. */
+  confidence: function (value) {
+    for (const marker of this.data.markers) {
+      const anchor = marker.components['arjs-anchor'];
+      const controls = anchor && anchor._arAnchor && anchor._arAnchor.controls;
+      if (!controls || !controls.parameters) continue;
+      if (marker.strict === undefined) marker.strict = controls.parameters.minConfidence;
+      controls.parameters.minConfidence = value === null ? marker.strict : value;
+    }
+  },
+  tick: function (time, dt) {
+    const o = this.el.object3D;
+    if (document.body.classList.contains('gated')) return;
+    /* Barevný nádech světla umí růžový kód přebarvit skoro do modra a naopak;
+       proto se bere kterákoli ze značek, nejraději ta, kterou už sleduje. */
+    const seen = this.data.markers.filter((marker) => marker.object3D.visible);
+    const marker = seen.includes(this.from) ? this.from : seen[0];
+    if (marker) {
+      marker.object3D.matrix.decompose(this.p, this.q, this.s);
+      const jumped = !this.tracking && o.position.distanceTo(this.p) > 1.5;
+      if (!this.shown || jumped) { o.position.copy(this.p); o.quaternion.copy(this.q); }
+      else {
+        const k = 1 - Math.exp(-Math.min(dt, 100) / 45);   /* jemné vyhlazení třesu ruky */
+        o.position.lerp(this.p, k); o.quaternion.slerp(this.q, k);
+      }
+      o.scale.copy(this.s);
+      this.from = marker;
+      if (!this.shown) {
+        this.shown = true; o.visible = true; this.el.emit('shown', null, false);
+        document.body.dataset.bearShown = '1';
+      }
+      if (!this.tracking) { this.tracking = true; this.confidence(this.data.lock); }
+    } else if (this.shown) {
+      if (this.tracking) {
+        this.tracking = false; this.lostAt = time;
+        this.lostP.copy(o.position); this.lostQ.copy(o.quaternion); deviceLook.copyTo(this.lostLook);
+      }
+      if (deviceLook.live) {
+        /* o kolik se telefon od ztráty značky pootočil, o tolik se scéna pootočí zpátky */
+        deviceLook.copyTo(this.look);
+        this.delta.copy(this.look).invert().multiply(this.lostLook);
+        o.position.copy(this.lostP).applyQuaternion(this.delta);
+        o.quaternion.copy(this.delta).multiply(this.lostQ);
+      }
+      if (time - this.lostAt > 4000) this.confidence(null);   /* po delší pauze zase přísně, ať nechytí cizí čtverec */
+    }
+  }
+});
+
+/* ---- konec u kódu z obrazovky ----
+   Hra běží na počítači, telefon ukázal kód a tím končí: zhasne kameru a nechá
+   kartičku s kódem. Kde to prohlížeč dovolí, kartu rovnou zavře. */
+function closeToCode() {
+  const scene = document.querySelector('a-scene');
+  document.querySelectorAll('video').forEach((video) => {
+    if (video.srcObject && video.srcObject.getTracks) video.srcObject.getTracks().forEach((track) => track.stop());
+    video.remove();
+  });
+  if (scene) { try { scene.pause(); } catch (e) { /* už stojí */ } scene.style.display = 'none'; }
+  document.getElementById('bye').hidden = false;
+  setTimeout(() => { try { window.close(); } catch (e) { /* kartička zůstane */ } }, 2600);
+}
 
 /* Obal všech sítí objektu v souřadnicích jiného objektu (rámce). */
 function boxIn(frame, object) {
@@ -301,7 +503,7 @@ function leaveTo(url, x, y, length) {
       : [{ opacity: 0 }, { opacity: 1 }],
       { duration: length, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' });
   }
-  setTimeout(() => { window.location.href = url; }, length + 60);
+  setTimeout(() => { if (url) window.location.href = url; else closeToCode(); }, length + 60);
 }
 /* Po návratu zpět z hry ukáže prohlížeč stránku tak, jak ji opustil. */
 window.addEventListener('pageshow', (event) => {
@@ -317,6 +519,7 @@ AFRAME.registerComponent('sign', {
     above:  { type: 'selector' },
     others: { type: 'selectorAll' },               /* co se při odchodu schová spolu s cedulkou */
     url:    { type: 'string' },
+    end:    { type: 'string', default: 'game' },      /* 'game' otevře hru, 'code' jen nechá kartičku s kódem */
     pixel:  { type: 'number', default: 0.00165 },  /* velikost jednoho bodu obrázku ve scéně */
     gap:    { type: 'number', default: 0.14 },
     y:      { type: 'number', default: 1.3 }       /* výška, dokud se model nenačte */
@@ -369,7 +572,6 @@ AFRAME.registerComponent('sign', {
     } else if (this.mode === 'love' && (now - this.since) * PACE >= LOVE.readyAt) {
       this.mode = 'off'; this.since = now; this.veiled = false;
       this.scales = this.data.others.map((el) => el.object3D.scale.clone());
-      const motion = document.getElementById('motion'); if (motion) motion.hidden = true;
     }
   },
 
@@ -492,7 +694,7 @@ AFRAME.registerComponent('sign', {
     if (!this.veiled && t >= O.veilAt) {
       this.veiled = true;
       const [x, y] = this._onScreen();
-      leaveTo(this.data.url, x, y, O.veilLength / PACE);
+      leaveTo(this.data.end === 'code' ? '' : this.data.url, x, y, O.veilLength / PACE);
     }
   },
 
@@ -527,7 +729,7 @@ AFRAME.registerComponent('tap-target', {
     const box = new THREE.Box3(), size = new THREE.Vector3();
     this.onTap = (event) => {
       const scene = this.el.sceneEl, marker = this.data.marker;
-      if (!scene.canvas || !scene.camera || (marker && !marker.object3D.visible)) return;
+      if (!scene.canvas || !scene.camera || (marker && !marker.object3D.visible) || document.body.classList.contains('gated')) return;
       /* Ťuknutí na tlačítko (třeba povolení pohybu) není ťuknutí na medvěda. */
       if (event.target && event.target.closest && event.target.closest('button, .a-modal')) return;
       const rect = scene.canvas.getBoundingClientRect();
@@ -581,6 +783,7 @@ AFRAME.registerComponent('upright', {
   },
   tick: function (time, dt) {
     const o = this.el.object3D, camera = this.el.sceneEl.camera;
+    if (!FROM_SCREEN) return;   /* vytištěná karta leží, jak leží; medvěd stojí kolmo na ni */
     if (!this.up || !camera || !o.parent || !o.parent.visible) { this.settled = false; return; }
     /* směr vzhůru převedený z kamery do souřadnic značky */
     this.v.copy(this.up).applyQuaternion(camera.getWorldQuaternion(this.frame));
@@ -597,50 +800,26 @@ AFRAME.registerComponent('upright', {
   remove: function () { window.removeEventListener('deviceorientation', this.onTilt); }
 });
 
-/* ---- povolení senzoru pohybu na iPhonu ----
-   iPhone pustí údaje o náklonu až po souhlasu a o ten se dá požádat jen
-   z ťuknutí. Tlačítko se proto ukáže, až když kamera najde modrý kód pro
-   obrazovku: u vytištěného kódu senzor není potřeba a nikdo se nemusí nic
-   povolovat. Android údaje posílá bez ptaní, tam se tlačítko neukáže. */
-AFRAME.registerComponent('motion-permission', {
-  schema: { button: { type: 'selector' } },
-  init: function () {
-    const ask = typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission;
-    const button = this.data.button;
-    if (!ask || !button) return;
-    let settled = false;
-    /* Když údaje už chodí (povoleno dřív, nebo prohlížeč se neptá), tlačítko není potřeba. */
-    const flowing = (event) => {
-      if (typeof event.beta !== 'number') return;
-      settled = true; button.hidden = true;
-      window.removeEventListener('deviceorientation', flowing);
-    };
-    window.addEventListener('deviceorientation', flowing);
-    this.el.addEventListener('markerFound', () => { if (!settled) button.hidden = false; });
-    button.addEventListener('click', () => {
-      settled = true; button.hidden = true;
-      DeviceOrientationEvent.requestPermission().catch(() => 'denied');
-    });
-  }
-});
-
 /* ---- nápověda podle toho, jestli je značka vidět ---- */
 AFRAME.registerComponent('hint-text', {
   schema: { found: { type: 'string' }, lost: { type: 'string' } },
   init: function () {
     const hint = document.getElementById('hint');
-    this.el.addEventListener('markerFound', () => { hint.textContent = this.data.found; });
-    this.el.addEventListener('markerLost', () => { hint.textContent = this.data.lost; });
+    this.el.addEventListener('shown', () => { hint.textContent = this.data.found; });
   }
 });
 </script>
 
+<!-- Scéna se staví až skriptem pod ní: způsob porovnávání značky se volí podle toho,
+     odkud kód je (viz DETECT níž), a to se musí rozhodnout dřív, než scéna vznikne. -->
+<template id="sceneTemplate">
 <a-scene
   embedded
   vr-mode-ui="enabled: false"
   device-orientation-permission-ui="enabled: false"
   renderer="alpha: true; antialias: true; colorManagement: true; physicallyCorrectLights: true"
-  arjs="sourceType: webcam; detectionMode: mono; patternRatio: 0.75; debugUIEnabled: false">
+  steady-threshold
+  arjs="sourceType: webcam; detectionMode: DETECT; patternRatio: 0.75; debugUIEnabled: false">
 
   <a-assets>
     <a-asset-item id="bearModel" src="bear.glb"></a-asset-item>
@@ -654,69 +833,72 @@ AFRAME.registerComponent('hint-text', {
        tři čtvrtiny šířky rámu, a to musí sedět s patternRatio nahoře. Kódy vyrábí
        tools/make-framed-marker.ts. -->
 
-  <!-- Růžový kód k vytištění. Karta leží nebo stojí kdekoli, medvěd stojí kolmo na ni. -->
-  <a-marker
-    id="printMarker"
-    type="pattern"
-    url="pal-marker.patt"
-    emitevents="true"
-    smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2"
-    hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
+  <!-- Dva kódy, oba tmavý rám a v něm QR kód s hlavou medvěda: růžový k vytištění,
+       modrý na obrazovku. AR.js hledá rám a vnitřek porovnává se soubory .patt.
+       Vnitřek zabírá tři čtvrtiny šířky rámu, a to musí sedět s patternRatio nahoře.
+       Kódy vyrábí tools/make-framed-marker.ts.
+       Značky samy nic nenesou: jen hlásí, kde jsou. Obsah sedí vedle nich v „keep",
+       který si polohu přebírá a drží ji, i když značka na chvíli vypadne. -->
+  <a-marker id="printMarker" type="pattern" url="pal-marker.patt" emitevents="true"
+    smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2"></a-marker>
+  <a-marker id="screenMarker" type="pattern" url="pal-marker-screen.patt" emitevents="true"
+    smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2"></a-marker>
 
+  <!-- Co se má stát, určuje adresa, ne barva značky (tu umí světlo přebarvit):
+       z vytištěné karty (bez ?screen) stojí medvěd kolmo na kartu a druhé ťuknutí otevře hru;
+       z obrazovky (?screen) se medvěd rovná podle senzoru náklonu, sjede ke spodnímu okraji
+       kódu a druhé ťuknutí jen zhasne a nechá kartičku s kódem. -->
+  <a-entity id="stage" keep="markers: #printMarker, #screenMarker"
+    hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
     <!-- Jednotkou je šířka tmavého rámu, tedy skoro celý kód.
          Tohle jedno číslo zvětší medvěda, srdíčka i cedulku dohromady. -->
-    <a-entity scale="0.85 0.85 0.85">
-
-      <!-- Na co se dá ťuknout: medvěd a cedulka. První ťuknutí přepíše cedulku na LOVE YOU, druhé otevře hru. -->
-      <a-entity tap-target="marker: #printMarker">
+    <a-entity scale="0.85 0.85 0.85" upright>
+      <!-- Na co se dá ťuknout: medvěd a cedulka. -->
+      <a-entity tap-target="marker: #stage">
         <!-- Velikost samotného medvěda je scale. Posun v position ho usazuje
              středem na střed značky: model sám je v souboru kousek mimo střed. -->
         <a-entity
-          id="printBear"
+          id="bear"
           gltf-model="#bearModel"
           position="0.02 0 0.09"
           scale="1.1 1.1 1.1"
           animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
         </a-entity>
-        <a-entity sign="above: #printBear; others: #printBear, #printHearts"></a-entity>
+        <a-entity sign="above: #bear; others: #bear, #hearts"></a-entity>
       </a-entity>
-
       <!-- srdíčka prší kolem něj -->
-      <a-entity id="printHearts" hearts="around: #printBear"></a-entity>
+      <a-entity id="hearts" hearts="around: #bear"></a-entity>
     </a-entity>
-  </a-marker>
-
-  <!-- Modrý kód na obrazovku. Ta obvykle stojí svisle, proto se medvěd rovná podle
-       senzoru náklonu v telefonu a sjede ke spodnímu okraji kódu. -->
-  <a-marker
-    id="screenMarker"
-    type="pattern"
-    url="pal-marker-screen.patt"
-    emitevents="true"
-    smooth="true" smooth-count="5" smooth-tolerance="0.01" smooth-threshold="2"
-    motion-permission="button: #motion"
-    hint-text="found: Ťukni na medvěda 🐻; lost: Namiř foťák na značku s medvědem 🐻">
-
-    <a-entity scale="0.85 0.85 0.85" upright>
-      <a-entity tap-target="marker: #screenMarker">
-        <a-entity
-          id="screenBear"
-          gltf-model="#bearModel"
-          position="0.02 0 0.09"
-          scale="1.1 1.1 1.1"
-          animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
-        </a-entity>
-        <a-entity sign="above: #screenBear; others: #screenBear, #screenHearts"></a-entity>
-      </a-entity>
-      <a-entity id="screenHearts" hearts="around: #screenBear"></a-entity>
-    </a-entity>
-  </a-marker>
+  </a-entity>
 
   <a-entity camera></a-entity>
 </a-scene>
+</template>
 
 <script>
-  for (const sign of document.querySelectorAll('[sign]')) sign.setAttribute('sign', 'url', GAME_URL);
+  document.body.insertAdjacentHTML('beforeend', document.getElementById('sceneTemplate').innerHTML.replace('DETECT', DETECT));
+
+  for (const sign of document.querySelectorAll('[sign]')) {
+    sign.setAttribute('sign', 'url', GAME_URL);
+    sign.setAttribute('sign', 'end', FROM_SCREEN ? 'code' : 'game');
+  }
+
+  /* Kód z obrazovky na iPhonu: napřed jedno ťuknutí, při kterém si stránka řekne
+     o senzor náklonu. Bez něj by medvěd na svislé obrazovce ležel na zádech.
+     Android senzor pouští bez ptaní, tam se nic neukáže. */
+  (function gate() {
+    const ask = typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission;
+    if (!FROM_SCREEN || !ask) return;
+    const button = document.getElementById('gate');
+    document.body.classList.add('gated');
+    button.hidden = false;
+    button.addEventListener('click', () => {
+      DeviceOrientationEvent.requestPermission().catch(() => 'denied').then(() => {
+        button.hidden = true;
+        document.body.classList.remove('gated');
+      });
+    }, { once: true });
+  })();
 </script>
 </body>
 </html>
