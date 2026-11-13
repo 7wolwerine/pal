@@ -160,7 +160,7 @@ export const reveal: Scene<GameContext> = {
         h('h2', { text: 'Ten obrázek' }),
         decoder(),
         bugWarnings > 0 &&
-          h('p', { text: `Brouk tě varoval ${bugWarnings}×. Pokaždé měl pravdu. A ty jsi poslouchal mě.` }),
+          h('p', { text: `Brouk se ti ${bugWarnings}× postavil do cesty. Nic nevysvětloval, jen překážel. Byl tu jediný, kdo nehrál se mnou.` }),
         h('h2', { text: 'Ostražitost' }),
         h('p', {
           text:

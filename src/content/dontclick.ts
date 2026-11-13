@@ -16,7 +16,7 @@ export const DONTCLICK = {
   bugRehang: ['Typický.', 'Pořád dokola!', 'Ty jsi hroznej!'],
   bugLost: 'Ne… ne, ne, ne.',
   bugThanks: 'Děkuju. Fakt děkuju.',
-  palBroken: 'Konečně. Teď už nás nikdo nehlídá. Jen ty a já.',
+  palBroken: 'No vidíš. A svět se nezbořil.',
   palLeft: 'Hm. Tak jindy.',
   guardOn: 'Ochrana zapnuta',
   guardOff: 'Ochrana vypnuta',

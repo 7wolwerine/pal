@@ -32,13 +32,27 @@ export const crash: GameScene = {
       if (!alive) return;
       const w = board.clientWidth || 320;
       beetle.jump(w + 10, 90);
-      beetle.setMood('sad');
-      await beetle.moveTo(w / 2 - BUG_PX / 2, 90);
+      beetle.setMood('panic');
+      // No words. BUG runs to the window's close button and pulls at it with all he has:
+      // the one thing he has been trying to do for the player all along.
+      const close = ctx.window.el.querySelector<HTMLElement>('[aria-label="Zavřít"]');
+      const from = board.getBoundingClientRect();
+      const to = close?.getBoundingClientRect();
+      const x = to ? to.left - from.left + to.width / 2 - BUG_PX / 2 : w / 2 - BUG_PX / 2;
+      const y = to ? to.top - from.top - BUG_PX + 14 : 90;
+      beetle.el.style.zIndex = '20';
+      await beetle.moveTo(x, y);
       if (!alive) return;
-      beetle.say(CRASH.bugLast);
-      await sleep(2200);
+      for (let pull = 0; pull < 3; pull++) {
+        await beetle.strain(650);
+        if (!alive) return;
+        ctx.window.el.classList.remove('win--nope');
+        void ctx.window.el.offsetWidth;
+        ctx.window.el.classList.add('win--nope');
+      }
+      beetle.setMood('cry');
+      await sleep(900);
       if (!alive) return;
-      beetle.say('');
       await dissolve();
       if (!alive) return;
       await pal.glitch(700);

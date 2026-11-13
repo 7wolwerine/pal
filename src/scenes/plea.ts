@@ -1,8 +1,6 @@
 import { FEMININE, PLEA, type NeedKey } from '../content/plea.ts';
 import { lean, type GameScene } from '../game.ts';
 import { h } from '../ui/dom.ts';
-import { ANOMALY_TEXT } from '../content/anomalies.ts';
-import { anomaly } from '../ui/anomaly.ts';
 import { PleaFlow, makeCode, sameCode, type PleaChoice } from './plea-model.ts';
 
 const SCENE = 'plea';
@@ -25,7 +23,6 @@ export const plea: GameScene = {
     const need = PLEA.need[needKey];
     const flow = new PleaFlow();
     let sms: HTMLElement | null = null;
-    let stopAnomaly = (): void => undefined;
 
     /** Says a line and waits for a click on the bubble before going on. */
     async function line(text: string): Promise<void> {
@@ -155,30 +152,16 @@ export const plea: GameScene = {
             input.focus();
             return;
           }
-          stopAnomaly();
           resolve();
         });
         stage.replaceChildren(form);
         input.focus();
-        const bubble = ctx.window.el.querySelector<HTMLElement>('.pal__bubble');
-        if (bubble) {
-          stopAnomaly = anomaly(witness, bubble, {
-            what: 'impatient',
-            scene: SCENE,
-            text: ANOMALY_TEXT.impatient,
-            className: 'anomaly--impatient',
-            place: { left: '0', top: '0', right: '0', bottom: '0' },
-            after: 8000,
-            ms: 900,
-          });
-        }
       });
     }
 
     void run();
     return () => {
       alive = false;
-      stopAnomaly();
       sms?.remove();
       pal.setLookMood('happy');
       stage.replaceChildren();

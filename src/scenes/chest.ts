@@ -124,7 +124,8 @@ export const chest: GameScene = {
       label.textContent = CHEST.reward(got);
       burst(button, Math.max(3, Math.round(got / 12)));
       audio.treasure();
-      witness.record({ scene: SCENE, kind: 'chest-open', trick: 'variable-reward', data: { n: model.opened, reward: got } });
+      // The first two are honest little wins; the third is the near miss that keeps the hand moving.
+      witness.record({ scene: SCENE, kind: 'chest-open', trick: model.opened < REWARDS.length ? 'small-win' : 'variable-reward', data: { n: model.opened, reward: got } });
       await countTo(model.points);
       await pal.say(CHEST.palAfter[model.opened - 1] ?? '');
       busy = false;

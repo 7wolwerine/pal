@@ -1,14 +1,12 @@
 /**
  * BUG's end and the blue screen. Everything the player did catches up: BUG,
- * who warned them all game, dissolves into a stream of green glyphs spelled
+ * who without a word tries to pull the window shut for the player, dissolves into a stream of green glyphs spelled
  * from the player's own actions, the window crashes, and a fake blue screen
  * offers a "support" number — the tech-support scam. The number is not a
  * valid phone number (no Czech number starts with 000) and nothing dials it.
  */
 export const CRASH = {
   palDark: 'Tak. A teď už jsi jen můj.',
-  bugLast: 'Já jsem tě varoval. Celou dobu.',
-  bugGone: '…',
   sad: ':(',
   title: 'Váš počítač narazil na závažný problém a byl zablokován.',
   body: 'Byla zjištěna nebezpečná aktivita (PAL.EXE). Nevypínejte počítač, mohlo by dojít ke ztrátě dat. Ihned kontaktujte technickou podporu:',
