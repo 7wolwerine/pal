@@ -23,6 +23,7 @@ import { welcome } from './scenes/welcome.ts';
 import { Dialogue } from './ui/dialogue.ts';
 import { h } from './ui/dom.ts';
 import { createJourney } from './ui/journey.ts';
+import { minimizeWindow } from './ui/minimize.ts';
 import { createPc } from './ui/pc.ts';
 import { createWindow } from './ui/window.ts';
 
@@ -43,7 +44,8 @@ function boot(): void {
   const win = createWindow('PAL', (button) => {
     witness.record({ scene: director?.currentId ?? 'boot', kind: 'window-button', data: { button } });
     if (button === 'minimize') {
-      void pal.say(WINDOW_REACTIONS.minimize);
+      const screen = win.el.closest<HTMLElement>('.pc__screen');
+      if (screen) minimizeWindow(win.el, screen, profile);
       return;
     }
     if (button === 'close') {
