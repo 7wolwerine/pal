@@ -52,7 +52,8 @@ const FRONT_HEAD = [
   '......qSSq......',
 ];
 const FRONT_BLINK: Record<number, string> = { 8: '.OHssssssssssHO.', 9: '.OHseesssseesHO.' };
-const FRONT_JOY: Record<number, string> = { 8: '.OHsessssseseHO.', 9: '.OHessssssessHO.', 11: '..qSssmmmmssSq..' };
+// Eyes squeezed into two little arcs and a wide open smile.
+const FRONT_JOY: Record<number, string> = { 8: '.OHssessssessHO.', 9: '.OHsesessesesHO.', 11: '..qSssmmmmssSq..' };
 
 const FRONT_BODY = [
   '...uTttttttTu...',
@@ -84,23 +85,25 @@ const FRONT_TORSO = [
   '...zzzz..zzzz...',
 ];
 
+// The head from the side, facing right: hair over the top and the back, one
+// ear, one eye, and a small nose that sticks one pixel out of the face.
 const SIDE_HEAD = [
-  '....OOOOOOO.....',
-  '..OOHhhhhhhOO...',
-  '.OHhhhyyyhhhhO..',
-  '.OHhhyyhhhhhhhO.',
-  'OHhhhhhhhhhhhhO.',
-  'OHhhhhhhhhhhhhO.',
-  'OHhhhhhhhhsHshO.',
-  'OHhhhhhhssssssq.',
-  'OHhhqSqsssseisq.',
-  'OHhhqSqsssseesq.',
-  '.OHhqqssssssscq.',
-  '.OHhhqSssssmsq..',
-  '..OOhhqSSSSSq...',
-  '....OOO.qSSq....',
+  '.....OOOOOO.....',
+  '...OOHhhhhHOO...',
+  '..OHhhyyhhhhHO..',
+  '.OHhhyyhhhhhhHO.',
+  '.OHhhhhhhhhhhHO.',
+  '.OHhhhhhhhHhhHO.',
+  '.OHhhhhhHssHssq.',
+  '.OHhhhhHssssssq.',
+  '.OHhhhqSsssseiq.',
+  '.OHhhhqSsssseesq',
+  '.OHhhhhqssscssq.',
+  '..OHhhhSssssmsq.',
+  '...OOhhqSSSSSq..',
+  '.....OO.qSSq....',
 ];
-const SIDE_BLINK: Record<number, string> = { 8: 'OHhhqSqssssssssq.'.slice(0, 16), 9: 'OHhhqSqsssseesq.' };
+const SIDE_BLINK: Record<number, string> = { 8: '.OHhhhqSssssssq.', 9: '.OHhhhqSsssseesq' };
 
 const SIDE_TORSO = ['.....uTttTu.....', '....uTttttTu....', '....uTtltttu....', '....uTtltttu....', '....uTTTTTTu....', '....nppppppn....', '....nppPPppn....'];
 
@@ -186,10 +189,10 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
 
   rows(g, FRONT_TORSO, ix, y + 14, false);
   if (pose === 'happy') {
-    // Both arms up in delight.
-    arm(g, ix + 4, y + 15, ix + 1, y + 9);
-    arm(g, ix + 11, y + 15, ix + 14, y + 9);
+    // Both arms thrown up and out in delight, clear of the face.
     rows(g, patch(FRONT_HEAD, FRONT_JOY), ix, y, false);
+    arm(g, ix + 3, y + 15, ix - 2, y + 11);
+    arm(g, ix + 11, y + 15, ix + 16, y + 11);
     return;
   }
   // 'hold': both hands together in front, holding up a little present.

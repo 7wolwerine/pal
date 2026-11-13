@@ -1,4 +1,4 @@
-import { INK, paintDrive } from '../../pixel/cast.ts';
+import { INK } from '../../pixel/cast.ts';
 import { px } from '../../pixel/stage.ts';
 
 type G = CanvasRenderingContext2D;
@@ -14,8 +14,15 @@ export const FEET_Y = 91;
 export const CHARACTER_HOME = { x: 62 };
 export const CHARACTER_AT_MAILBOX = { x: 98 };
 export const CHARACTER_AT_DOOR = { x: 42 };
-/** The strip of path the character can be sent along by clicking it. */
-export const PATH_RECT = { x: 44, y: 84, w: 86, h: 9 };
+/** The grass and the path: anywhere here the character can be sent by a click. */
+export const GROUND_RECT = { x: 0, y: 78, w: 160, h: 22 };
+/** How far up and down the garden the feet may go. */
+export const FEET_MIN_Y = 81;
+export const FEET_MAX_Y = 99;
+export const TREE_RECT = { x: 132, y: 8, w: 28, h: 30 };
+export const BUSH_RECT = { x: 138, y: 83, w: 20, h: 13 };
+export const POT_RECT = { x: 7, y: 75, w: 14, h: 18 };
+export const CHIMNEY_RECT = { x: 64, y: 0, w: 12, h: 14 };
 export const DOOR_RECT = { x: 42, y: 47, w: 16, h: 26 };
 
 /** The close-up envelope, seen from the back: body, flap and the heart seal on it. */
@@ -57,6 +64,8 @@ const C = {
   paper: '#fff6e0',
   paperShade: '#eedfba',
   paperLine: '#c9a66b',
+  lilac: '#b79be8',
+  redDark: '#b8322f',
 } as const;
 
 const TUFTS = [
@@ -71,11 +80,22 @@ const TUFTS = [
 ] as const;
 
 const FLOWERS = [
-  [10, 90, C.pink],
+  [28, 88, C.pink],
   [100, 96, C.yellow],
-  [148, 82, C.pink],
+  [132, 96, C.pink],
   [34, 66, C.yellow],
   [90, 80, C.pink],
+  [6, 97, C.lilac],
+  [22, 96, C.yellow],
+  [38, 82, C.white],
+  [64, 97, C.lilac],
+  [72, 80, C.yellow],
+  [110, 80, C.lilac],
+  [150, 78, C.yellow],
+  [86, 97, C.white],
+  [4, 70, C.pink],
+  [154, 99, C.lilac],
+  [48, 97, C.pink],
 ] as const;
 
 function cloud(g: G, x: number, y: number): void {
@@ -106,7 +126,7 @@ function fence(g: G, from: number, to: number): void {
 }
 
 /** Sky, hills, garden, tree and cottage. `motion` false keeps clouds and smoke still. */
-export function paintBackdrop(g: G, t: number, motion: boolean): void {
+export function paintBackdrop(g: G, t: number, motion: boolean, picked = 0): void {
   const time = motion ? t : 0;
   px(g, C.sky, 0, 0, 160, 60);
   px(g, C.skyLow, 0, 44, 160, 16);
@@ -131,22 +151,15 @@ export function paintBackdrop(g: G, t: number, motion: boolean): void {
   px(g, C.pathEdge, 44, 92, 86, 1);
   px(g, C.pathEdge, 58, 83, 72, 1);
 
-  for (const [x, y, colour] of FLOWERS) {
+  FLOWERS.forEach(([x, y, colour], i) => {
+    // Each one nods a pixel in the breeze, in its own time.
+    const nod = motion && Math.floor(t / 900 + i * 0.37) % 4 === 0 ? 1 : 0;
     px(g, C.grassDark, x, y + 2, 1, 2);
-    px(g, colour, x - 1, y, 3, 2);
-    px(g, C.white, x, y, 1, 1);
-  }
+    px(g, colour, x - 1 + nod, y, 3, 2);
+    px(g, colour === C.white ? C.yellow : C.white, x + nod, y, 1, 1);
+  });
 
-  // Tree behind the fence.
-  px(g, C.door, 148, 40, 5, 24);
-  px(g, C.leaf, 138, 14, 22, 24);
-  px(g, C.leaf, 142, 10, 16, 4);
-  px(g, C.leaf, 135, 20, 3, 12);
-  px(g, C.leafLight, 141, 14, 9, 3);
-  px(g, C.leafLight, 139, 19, 5, 2);
-  px(g, C.red, 145, 26, 2, 2);
-  px(g, C.red, 153, 20, 2, 2);
-  px(g, C.red, 151, 32, 2, 2);
+  paintTree(g, time, motion, picked);
 
   fence(g, 88, 110);
   fence(g, 140, 160);
@@ -207,25 +220,140 @@ export function paintMailbox(g: G, flagUp: boolean): void {
   }
 }
 
-const ARROW = ['..kkk..', '..kpk..', '..kpk..', 'kkkpkkk', '.kpppk.', '..kpk..', '...k...'];
+/** The apple tree behind the fence: a round crown sitting square on its trunk. */
+export const APPLES = [
+  [139, 20],
+  [146, 27],
+  [153, 18],
+  [151, 31],
+  [141, 30],
+] as const;
 
-/** A chunky pink arrow bobbing over something to click. (x, y) is its tip. */
-export function paintPointer(g: G, x: number, y: number, t: number): void {
-  const b = Math.round(Math.abs(Math.sin(t / 220)) * 3);
-  const ox = Math.round(x) - 3;
-  const oy = Math.round(y) - ARROW.length - b;
-  for (const [hx, hy] of [[-1, 0], [1, 0], [0, -1], [0, 1]] as const) {
-    ARROW.forEach((row, ry) => {
-      for (let rx = 0; rx < row.length; rx++) if (row[rx] !== '.') px(g, C.white, ox + rx + hx, oy + ry + hy, 1, 1);
-    });
+function paintTree(g: G, t: number, motion: boolean, picked: number): void {
+  // trunk, centred under the crown
+  px(g, C.doorDark, 143, 36, 6, 28);
+  px(g, C.door, 144, 36, 4, 28);
+  px(g, C.doorDark, 141, 40, 3, 2);
+  // crown: a stack of rows that makes a round ball
+  const rows = [
+    [140, 12],
+    [137, 16],
+    [135, 20],
+    [134, 24],
+    [133, 26],
+    [133, 26],
+    [133, 26],
+    [134, 24],
+    [135, 20],
+    [137, 16],
+    [140, 12],
+  ] as const;
+  rows.forEach(([x, w], i) => px(g, C.leaf, x, 9 + i * 3, w, 3));
+  px(g, C.leafLight, 140, 12, 9, 3);
+  px(g, C.leafLight, 137, 16, 5, 3);
+  px(g, C.leafLight, 150, 15, 3, 2);
+  px(g, C.grassDark, 136, 33, 6, 2);
+  px(g, C.grassDark, 147, 37, 8, 2);
+  px(g, C.grassDark, 154, 27, 3, 3);
+  // The first `picked` apples have already fallen.
+  APPLES.forEach(([x, y], i) => i >= picked && paintApple(g, x, y));
+  if (motion) {
+    // Now and then one of them catches the light.
+    const turn = Math.floor(t / 2600);
+    const since = t % 2600;
+    const apple = APPLES[picked + (turn % Math.max(1, APPLES.length - picked))];
+    if (apple && since < 420) paintTwinkle(g, apple[0] + 1, apple[1] + 1, since < 140 || since > 280 ? 1 : 2, C.white);
   }
-  ARROW.forEach((row, ry) => {
+}
+
+/** One apple, three pixels across, with a stalk and a highlight. */
+export function paintApple(g: G, x: number, y: number): void {
+  px(g, C.redDark, x, y, 3, 3);
+  px(g, C.red, x, y, 3, 2);
+  px(g, '#ff9c8f', x, y, 1, 1);
+  px(g, C.doorDark, x + 1, y - 1, 1, 1);
+}
+
+/** A round bush on the grass. `shake` -1, 0 or 1 nudges it sideways. */
+export function paintBush(g: G, shake: number): void {
+  const { x, y } = BUSH_RECT;
+  const ox = x + shake;
+  g.globalAlpha = 0.25;
+  px(g, INK, x + 1, y + 12, 18, 1);
+  g.globalAlpha = 1;
+  px(g, C.leaf, ox + 4, y, 11, 2);
+  px(g, C.leaf, ox + 2, y + 2, 16, 2);
+  px(g, C.leaf, ox, y + 4, 20, 6);
+  px(g, C.leaf, ox + 1, y + 10, 18, 2);
+  px(g, C.leafLight, ox + 5, y + 1, 5, 2);
+  px(g, C.leafLight, ox + 2, y + 5, 3, 2);
+  px(g, C.leafLight, ox + 12, y + 4, 4, 1);
+  px(g, C.grassDark, ox + 8, y + 7, 4, 2);
+  px(g, C.grassDark, ox + 15, y + 8, 3, 2);
+  px(g, C.pink, ox + 4, y + 8, 2, 2);
+  px(g, C.pink, ox + 13, y + 2, 2, 2);
+  px(g, C.pink, ox + 16, y + 6, 2, 2);
+}
+
+const CRITTERS = {
+  // A bunny: white, long ears, a pink nose.
+  bunny: { rows: ['.w.w....', '.w.w....', '.wwww...', 'wwwkwp..', 'wwwwww..', '.wwwwwww', '.ww..ww.'], colours: { w: '#fdfdfd', k: INK, p: '#f29aa8' } },
+  // A hedgehog: a brown ball of spikes with a pale snout.
+  hedgehog: { rows: ['..hHhH...', '.hHhHhH..', 'hHhHhHss.', 'HhHhHsksk', 'hHhHssss.', '.k..k....'], colours: { h: '#6b4a33', H: '#8a6446', s: '#f0d2b0', k: INK } },
+  // A field mouse: grey, with a round ear and a long tail.
+  mouse: { rows: ['....gg..', '..ggggg.', 'k.ggggkp', '.kgggggg', '...k..k.'], colours: { g: '#a9a3ad', k: INK, p: '#f29aa8' } },
+} as const;
+
+export type Critter = keyof typeof CRITTERS;
+export const CRITTER_ORDER: readonly Critter[] = ['bunny', 'hedgehog', 'mouse'];
+
+/** A small animal running to the left; (x, y) is where its feet touch the grass. */
+export function paintCritter(g: G, kind: Critter, x: number, y: number, t: number): void {
+  const { rows, colours } = CRITTERS[kind];
+  const hop = kind === 'bunny' ? Math.round(Math.abs(Math.sin(t / 90)) * 4) : Math.floor(t / 70) % 2;
+  const palette: Record<string, string> = colours;
+  rows.forEach((row, ry) => {
     for (let rx = 0; rx < row.length; rx++) {
-      const ch = row[rx];
-      if (ch === 'k') px(g, INK, ox + rx, oy + ry, 1, 1);
-      else if (ch === 'p') px(g, '#ff6fa3', ox + rx, oy + ry, 1, 1);
+      const colour = palette[row[rx] ?? ''];
+      // mirrored: the sprites are drawn facing right, the animal runs left
+      if (colour) px(g, colour, x + row.length - 1 - rx, y - rows.length - hop + ry, 1, 1);
     }
   });
+}
+
+/** A few leaves thrown up when the bush is shaken; `u` 0..1. */
+export function paintLeaves(g: G, u: number): void {
+  const { x, y } = BUSH_RECT;
+  const spots = [
+    [3, -1, -1],
+    [9, -2, 0],
+    [15, -1, 1],
+    [6, 0, -1],
+    [12, 0, 1],
+  ] as const;
+  for (const [dx, dy, dir] of spots) {
+    const lift = Math.sin(u * Math.PI) * 6;
+    px(g, u < 0.5 ? C.leafLight : C.leaf, x + dx + dir * u * 5, y + dy - lift + u * 3, 2, 1);
+  }
+}
+
+/**
+ * Sparkles that come and go around something worth a click: three twinkles,
+ * each on its own beat, with long quiet gaps between them.
+ */
+export function paintSparkles(g: G, rect: { x: number; y: number; w: number; h: number }, t: number): void {
+  const spots = [
+    [0.15, 0.2, 0],
+    [0.85, 0.45, 520],
+    [0.3, 0.8, 1040],
+    [0.75, 0.05, 1560],
+  ] as const;
+  for (const [fx, fy, delay] of spots) {
+    const u = ((t + delay) % 2080) / 520;
+    if (u >= 1) continue;
+    const size = u < 0.25 || u > 0.75 ? 1 : 2;
+    paintTwinkle(g, Math.round(rect.x + rect.w * fx), Math.round(rect.y + rect.h * fy), size, u > 0.4 && u < 0.6 ? C.white : C.yellow);
+  }
 }
 
 /** A four-pointed twinkle, for "this is worth a look". */
@@ -235,8 +363,8 @@ export function paintTwinkle(g: G, x: number, y: number, size: number, colour: s
   px(g, C.white, x, y, 1, 1);
 }
 
-/** A little potted plant on the grass, bottom-left. */
-export function paintPlant(g: G): void {
+/** A little potted plant on the grass, bottom-left. `blooms` adds flowers to it. */
+export function paintPlant(g: G, blooms = 0): void {
   px(g, C.doorDark, 9, 90, 10, 2);
   px(g, '#c56a4a', 9, 85, 10, 6);
   px(g, '#b05638', 9, 85, 2, 6);
@@ -247,6 +375,26 @@ export function paintPlant(g: G): void {
   px(g, C.leafLight, 17, 82, 2, 2);
   px(g, C.pink, 10, 77, 2, 2);
   px(g, C.yellow, 15, 76, 2, 2);
+  const extra = [
+    [13, 74, C.lilac],
+    [8, 80, C.yellow],
+    [18, 79, C.pink],
+    [12, 71, C.white],
+  ] as const;
+  extra.slice(0, blooms).forEach(([x, y, colour]) => {
+    px(g, C.leaf, x, y + 2, 1, 2);
+    px(g, colour, x - 1, y, 3, 2);
+    px(g, colour === C.white ? C.yellow : C.white, x, y, 1, 1);
+  });
+}
+
+/** A fat puff of smoke out of the chimney; `u` 0..1. */
+export function paintPuff(g: G, u: number): void {
+  g.globalAlpha = 1 - u * 0.8;
+  const size = 3 + Math.round(u * 5);
+  px(g, C.smoke, 70 - size / 2 + Math.sin(u * 5) * 3, 4 - u * 22, size, size);
+  px(g, C.smoke, 73 - size / 2 - Math.sin(u * 4) * 2, 8 - u * 18, size - 1, size - 1);
+  g.globalAlpha = 1;
 }
 
 const BIRD = '#6c7b88';
@@ -336,48 +484,34 @@ function airmail(g: G, x: number, y: number, w: number, h: number): void {
 }
 
 /**
- * The close-up: the envelope from the back. The heart sits on the point of
- * the flap like a seal and beats while it waits. `open` (0..1) folds the flap
- * up over the top edge, taking the heart with it.
+ * The close-up: the envelope from the back, with soft round corners. The heart
+ * sits on the point of the flap like a seal and now and then catches the
+ * light. `open` (0..1) folds the flap up over the top edge, taking the heart
+ * with it.
  */
-export function paintCloseUp(g: G, t: number, dim: number, open: number, beat: boolean): void {
+export function paintCloseUp(g: G, t: number, dim: number, open: number, shine: boolean): void {
   g.globalAlpha = Math.min(0.62, dim);
   px(g, INK, 0, 0, STAGE_WIDTH, STAGE_HEIGHT);
   g.globalAlpha = 1;
-  const { x, y, w, h } = ENVELOPE;
+  const { x, y, w } = ENVELOPE;
   const flapH = 24;
-
-  // A soft shadow under the envelope.
-  g.globalAlpha = 0.25;
-  px(g, INK, x + 2, y + 3, w, h);
-  g.globalAlpha = 1;
 
   // Flap folded up above the top edge, inside showing.
   if (open > 0) {
     const up = Math.max(1, Math.round(flapH * open));
     for (let i = 0; i < up; i++) {
-      const half = Math.round((w / 2) * (1 - i / up));
+      const half = Math.round((w / 2 - 2) * (1 - i / up));
       if (half <= 0) break;
       px(g, ENV.edge, x + w / 2 - half, y - 1 - i, half * 2, 1);
       px(g, ENV.shade, x + w / 2 - half + 1, y - 1 - i, Math.max(0, half * 2 - 2), 1);
     }
   }
 
-  // Body with an airmail border.
-  px(g, ENV.edge, x - 1, y - 1, w + 2, h + 2);
-  px(g, ENV.paper, x, y, w, h);
-  airmail(g, x + 1, y + h - 3, w - 2, 2);
-  airmail(g, x + 1, y + 1, w - 2, 2);
-  // the side flaps folded in, meeting the bottom flap
-  for (let i = 0; i < 22; i++) {
-    const hh = Math.round(i * 0.8);
-    px(g, ENV.shade, x + i, y + h - 3 - hh, 1, hh);
-    px(g, ENV.shade, x + w - 1 - i, y + h - 3 - hh, 1, hh);
-  }
+  paintEnvelopeBody(g, 0, STAGE_HEIGHT);
 
   if (open > 0) {
     // The opening: the inside of the pocket shows above its front edge.
-    px(g, ENV.inside, x, y, w, 4);
+    px(g, ENV.inside, x + 2, y, w - 4, 4);
     px(g, ENV.edge, x, y + 4, w, 1);
   }
 
@@ -386,46 +520,136 @@ export function paintCloseUp(g: G, t: number, dim: number, open: number, beat: b
   if (open <= 0) {
     // Flap still closed: a triangle pointing down with the heart on its tip.
     for (let i = 0; i < flapH; i++) {
-      const half = Math.round((w / 2) * (1 - i / flapH));
+      const half = Math.round((w / 2 - 1) * (1 - i / flapH));
       if (half <= 0) break;
-      px(g, ENV.shade, x + w / 2 - half, y + i, half * 2, 1);
-      px(g, ENV.edge, x + w / 2 - half, y + i, 1, 1);
-      px(g, ENV.edge, x + w / 2 + half - 1, y + i, 1, 1);
+      px(g, ENV.shade, x + w / 2 - half, y + 1 + i, half * 2, 1);
+      px(g, ENV.edge, x + w / 2 - half, y + 1 + i, 1, 1);
+      px(g, ENV.edge, x + w / 2 + half - 1, y + 1 + i, 1, 1);
     }
   } else {
     sealX = x + w / 2;
     sealY = y - Math.round(flapH * open) + 4;
   }
-  // Lub-dub: two quick beats, then a rest.
-  const phase = t % 1100;
-  const big = beat && (phase < 120 || (phase > 240 && phase < 360));
-  paintHeart(g, sealX, sealY, big);
+  paintHeart(g, sealX, sealY, shine ? t : -1);
 }
 
-const HEART = ['rrr..rrr', 'rrr..rrr', 'rrrrrrrr', 'rrrrrrrr', '.rrrrrr.', '..rrrr..', '...rr...'];
-const HEART_BIG = ['.rrr..rrr.', 'rrrrrrrrrr', 'rrrrrrrrrr', 'rrrrrrrrrr', '.rrrrrrrr.', '..rrrrrr..', '...rrrr...', '....rr....'];
+/**
+ * The envelope's body: paper with round corners, an airmail border and the
+ * folded-in side flaps. Only the rows from `fromY` down to `toY` are painted,
+ * so the front pocket can be laid over whatever slides out of it.
+ */
+function paintEnvelopeBody(g: G, fromY: number, toY: number): void {
+  const { x, y, w, h } = ENVELOPE;
+  g.save();
+  g.beginPath();
+  g.rect(0, fromY, STAGE_WIDTH, toY - fromY);
+  g.clip();
+  // A soft shadow under the envelope.
+  g.globalAlpha = 0.22;
+  px(g, INK, x + 2, y + 4, w, h);
+  g.globalAlpha = 1;
+  px(g, ENV.edge, x - 1, y, w + 2, h);
+  px(g, ENV.edge, x, y - 1, w, h + 2);
+  px(g, ENV.paper, x, y, w, h);
+  airmail(g, x + 3, y + h - 3, w - 6, 2);
+  airmail(g, x + 3, y + 1, w - 6, 2);
+  // the side flaps folded in, meeting the bottom flap
+  for (let i = 2; i < 22; i++) {
+    const hh = Math.round(i * 0.8);
+    px(g, ENV.shade, x + i, y + h - 4 - hh, 1, hh);
+    px(g, ENV.shade, x + w - 1 - i, y + h - 4 - hh, 1, hh);
+  }
+  // round the corners: two steps of edge colour, the tips cut away
+  for (const [cx, cy, sx, sy] of [
+    [x, y, 1, 1],
+    [x + w - 1, y, -1, 1],
+    [x, y + h - 1, 1, -1],
+    [x + w - 1, y + h - 1, -1, -1],
+  ] as const) {
+    px(g, ENV.edge, cx, cy, 1, 1);
+    px(g, ENV.edge, cx + sx, cy, 1, 1);
+    px(g, ENV.edge, cx, cy + sy, 1, 1);
+  }
+  g.restore();
+}
 
-/** The little red heart, centred on (cx, cy); `big` is the beat. */
-function paintHeart(g: G, cx: number, cy: number, big: boolean): void {
-  const heart = big ? HEART_BIG : HEART;
-  const w = heart[0]?.length ?? 0;
+const HEART = ['.rr..rr.', 'rrrrrrrr', 'rrrrrrrr', 'rrrrrrrr', '.rrrrrr.', '..rrrr..', '...rr...'];
+
+/**
+ * The little red heart, centred on (cx, cy). It does not beat: every couple
+ * of seconds a streak of light runs across it. `t` below zero keeps it plain.
+ */
+function paintHeart(g: G, cx: number, cy: number, t: number): void {
+  const w = HEART[0]?.length ?? 0;
   const ox = Math.round(cx - w / 2);
-  const oy = Math.round(cy - heart.length / 2);
-  heart.forEach((row, ry) => {
-    for (let rx = 0; rx < row.length; rx++) if (row[rx] === 'r') px(g, C.red, ox + rx, oy + ry, 1, 1);
+  const oy = Math.round(cy - HEART.length / 2);
+  // the streak: a diagonal that sweeps from the top left to the bottom right
+  const sweep = t < 0 ? -99 : Math.floor(((t % 2400) / 2400) * 60) - 4;
+  HEART.forEach((row, ry) => {
+    for (let rx = 0; rx < row.length; rx++) {
+      if (row[rx] !== 'r') continue;
+      const d = rx + ry - sweep;
+      px(g, d === 0 ? C.white : d === 1 || d === -1 ? '#ff9c8f' : C.red, ox + rx, oy + ry, 1, 1);
+    }
   });
+  // a small fixed highlight, so it reads as glossy even between the streaks
+  px(g, '#ff9c8f', ox + 1, oy + 1, 1, 1);
+}
+
+const DRIVE_BIG = {
+  metalEdge: '#8e8e9a',
+  metal: '#d5d5dd',
+  metalLight: '#f2f2f6',
+  hole: '#5b5b68',
+  edge: '#b84a72',
+  body: '#ed93b1',
+  light: '#f8bfd1',
+  dark: '#d4537e',
+} as const;
+export const DRIVE_BIG_W = 18;
+export const DRIVE_BIG_H = 30;
+
+const DRIVE_HEART = ['.ww..ww.', 'wwwwwwww', 'wwwwwwww', '.wwwwww.', '..wwww..', '...ww...'];
+
+/** The flash drive up close, standing on its end: metal plug on top, a white heart on the pink body. */
+export function paintDriveBig(g: G, x: number, y: number): void {
+  const D = DRIVE_BIG;
+  // plug
+  px(g, D.metalEdge, x + 4, y, 10, 9);
+  px(g, D.metal, x + 5, y + 1, 8, 8);
+  px(g, D.metalLight, x + 5, y + 1, 2, 8);
+  px(g, D.hole, x + 7, y + 3, 2, 2);
+  px(g, D.hole, x + 10, y + 3, 2, 2);
+  px(g, D.metalEdge, x + 5, y + 7, 8, 1);
+  // body, with round corners
+  px(g, D.edge, x + 1, y + 9, 16, 21);
+  px(g, D.edge, x, y + 10, 18, 19);
+  px(g, D.body, x + 1, y + 10, 16, 19);
+  px(g, D.dark, x + 14, y + 11, 3, 18);
+  px(g, D.dark, x + 2, y + 26, 15, 3);
+  px(g, D.light, x + 2, y + 11, 2, 13);
+  px(g, D.light, x + 4, y + 11, 6, 1);
+  px(g, '#ffffff', x + 2, y + 11, 1, 3);
+  DRIVE_HEART.forEach((row, ry) => {
+    for (let rx = 0; rx < row.length; rx++) if (row[rx] === 'w') px(g, '#ffffff', x + 5 + rx, y + 14 + ry, 1, 1);
+  });
+  // the eye for a ribbon
+  px(g, D.edge, x + 7, y + 23, 4, 4);
+  px(g, '#fff6e0', x + 8, y + 24, 2, 2);
 }
 
 /** The drive rising out of the opened envelope; `u` 0..1. */
 export function paintDriveOut(g: G, u: number, t: number): void {
   const { x, y, w } = ENVELOPE;
-  const dx = x + w / 2 - 9;
+  const dx = x + w / 2 - DRIVE_BIG_W / 2;
   const dy = y + 6 - Math.round(u * 34);
-  paintDrive(g, dx, dy, 3);
-  // the envelope's front pocket hides the rest of the drive
-  px(g, ENV.edge, x - 1, y + 4, w + 2, 1);
-  px(g, ENV.paper, x, y + 5, w, 12);
-  airmail(g, x + 1, y + 6, w - 2, 2);
+  // Only what is above the pocket's edge shows; the rest is still inside.
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, STAGE_WIDTH, y + 4);
+  g.clip();
+  paintDriveBig(g, dx, dy);
+  g.restore();
   if (u >= 1) {
     const on = Math.floor(t / 220) % 2 === 0;
     paintTwinkle(g, dx - 7, dy + 6, on ? 3 : 2);
