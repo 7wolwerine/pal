@@ -18,6 +18,13 @@ const DRIVE_READY = { x: 114, y: 58 };
 const DRIVE_IN_PORT = { x: 119, y: 58 };
 /** Click area of the drive lying on the desk. */
 export const DRIVE_RECT = { x: 104, y: 80, w: 22, h: 12 };
+/** The big round button on the front of the case. */
+export const POWER_RECT = { x: 131, y: 38, w: 13, h: 13 };
+/** The pink day/night key on the keyboard. */
+export const NIGHT_KEY_RECT = { x: 84, y: 85, w: 9, h: 6 };
+export const FAN_RECT = { x: 17, y: 64, w: 19, h: 30 };
+export const MUG_RECT = { x: 4, y: 81, w: 13, h: 12 };
+export const NOTE_RECT = { x: 98, y: 0, w: 13, h: 12 };
 
 const C = {
   wall: '#f3e3c7',
@@ -47,7 +54,16 @@ export interface DeskLook {
   readonly sad: boolean;
   /** True while the player is carrying the drive as the cursor, so it is not on the desk. */
   readonly held?: boolean;
+  /** The computer is switched off: black screen, dark lamp. */
+  readonly off?: boolean;
+  /** Stage time the computer was switched on, for its boot screen. */
+  readonly bootAt?: number;
+  /** The desktop shows night. */
+  readonly night?: boolean;
 }
+
+/** How long the boot screen shows after switching on. */
+export const BOOT_MS = 1800;
 
 export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): void {
   const blink = motion ? Math.floor(t / 400) % 2 === 0 : true;
@@ -67,9 +83,24 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   px(g, C.note, 100, 2, 9, 8);
   px(g, INK, 102, 5, 5, 1);
 
-  // What the monitor shows: an ordinary, pretty desktop.
+  // What the monitor shows: an ordinary, pretty desktop — or nothing, or the boot screen.
   const s = SCREEN_RECT;
-  paintWallpaper(g, s.x, s.y, s.w, s.h, { gloomy: look.sad, drive: look.plug >= 1, t: motion ? t : 0 });
+  const booting = look.bootAt !== undefined && t - look.bootAt < BOOT_MS;
+  if (look.off) {
+    px(g, '#101016', s.x, s.y, s.w, s.h);
+    px(g, '#24242e', s.x + 6, s.y + 4, 18, 1);
+    px(g, '#24242e', s.x + 4, s.y + 6, 10, 1);
+  } else if (booting) {
+    const u = (t - (look.bootAt ?? 0)) / BOOT_MS;
+    px(g, '#000000', s.x, s.y, s.w, s.h);
+    px(g, '#ed93b1', s.x + s.w / 2 - 6, s.y + 18, 12, 10);
+    px(g, '#ffffff', s.x + s.w / 2 - 3, s.y + 21, 2, 2);
+    px(g, '#ffffff', s.x + s.w / 2 + 1, s.y + 21, 2, 2);
+    px(g, '#2a2a34', s.x + 25, s.y + 36, s.w - 50, 3);
+    px(g, '#ffffff', s.x + 25, s.y + 36, Math.round((s.w - 50) * Math.min(1, u * 1.2)), 3);
+  } else {
+    paintWallpaper(g, s.x, s.y, s.w, s.h, { gloomy: look.sad, drive: look.plug >= 1 && !look.off, night: look.night, t: motion ? t : 0 });
+  }
 
   // Keyboard, mouse and a mug.
   px(g, C.beigeShade, 38, 85, 54, 10);
@@ -77,8 +108,13 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   for (let row = 0; row < 3; row++) {
     for (let key = 0; key < 16; key++) px(g, C.beigeLight, 40 + key * 3 + row, 87 + row * 2 + (row ? 0.5 : 0), 2, 1);
   }
+  // The pink day/night key, with a little moon or sun on it.
+  px(g, C.pinkDark, 86, 87, 5, 3);
+  px(g, C.pink, 86, 87, 4, 2);
+  px(g, look.night ? '#fff3b0' : '#ffffff', 88, 87, 1, 1);
   px(g, C.beige, 98, 88, 7, 6);
   px(g, C.beigeShade, 101, 88, 1, 3);
+  paintFan(g, motion ? t : 0, !look.off);
   px(g, C.pink, 6, 83, 8, 9);
   px(g, C.pinkDark, 14, 85, 2, 5);
   px(g, C.white, 8, 86, 4, 3);
@@ -92,7 +128,7 @@ export function paintDesk(g: G, t: number, look: DeskLook, motion: boolean): voi
   px(g, C.beigeShade, 127, 32, 22, 4);
   px(g, C.beigeLight, 133, 40, 9, 9);
   px(g, C.beigeShade, 135, 42, 5, 5);
-  px(g, blink ? C.green : C.greenDim, 146, 44, 2, 2);
+  px(g, look.off ? '#6a6658' : blink ? C.green : C.greenDim, 146, 44, 2, 2);
   px(g, C.beigeDark, 128, 55, 20, 15);
   px(g, INK, 131, 59, 7, 3);
   px(g, INK, 131, 64, 7, 3);
@@ -160,4 +196,49 @@ export function paintPortGlow(g: G, t: number): void {
   px(g, '#ffe08a', 131, 64, 7, 3);
   px(g, '#fff6c8', 132, 60, 5, 1);
   px(g, '#fff6c8', 132, 65, 5, 1);
+}
+
+/** A little desk fan with a pink ribbon tied to its guard, fluttering in the breeze. */
+function paintFan(g: G, t: number, spinning: boolean): void {
+  const cx = 26;
+  const cy = 72;
+  // base and neck
+  px(g, '#8a8a96', 21, 91, 11, 2);
+  px(g, '#a9a9b4', 22, 90, 9, 1);
+  px(g, '#8a8a96', 25, 80, 3, 10);
+  // the guard
+  for (let a = 0; a < 32; a++) {
+    const ang = (a / 32) * Math.PI * 2;
+    px(g, '#c9c9d1', cx + Math.round(Math.cos(ang) * 8), cy + Math.round(Math.sin(ang) * 8), 1, 1);
+  }
+  px(g, '#b8b8c2', cx - 7, cy, 15, 1);
+  px(g, '#b8b8c2', cx, cy - 7, 1, 15);
+  // the blades, turning
+  const turn = spinning ? t / 40 : 0.4;
+  for (let b = 0; b < 3; b++) {
+    const ang = turn + (b / 3) * Math.PI * 2;
+    for (let r = 1; r <= 6; r++) {
+      px(g, '#7fb2e5', cx + Math.round(Math.cos(ang) * r), cy + Math.round(Math.sin(ang) * r), 2, 1);
+    }
+  }
+  px(g, '#4f8fd6', cx - 1, cy - 1, 3, 3);
+  // the ribbon: tied at the top of the guard, blown out to the right
+  const wave = spinning ? t / 90 : 0;
+  for (let i = 0; i < 12; i++) {
+    const ry = cy - 6 + Math.round(Math.sin(wave + i * 0.7) * (spinning ? 1.5 : 0.5)) + (spinning ? 0 : Math.round(i * 0.8));
+    px(g, i % 2 ? '#ed93b1' : '#f7b6cc', cx + 8 + (spinning ? i : Math.round(i * 0.3)), ry, 1, 1);
+  }
+}
+
+/** Twinkles round the power button, when switching on is the thing to do. */
+export function paintPowerTwinkle(g: G, t: number): void {
+  for (const [x, y, phase] of [[129, 37, 0], [145, 40, 500], [138, 53, 900]] as const) {
+    const cycle = (t + phase) % 1400;
+    if (cycle > 800) continue;
+    const size = cycle < 400 ? Math.round((cycle / 400) * 3) : Math.round(((800 - cycle) / 400) * 3);
+    if (size <= 0) continue;
+    px(g, '#fff6c8', x, y - size, 1, size * 2 + 1);
+    px(g, '#fff6c8', x - size, y, size * 2 + 1, 1);
+    px(g, C.white, x, y, 1, 1);
+  }
 }

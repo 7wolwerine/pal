@@ -7,7 +7,15 @@ import { PixelStage, progress } from '../../pixel/stage.ts';
 import { h, prefersReducedMotion } from '../../ui/dom.ts';
 import { printSurprise, surprise } from '../../ui/print.ts';
 import { audio } from '../../audio/engine.ts';
+import { Speech } from '../../ui/speech.ts';
 import {
+  BOOT_MS,
+  FAN_RECT,
+  MUG_RECT,
+  NIGHT_KEY_RECT,
+  NOTE_RECT,
+  POWER_RECT,
+  paintPowerTwinkle,
   DRIVE_RECT,
   SCREEN_RECT,
   STAGE_HEIGHT,
@@ -78,6 +86,59 @@ export const desk: GameScene = {
     });
 
     const screen = stage.overlay(SCREEN_RECT, 'scene__screen');
+    const speech = new Speech(stage.el, STAGE_WIDTH, STAGE_HEIGHT);
+    let off = false;
+    let bootAt: number | undefined;
+    let night = false;
+    /** Set once the drive is in a switched-off computer; runs when it is switched on. */
+    let waiting: (() => void) | undefined;
+    const think = (text: string, rect: { x: number; y: number; w: number }): void => {
+      void speech.say(text, () => ({ x: rect.x + rect.w / 2, y: rect.y }), { who: 'hero' });
+    };
+    const counters = new Map<string, number>();
+    const next = (key: string, lines: readonly string[]): string => {
+      const n = counters.get(key) ?? 0;
+      counters.set(key, n + 1);
+      return lines[n % lines.length] ?? '';
+    };
+
+    // The power button: off and on — but not once the drive is in and running.
+    stage.hotspot(POWER_RECT, DESK.powerLabel, () => {
+      if (pluggedAt !== undefined && !off) {
+        think(DESK.thoughts.stuck, POWER_RECT);
+        audio.click(50, 0.3);
+        return;
+      }
+      off = !off;
+      audio.click(off ? 45 : 60, 0.5);
+      witness.tally('power');
+      if (off) {
+        bootAt = undefined;
+        screen.hidden = true;
+        think(DESK.thoughts.off, POWER_RECT);
+        return;
+      }
+      bootAt = now;
+      think(DESK.thoughts.on, POWER_RECT);
+      timers.push(
+        window.setTimeout(() => {
+          if (off) return;
+          screen.hidden = false;
+          const run = waiting;
+          waiting = undefined;
+          run?.();
+        }, BOOT_MS),
+      );
+    });
+    stage.hotspot(NIGHT_KEY_RECT, DESK.nightLabel, () => {
+      if (off) return;
+      night = !night;
+      audio.click(night ? 67 : 79, 0.3);
+      think(DESK.thoughts.night[night ? 0 : 1] ?? '', NIGHT_KEY_RECT);
+    });
+    stage.hotspot(FAN_RECT, DESK.fanLabel, () => think(next('fan', DESK.thoughts.fan), FAN_RECT));
+    stage.hotspot(MUG_RECT, DESK.mugLabel, () => think(next('mug', DESK.thoughts.mug), MUG_RECT));
+    stage.hotspot(NOTE_RECT, DESK.noteLabel, () => think(next('note', DESK.thoughts.note), { x: NOTE_RECT.x, y: NOTE_RECT.y + 12, w: NOTE_RECT.w }));
     const flow = new PrintFlow();
     const timers: number[] = [];
     let now = 0;
@@ -106,12 +167,17 @@ export const desk: GameScene = {
       stage.el.style.cursor = '';
       window.setTimeout(() => audio.snap(84), PLUG_MS);
       witness.record({ scene: SCENE, kind: 'plugged', trick: 'baiting', data: { ms: Math.round(now) } });
-      timers.push(
-        window.setTimeout(() => {
-          screen.replaceChildren(h('p', { class: 'toast', text: DESK.toast, attrs: { role: 'status' } }));
-        }, PLUG_MS),
-        window.setTimeout(render, PLUG_MS + TOAST_MS),
-      );
+      // The computer greets the drive — but only once it is switched on.
+      const greet = (delay: number): void => {
+        timers.push(
+          window.setTimeout(() => {
+            screen.replaceChildren(h('p', { class: 'toast', text: DESK.toast, attrs: { role: 'status' } }));
+          }, delay),
+          window.setTimeout(render, delay + TOAST_MS),
+        );
+      };
+      if (off) waiting = () => greet(300);
+      else greet(PLUG_MS);
     });
 
     function act(action: PrintAction): void {
@@ -199,7 +265,8 @@ export const desk: GameScene = {
     stage.run((g, t) => {
       now = t;
       const plug = pluggedAt === undefined ? 0 : progress(t, pluggedAt, pluggedAt + PLUG_MS);
-      paintDesk(g, t, { plug, sad: flow.state === 'sad', held: step === 'holding' && pluggedAt === undefined }, motion);
+      paintDesk(g, t, { plug, sad: flow.state === 'sad', held: step === 'holding' && pluggedAt === undefined, off, bootAt, night }, motion);
+      if (off && pluggedAt !== undefined && motion) paintPowerTwinkle(g, t);
       if (pluggedAt === undefined) {
         if (step === 'pick') {
           if (motion) paintDriveTwinkle(g, t);
@@ -209,6 +276,7 @@ export const desk: GameScene = {
 
     return () => {
       stopAnomaly();
+      speech.stop();
       stage.stop();
       stage.el.style.cursor = '';
       for (const timer of timers) window.clearTimeout(timer);
