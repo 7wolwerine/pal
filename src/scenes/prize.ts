@@ -1,5 +1,5 @@
 import { ASSISTANT_KINDS } from '../content/welcome.ts';
-import { PRIZE, gameAddress, hiddenPayload, prizeMailto } from '../content/prize.ts';
+import { MAIL_URL, PRIZE, gameAddress, hiddenPayload, prizeMailto } from '../content/prize.ts';
 import { memoryFrom, memoryLine } from '../core/memory.ts';
 import { hide } from '../core/stego.ts';
 import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
@@ -99,6 +99,13 @@ export const prize: GameScene = {
         profile.email = value;
         witness.disclose(SCENE, 'real-email', 'email', value);
         kindlyObeyed(witness, SCENE);
+        const letter = {
+          email: value,
+          name: facts.name,
+          title: facts.title,
+          score: facts.score.toLocaleString('cs-CZ'),
+          game: gameAddress(location),
+        };
         const href = prizeMailto(value, {
           name: facts.name,
           title: facts.title,
@@ -107,7 +114,7 @@ export const prize: GameScene = {
           date: facts.date,
           url: gameAddress(location),
         });
-        void sendMail(send, href);
+        void sendMail(send, href, letter);
       });
       decline.addEventListener('click', () => {
         witness.record({ scene: SCENE, kind: 'declined-email', data: {} });
@@ -118,23 +125,50 @@ export const prize: GameScene = {
       input.focus();
     }
 
-    // The player's own mail program opens with the letter written, still inside
-    // their click (a later open can be refused once the click's activation has
-    // lapsed); the little sending theatre plays around it in the game.
-    async function sendMail(button: HTMLButtonElement, href: string): Promise<void> {
+    /**
+     * Sends the certificate through PAL's mail server, picture included. If
+     * that does not work (offline, the single-file version, the server down),
+     * the letter goes to the player's own mail program instead.
+     */
+    async function sendMail(button: HTMLButtonElement, href: string, letter: Record<string, string>): Promise<void> {
       button.disabled = true;
       button.textContent = PRIZE.sending;
-      openMail(href);
-      await sleep(prefersReducedMotion() ? 100 : 900);
+      const image = cert.toDataURL('image/png');
+      const ok = await postCertificate({ ...letter, ...(image.length < 1_900_000 ? { image } : {}) });
       if (!alive) return;
+      if (ok) {
+        witness.record({ scene: SCENE, kind: 'mail-sent', data: {} });
+        status.textContent = PRIZE.sentServer;
+        offerSave();
+        void pal.say(PRIZE.palSentServer);
+        return;
+      }
       const again = h('a', { class: 'prize__again', text: PRIZE.mailAgain, attrs: { href } });
       again.addEventListener('click', (event) => {
         event.preventDefault();
         openMail(href);
       });
-      status.replaceChildren(PRIZE.sent, ' ', again);
+      status.replaceChildren(PRIZE.mailFallback, ' ', again);
       offerSave();
       void pal.say(PRIZE.mailWaiting);
+    }
+
+    async function postCertificate(body: Record<string, string>): Promise<boolean> {
+      const abort = new AbortController();
+      const timer = window.setTimeout(() => abort.abort(), 20000);
+      try {
+        const res = await fetch(MAIL_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: abort.signal,
+        });
+        return res.ok;
+      } catch {
+        return false;
+      } finally {
+        window.clearTimeout(timer);
+      }
     }
 
     /**

@@ -1,6 +1,9 @@
 import type { RoleId } from './roles.ts';
 import { KINDLY } from '../core/kindly.ts';
 
+/** PAL's mail server: the one place the game ever sends anything, and only the certificate the player asked for. */
+export const MAIL_URL = 'https://neotvir.at/api/pal/certificate';
+
 export const PRIZE = {
   cheer: 'Zvládl jsi to! Jsi prostě neuvěřitelný! <3',
   scoreLabel: 'Skóre',
@@ -9,7 +12,13 @@ export const PRIZE = {
   askEmail: `${KINDLY} a řekl mi, kam ti mám poslat ten krásný certifikát?`,
   emailPlaceholder: 'jana.novakova@email.cz',
   send: 'Pošli mi ho',
-  sending: 'Chystám dopis…',
+  sending: 'Odesílám…',
+  /** In the status line once PAL's server has sent the letter. */
+  sentServer: 'Odesláno! Mrkni do schránky. ✉',
+  /** PAL, once the server has sent it. */
+  palSentServer: 'Hotovo! Certifikát ti letí do schránky. <3',
+  /** When the server could not send it: the letter goes through the player's own mail program instead. */
+  mailFallback: 'Neodešlo to. Pošli si ho přes svou poštu:',
   /** In the status line once the player's own mail program has the letter. */
   sent: 'Dopis čeká ve tvé poště. ✉',
   /** PAL, once the mail program is open. */

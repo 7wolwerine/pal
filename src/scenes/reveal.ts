@@ -428,7 +428,9 @@ export const reveal: Scene<GameContext> = {
           { class: 'reveal__calm' },
           h('h2', { text: 'Pro klid duše' }),
           h('p', {
-            text: 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
+            text: ctx.witness.events.some((e) => e.kind === 'mail-sent')
+              ? 'Jedinou výjimkou byl certifikát: na tvou adresu jsem poslal ten jeden dopis, o který sis řekl. Adresu nikde neukládám. Nic dalšího neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.'
+              : 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
           }),
           again,
         ),

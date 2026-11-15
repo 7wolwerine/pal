@@ -2,9 +2,10 @@ import { defineConfig } from 'vitest/config';
 import type { Plugin } from 'vite';
 
 /**
- * The shipped build may talk to nobody. `connect-src 'none'` makes that a
+ * The shipped build may talk to nobody but PAL's mail server, and only to send
+ * the certificate the player asked for. `connect-src` makes that a
  * browser-enforced fact instead of a promise: fetch, XHR, WebSocket and
- * sendBeacon are all refused, so nothing the player types can leave the page.
+ * sendBeacon to anywhere else are refused.
  * Applied to the build only, because the dev server needs its HMR socket.
  */
 const CONTENT_SECURITY_POLICY = [
@@ -13,7 +14,8 @@ const CONTENT_SECURITY_POLICY = [
   "style-src 'self'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
-  "connect-src 'none'",
+  // One exception: PAL's mail server, for the certificate the player asks for.
+  "connect-src https://neotvir.at",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",
