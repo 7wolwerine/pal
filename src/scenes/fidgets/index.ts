@@ -22,6 +22,16 @@ export const fidgets: Scene<GameContext> = {
     const abort = new AbortController();
     const { signal } = abort;
     const { pal, profile, stage, witness } = ctx;
+    // The panel and the questions need the whole window: PAL, the conversation and the
+    // trust badges step aside, and PAL's lines pop up as a bubble of their own above it.
+    const focus = (on: boolean): void => {
+      const screen = ctx.window.el.parentElement;
+      ctx.window.el.classList.toggle('win--focus', on);
+      pal.el.classList.toggle('pal--float', on);
+      if (on && screen) screen.append(pal.el);
+      else if (!on && pal.el.parentElement !== ctx.window.body) ctx.window.body.prepend(pal.el);
+    };
+    focus(true);
 
     // Between the steps the stage empties while PAL talks. So that PAL's window does not
     // shrink and grow again every time, the stage keeps the tallest height it has had.
@@ -96,6 +106,8 @@ export const fidgets: Scene<GameContext> = {
 
       clear();
       audio.latch();
+      // PAL comes back into the window for the big moment.
+      focus(false);
       // Out of the safe, PAL finally becomes who the player made them.
       if (profile.assistantLook) pal.setAvatar(profile.assistantLook);
       pal.setCaged(false);
@@ -135,6 +147,7 @@ export const fidgets: Scene<GameContext> = {
     void run();
     return () => {
       abort.abort();
+      focus(false);
       smooth.disconnect();
       growing?.cancel();
       stage.style.overflow = '';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FIDGETS, QUIZ, isRightAnswer, plain } from '../src/content/fidgets.ts';
-import { BOARD, BOX, GEARS, MODULE, gearPath, meshAngle, outerRadius, pitchRadius, speedRatio, trainAngles, turning, wrap } from '../src/scenes/fidgets/gears.ts';
+import { BOARD, BOX, GEARS, MODULE, gearPath, meshAngle, outerRadius, pitchRadius, speedRatio, trainAngles, nextToPlace, turning, wrap } from '../src/scenes/fidgets/gears.ts';
 import { HELP_AFTER_MS, SIZE, isSolved, press, startState } from '../src/scenes/fidgets/lights.ts';
 import {
   BOOKS,
@@ -313,5 +313,17 @@ describe('quiz form', () => {
     const quiz = new QuizModel();
     expect(quiz.submit({ ...good, stars: ' ' })).toEqual({ kind: 'incomplete', id: 'stars' });
     expect(quiz.submit(good)).toEqual({ kind: 'done' });
+  });
+});
+
+describe('cogs in order', () => {
+  it('lets only the next cog from the motor go on its peg', () => {
+    const none = GEARS.map((_g, i) => i === 0);
+    expect(nextToPlace(none)).toBe(1);
+    const two = GEARS.map((_g, i) => i <= 2);
+    expect(nextToPlace(two)).toBe(3);
+    const gap = GEARS.map((_g, i) => i === 0 || i === 2);
+    expect(nextToPlace(gap)).toBe(1);
+    expect(nextToPlace(GEARS.map(() => true))).toBe(-1);
   });
 });

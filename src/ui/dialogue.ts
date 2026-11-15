@@ -145,11 +145,33 @@ export class Dialogue {
     this.#skip = false;
     this.#spoken.textContent = text;
     this.#typed.textContent = '';
+    this.#light();
     if (prefersReducedMotion()) {
       this.#typed.textContent = text;
+      this.#dim(text, line);
       return;
     }
     await this.#type(text, line, msPerChar);
+    this.#dim(text, line);
+  }
+
+  #liveTimer = 0;
+
+  /**
+   * Marks the bubble as speaking. Where PAL's window hides the conversation
+   * (a scene that needs all the room), only a speaking bubble shows, on its own.
+   */
+  #light(): void {
+    window.clearTimeout(this.#liveTimer);
+    this.#bubble.classList.add('pal__bubble--live');
+  }
+
+  /** A while after the line is finished, the bubble stops speaking (if no new line came). */
+  #dim(text: string, line: number): void {
+    window.clearTimeout(this.#liveTimer);
+    this.#liveTimer = window.setTimeout(() => {
+      if (line === this.#line) this.#bubble.classList.remove('pal__bubble--live');
+    }, 2600 + text.length * 40);
   }
 
   /** Types `text` character by character, if this is still the current line. */

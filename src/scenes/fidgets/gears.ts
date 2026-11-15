@@ -152,3 +152,9 @@ export function gearPath(teeth: number): string {
   }
   return `${d}Z`;
 }
+
+/** The only cog that can go on its peg now: the first one not placed yet, counting from the motor. */
+export function nextToPlace(placed: readonly boolean[]): number {
+  for (let i = 1; i < GEARS.length; i++) if (!placed[i]) return i;
+  return -1;
+}

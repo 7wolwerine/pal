@@ -12,6 +12,7 @@ import {
   trainAngles,
   turning,
   wrap,
+  nextToPlace,
 } from './gears.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -178,8 +179,23 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
     onPlace(cog.spec.id, all);
   }
 
+  /** Only in order: a cog goes on its peg once the one before it turns. */
+  const inTurn = (cog: Cog): boolean => nextToPlace(placedFlags()) === cogs.indexOf(cog);
+
+  /** Out of turn: a little shake and a boing, and it stays (or rolls back) in the box. */
+  function refuse(cog: Cog): void {
+    audio.boing(0.3);
+    cog.g.classList.remove('gears__cog--nope');
+    void cog.g.getBoundingClientRect();
+    cog.g.classList.add('gears__cog--nope');
+  }
+
   function place(cog: Cog): void {
     if (cog.placed || (cog.fly && !cog.fly.back)) return;
+    if (!inTurn(cog)) {
+      refuse(cog);
+      return;
+    }
     audio.click(64 + (24 - cog.spec.teeth), 0.35);
     send(cog, false);
   }
@@ -227,6 +243,11 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
       }
       dragging = false;
       const near = Math.hypot(cog.x - cog.spec.x, cog.y - cog.spec.y);
+      if (near < pitchRadius(cog.spec.teeth) * 0.9 && !inTurn(cog)) {
+        refuse(cog);
+        send(cog, true);
+        return;
+      }
       if (near < pitchRadius(cog.spec.teeth) * 0.9) {
         audio.click(64 + (24 - cog.spec.teeth), 0.35);
         send(cog, false);

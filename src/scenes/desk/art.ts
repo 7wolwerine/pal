@@ -12,11 +12,14 @@ export const STAGE_HEIGHT = 100;
 /** The glass of the monitor: page content is laid over this area. */
 export const SCREEN_RECT = { x: 18, y: 12, w: 90, h: 54 };
 /** Top left corners of the things on the desk; each has a `paint…(g, x, y, …)` of its own. */
-export const KEYBOARD_AT = { x: 38, y: 84 };
-export const KEYBOARD_SIZE = { w: 54, h: 12 };
-export const MOUSE_AT = { x: 95, y: 88 };
-export const MUG_AT = { x: 4, y: 82 };
-export const FAN_AT = { x: 17, y: 68 };
+/** The keyboard sits at the very front of the desk: only its two back rows show, the rest runs off the picture. */
+export const KEYBOARD_AT = { x: 33, y: 90 };
+/** The part of the keyboard that shows (and takes clicks). */
+export const KEYBOARD_SIZE = { w: 62, h: 10 };
+export const MOUSE_AT = { x: 98, y: 88 };
+export const MUG_AT = { x: 3, y: 82 };
+/** Mostly off the left edge: only a piece of the fan and its ribbon peeks in. */
+export const FAN_AT = { x: -10, y: 68 };
 export const NOTE_AT = { x: 100, y: 2 };
 export const CASE_AT = { x: 123, y: 19 };
 export const CASE_SIZE = { w: 30, h: 64 };
@@ -43,11 +46,13 @@ export const POWER_RECT = { x: 131, y: 38, w: 13, h: 13 };
 export const TRAY_RECT = { x: 126, y: 22, w: 24, h: 9 };
 export const VENT_RECT = { x: 126, y: 72, w: 24, h: 10 };
 export const CAGE_RECT = { x: 123, y: 1, w: 30, h: 18 };
-export const KEYBOARD_RECT = { x: 38, y: 84, w: 54, h: 12 };
-export const MOUSE_RECT = { x: 93, y: 86, w: 10, h: 10 };
+export const KEYBOARD_RECT = { x: KEYBOARD_AT.x, y: KEYBOARD_AT.y, w: KEYBOARD_SIZE.w, h: KEYBOARD_SIZE.h };
+export const MOUSE_RECT = { x: 96, y: 86, w: 10, h: 10 };
 export const LED_RECT = { x: 103, y: 66, w: 8, h: 6 };
-export const FAN_RECT = { x: 17, y: 68, w: 19, h: 30 };
-export const MUG_RECT = { x: 3, y: 81, w: 13, h: 13 };
+/** The visible piece of the fan. */
+export const FAN_RECT = { x: 0, y: 68, w: 12, h: 30 };
+export const MUG_SIZE = { w: 16, h: 16 };
+export const MUG_RECT = { x: MUG_AT.x - 1, y: MUG_AT.y - 1, w: MUG_SIZE.w + 2, h: MUG_SIZE.h + 2 };
 export const NOTE_RECT = { x: 98, y: 0, w: 13, h: 12 };
 
 /** Click area of the drive lying at `at`. */
@@ -174,35 +179,40 @@ function drivePath(from: { readonly x: number; readonly y: number }, plug: numbe
 /* ---------- things on the desk ---------- */
 
 /** Keys per row and rows of the keyboard; a key's number is `row * KEY_COLUMNS + column`. */
-export const KEY_COLUMNS = 16;
-export const KEY_ROWS = 3;
+export const KEY_COLUMNS = 14;
+/** Rows that show (and can be played); more are drawn below, off the picture. */
+export const KEY_ROWS = 2;
+/** Size of one key on the grid, in picture pixels. */
+const KEY_PITCH = 4;
+/** The keyboard's whole body, most of which is off the picture. */
+const KEYBOARD_BODY_H = 22;
 
 /** The key under a point of the keyboard, given as fractions 0..1 of `KEYBOARD_SIZE`. */
 export function keyAt(fx: number, fy: number): number {
-  const row = Math.max(0, Math.min(KEY_ROWS - 1, Math.floor(((fy * KEYBOARD_SIZE.h - 1) / (KEYBOARD_SIZE.h - 2)) * KEY_ROWS)));
-  const column = Math.max(0, Math.min(KEY_COLUMNS - 1, Math.floor((fx * KEYBOARD_SIZE.w - 2 - row) / 3)));
+  const row = Math.max(0, Math.min(KEY_ROWS - 1, Math.floor((fy * KEYBOARD_SIZE.h - 2) / KEY_PITCH)));
+  const column = Math.max(0, Math.min(KEY_COLUMNS - 1, Math.floor((fx * KEYBOARD_SIZE.w - 2 - row * 2) / KEY_PITCH)));
   return row * KEY_COLUMNS + column;
 }
 
 /** The keyboard; keys in `pressed` are down. */
 export function paintKeyboard(g: G, x: number, y: number, pressed?: ReadonlySet<number>): void {
-  px(g, C.beigeShade, x, y, KEYBOARD_SIZE.w, KEYBOARD_SIZE.h);
-  px(g, C.beige, x + 1, y + 1, KEYBOARD_SIZE.w - 2, KEYBOARD_SIZE.h - 3);
-  for (let row = 0; row < KEY_ROWS; row++) {
+  const w = KEYBOARD_SIZE.w;
+  px(g, C.beigeShade, x, y, w, KEYBOARD_BODY_H);
+  px(g, C.beige, x + 1, y + 1, w - 2, KEYBOARD_BODY_H - 1);
+  px(g, C.beigeLight, x + 1, y + 1, w - 2, 1);
+  // Five rows of big keys, each row shifted a little; only the first two are in the picture.
+  for (let row = 0; row < 5; row++) {
     for (let key = 0; key < KEY_COLUMNS; key++) {
-      const down = pressed?.has(row * KEY_COLUMNS + key) === true;
-      const kx = x + 2 + key * 3 + row;
-      const ky = y + 2 + row * 3;
-      // the space bar: one long key in the bottom row
-      const space = row === 2 && key >= 4 && key <= 10;
-      const width = space && key < 10 ? 3 : 2;
-      const spaceDown = space && [4, 5, 6, 7, 8, 9, 10].some((k) => pressed?.has(2 * KEY_COLUMNS + k));
-      if (down || spaceDown) {
-        px(g, C.beigeDark, kx, ky + 1, width, 1);
+      const kx = x + 2 + key * KEY_PITCH + (row % 3) * 2;
+      if (kx + 3 > x + w - 1) continue;
+      const ky = y + 2 + row * KEY_PITCH;
+      const down = row < KEY_ROWS && pressed?.has(row * KEY_COLUMNS + key) === true;
+      if (down) {
+        px(g, C.beigeDark, kx, ky + 1, 3, 2);
       } else {
-        px(g, C.beigeLight, kx, ky, width, 1);
-        px(g, C.white, kx, ky, width, 1);
-        px(g, C.beigeLight, kx, ky + 1, width, 1);
+        px(g, C.white, kx, ky, 3, 1);
+        px(g, C.beigeLight, kx, ky + 1, 3, 1);
+        px(g, C.beigeShade, kx, ky + 2, 3, 1);
       }
     }
   }
@@ -228,19 +238,22 @@ export function paintMouse(g: G, x: number, y: number): void {
 }
 
 /** The mug. Its words are too small to read from here. */
+/** A big pink mug with a handle and some writing too small to read. */
 export function paintMug(g: G, x: number, y: number): void {
-  px(g, C.pinkDark, x + 1, y, 9, 11);
-  px(g, C.pink, x + 1, y, 8, 10);
-  px(g, C.pinkLight, x + 2, y + 1, 1, 8);
-  px(g, '#6a4a2e', x + 2, y, 6, 1);
+  px(g, C.pinkDark, x + 1, y + 1, 12, 15);
+  px(g, C.pink, x + 1, y, 11, 15);
+  px(g, C.pinkLight, x + 2, y + 2, 2, 11);
+  px(g, '#6a4a2e', x + 2, y, 9, 2);
+  px(g, '#8a6440', x + 3, y, 6, 1);
   // the handle
-  px(g, C.pinkDark, x + 10, y + 2, 2, 1);
-  px(g, C.pinkDark, x + 11, y + 3, 1, 4);
-  px(g, C.pinkDark, x + 10, y + 7, 2, 1);
+  px(g, C.pinkDark, x + 12, y + 3, 3, 2);
+  px(g, C.pinkDark, x + 14, y + 4, 2, 6);
+  px(g, C.pinkDark, x + 12, y + 9, 3, 2);
   // the writing
-  px(g, C.white, x + 3, y + 3, 5, 5);
-  px(g, C.pinkDark, x + 4, y + 4, 3, 1);
-  px(g, C.pinkDark, x + 4, y + 6, 2, 1);
+  px(g, C.white, x + 4, y + 4, 7, 7);
+  px(g, C.pinkDark, x + 5, y + 5, 5, 1);
+  px(g, C.pinkDark, x + 5, y + 7, 4, 1);
+  px(g, C.pinkDark, x + 5, y + 9, 5, 1);
 }
 
 /** The sticky note on the monitor's corner. */

@@ -132,10 +132,12 @@ function full(s: number, availW: number, availH: number): PcLayout {
     lamp: { x: right - 6, y: bezel.y + bezel.h - 4 },
     tower,
     cage: { x: tower.x, y: tower.y - CAGE_H },
-    keyboard: { x: cx - 25, y: deskTop + 3 },
-    mouse: { x: cx + 32, y: deskTop + 7 },
-    mug: { x: 4, y: deskTop + 2 },
-    fan: { x: bezel.x + 3, y: deskTop - 12 },
+    // At the very front: only the keyboard's two back rows are in the picture.
+    keyboard: { x: cx - 31, y: deskTop + DESK_FULL - 10 },
+    mouse: { x: cx + 35, y: deskTop + 7 },
+    mug: { x: 3, y: deskTop + 2 },
+    // Mostly off the left edge, so only a piece of it peeks in.
+    fan: { x: -10, y: deskTop - 12 },
     win: windowPlace(gw, s, paper, true),
   };
 }

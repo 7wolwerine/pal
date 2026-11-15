@@ -639,3 +639,16 @@
     transition: none;
   }
 }
+
+/* A cog out of turn flashes red: the one before it has to go on first. */
+.gears__cog--nope > g > path {
+  animation: cog-nope 420ms ease-out;
+}
+
+@keyframes cog-nope {
+  0%,
+  60% {
+    stroke: #e0405a;
+    stroke-width: 2.4;
+  }
+}

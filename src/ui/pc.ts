@@ -7,6 +7,7 @@ import {
   CASE_SIZE,
   CAGE_SIZE,
   KEYBOARD_SIZE,
+  MUG_SIZE,
   KEY_COLUMNS,
   KEY_ROWS,
   keyAt,
@@ -310,7 +311,7 @@ export function createPc(win: HTMLElement): HTMLElement {
   let fanTurn = 0.4;
   let fanSpeed = 1;
   let fanBoostAt: number | undefined;
-  const fan = spot(DESK.fanLabel, (l) => (l.fan ? { x: l.fan.x, y: l.fan.y, w: 19, h: 30 } : undefined), () => {
+  const fan = spot(DESK.fanLabel, (l) => (l.fan ? { x: Math.max(0, l.fan.x), y: l.fan.y, w: 19 - Math.max(0, -l.fan.x), h: 30 } : undefined), () => {
     fanBoostAt = now();
     audio.click(55, 0.2);
     think(next('fan', DESK.thoughts.fan), rectOf(fan));
@@ -318,7 +319,7 @@ export function createPc(win: HTMLElement): HTMLElement {
 
   // The mug: its words are too small to read, so a click (or the mouse over it) holds them up.
   let mugTimer = 0;
-  const mug = spot(DESK.mugLabel, (l) => (l.mug ? { x: l.mug.x - 1, y: l.mug.y - 1, w: 13, h: 13 } : undefined), (_event, el) => {
+  const mug = spot(DESK.mugLabel, (l) => (l.mug ? { x: l.mug.x - 1, y: l.mug.y - 1, w: MUG_SIZE.w + 2, h: MUG_SIZE.h + 2 } : undefined), (_event, el) => {
     el.classList.add('is-read');
     audio.click(70, 0.25);
     think(DESK.thoughts.mug, rectOf(mug));
