@@ -1,6 +1,7 @@
 import { audio } from '../audio/engine.ts';
 import { DOWNLOAD } from '../content/download.ts';
 import type { GameScene } from '../game.ts';
+import { WELL_H, WELL_W, drawBlocks } from '../ui/blocks.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 import { sprite } from '../ui/sprites.ts';
@@ -8,6 +9,8 @@ import { sprite } from '../ui/sprites.ts';
 const SCENE = 'download';
 /** A real-feeling download takes a while. */
 const DOWNLOAD_MS = 6500;
+/** One block of the download well, in canvas pixels (shown at twice that). */
+const BLOCK = 8;
 
 /**
  * PAL Pro as a reward: a tidy download card with an antivirus badge and one
@@ -19,6 +22,7 @@ export const download: GameScene = {
   mount(ctx, done) {
     const { pal, profile, stage, witness } = ctx;
     let alive = true;
+    let stopBlocks = (): void => undefined;
     const shownAt = performance.now();
     const motion = !prefersReducedMotion();
 
@@ -47,18 +51,34 @@ export const download: GameScene = {
         trick: 'fake-download',
         data: { ms: Math.round(performance.now() - shownAt) },
       });
-      // A download that takes its time, the way real ones do.
-      const bar = h('span', { class: 'dl__bar' });
+      // A download that takes its time, the way real ones do; four-square blocks fall and stack as it goes.
+      const well = h('canvas', { class: 'dl__blocks', attrs: { width: String(WELL_W * BLOCK), height: String(WELL_H * BLOCK), 'aria-hidden': 'true' } });
+      const wg = well.getContext('2d');
       const label = h('span', { text: DOWNLOAD.progress(0) });
-      after.replaceChildren(h('div', { class: 'dl__file' }, h('strong', { text: DOWNLOAD.file }), h('span', { class: 'dl__track' }, bar), label));
+      after.replaceChildren(h('div', { class: 'dl__file' }, h('strong', { text: DOWNLOAD.file }), well, label));
+      let shown = 0;
+      let target = 0;
+      let raf = 0;
+      const animate = (): void => {
+        shown += Math.min(0.012, Math.max(0, target - shown));
+        if (wg) drawBlocks(wg, shown, BLOCK);
+        if (alive && shown < 1) raf = requestAnimationFrame(animate);
+      };
+      if (wg) drawBlocks(wg, 0, BLOCK);
+      raf = requestAnimationFrame(animate);
+      stopBlocks = () => cancelAnimationFrame(raf);
       const steps = motion ? 50 : 1;
       for (let i = 1; i <= steps; i++) {
         // uneven, like a real connection
         const pct = Math.round(100 * (i / steps) ** 1.2);
-        bar.style.width = `${pct}%`;
+        target = pct / 100;
         label.textContent = DOWNLOAD.progress(pct);
         await sleep((DOWNLOAD_MS / steps) * (0.5 + Math.random()));
         if (!alive) return;
+      }
+      if (!motion && wg) {
+        shown = 1;
+        drawBlocks(wg, 1, BLOCK);
       }
       label.textContent = DOWNLOAD.downloaded;
       audio.click(84, 0.3);
@@ -87,6 +107,7 @@ export const download: GameScene = {
 
     return () => {
       alive = false;
+      stopBlocks();
       stage.replaceChildren();
     };
   },

@@ -4250,3 +4250,14 @@ body {
     transform: scale(1.04);
   }
 }
+
+/* The PAL Pro download as falling blocks. */
+.dl__blocks {
+  display: block;
+  width: 160px;
+  height: 64px;
+  margin: 4px auto;
+  border: 2px solid var(--line);
+  border-radius: 4px;
+  image-rendering: pixelated;
+}

@@ -92,8 +92,7 @@ export function drawCertificate(f: CertificateFacts): HTMLCanvasElement {
   g.font = '700 16px "Segoe UI", system-ui, sans-serif';
   g.fillText(PRIZE.certificate.kicker.toUpperCase(), CERT_W / 2, 78);
   g.fillStyle = '#4b1528';
-  g.font = '800 34px Georgia, "Times New Roman", serif';
-  g.fillText(f.title, CERT_W / 2, 120);
+  drawTitle(g, f.title);
   g.fillStyle = '#993556';
   g.font = 'italic 16px Georgia, serif';
   g.fillText(PRIZE.certificate.awarded, CERT_W / 2, 148);
@@ -119,4 +118,47 @@ export function drawCertificate(f: CertificateFacts): HTMLCanvasElement {
   g.font = '400 13px "Segoe UI", system-ui, sans-serif';
   g.fillText(`${f.date.toLocaleDateString('cs-CZ')} · ${PRIZE.certificate.footer}`, CERT_W / 2, 358);
   return c;
+}
+
+/** Room for the title inside the frame, in canvas pixels. */
+const TITLE_MAX_W = 500;
+
+/**
+ * The title, as big as fits: it shrinks down to 24px, and a title still too
+ * long is split onto two lines, both above "uděluje se".
+ */
+function drawTitle(g: CanvasRenderingContext2D, title: string): void {
+  const font = (px: number): string => `800 ${px}px Georgia, "Times New Roman", serif`;
+  for (let px = 34; px >= 24; px -= 2) {
+    g.font = font(px);
+    if (g.measureText(title).width <= TITLE_MAX_W) {
+      g.fillText(title, CERT_W / 2, 120);
+      return;
+    }
+  }
+  const [first, second] = splitTitle(title);
+  let px = 24;
+  g.font = font(px);
+  while (px > 16 && Math.max(g.measureText(first).width, g.measureText(second).width) > TITLE_MAX_W) {
+    px -= 2;
+    g.font = font(px);
+  }
+  g.fillText(first, CERT_W / 2, 102);
+  g.fillText(second, CERT_W / 2, 102 + px + 2);
+}
+
+/** Splits a title at the space closest to its middle. */
+export function splitTitle(title: string): [string, string] {
+  const words = title.split(' ');
+  if (words.length < 2) return [title, ''];
+  let best = 1;
+  let bestDiff = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const diff = Math.abs(words.slice(0, i).join(' ').length - words.slice(i).join(' ').length);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = i;
+    }
+  }
+  return [words.slice(0, best).join(' '), words.slice(best).join(' ')];
 }
