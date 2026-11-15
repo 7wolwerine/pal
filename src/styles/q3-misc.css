@@ -1,0 +1,41 @@
+/* misc: styles added with the third feedback round. Loaded after app.css, so rules here win. */
+
+/* ---------- the flower: the brass plate on the sill ---------- */
+
+/* The plate itself is painted in pixels; this lays its words over it, sized by the plate. */
+.flower__plate {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  container-type: size;
+  pointer-events: none;
+}
+
+.flower__plate > span {
+  color: #6b4318;
+  font-family: ui-rounded, 'Segoe UI', system-ui, sans-serif;
+  font-size: 44cqh;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 246, 210, 0.8);
+}
+
+/* ---------- the prize: the letter waiting in the player's own mail program ---------- */
+
+.prize__again {
+  margin-left: 4px;
+  color: var(--ink-soft, inherit);
+  font-weight: 600;
+  font-size: 0.92em;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+}
+
+.prize__again:hover {
+  color: var(--ok);
+}

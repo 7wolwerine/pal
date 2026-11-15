@@ -25,6 +25,7 @@ import { h } from './ui/dom.ts';
 import { createJourney } from './ui/journey.ts';
 import { minimizeWindow } from './ui/minimize.ts';
 import { createPc } from './ui/pc.ts';
+import { attachPcBug } from './ui/pc-bug.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
@@ -73,6 +74,7 @@ function boot(): void {
   win.body.append(pal.el, stage);
   const scenery = h('div', { class: 'scenery' });
   const pc = createPc(win.el);
+  const pcBug = attachPcBug(pc);
   const journey = createJourney(SCENES.map((s) => s.id), 'prize');
   app.append(scenery, pc);
   document.body.append(journey.el);
@@ -116,6 +118,7 @@ function boot(): void {
     const onScenery = scene.surface === 'scenery';
     scenery.hidden = !onScenery;
     pc.hidden = onScenery;
+    pcBug.setScene(scene.id);
     document.body.classList.toggle('on-pc', !onScenery);
     // Power the window on with a boot animation each time it reappears.
     if (!onScenery && winWasHidden) {
@@ -151,7 +154,7 @@ function boot(): void {
   const params = new URLSearchParams(location.search);
   const debug = import.meta.env.DEV || params.has('debug');
   const jump = debug ? params.get('scene') : null;
-  if (debug) addDebugArrows(director, profile, pal);
+  if (debug) addDebugArrows(director, profile, pal, ctx);
   if (jump) {
     fillDebugProfile(profile);
     debugBond(director.sceneIds, jump, profile, pal);
@@ -177,14 +180,38 @@ function debugBond(ids: readonly string[], target: string, profile: Profile, pal
   if (profile.assistantName) pal.setName(profile.assistantName);
 }
 
-function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile, pal: Dialogue): void {
+function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile, pal: Dialogue, ctx: GameContext): void {
   const ids = director.sceneIds;
+  // The reveal takes PAL's window over for good (its own content, title, badges and a
+  // dark theme) and does not give it back: a real game never leaves it. Remember the
+  // window as it was built, so a jump out of the reveal (or the crash) finds it whole.
+  const win = ctx.window;
+  const body = [...win.body.childNodes];
+  const titleEl = win.el.querySelector('.win__title');
+  const title = titleEl?.textContent ?? '';
+  const foot = win.el.querySelector('.win__foot');
+  const badges = foot ? [...foot.childNodes] : [];
+  const restoreShell = (): void => {
+    if (body.some((node) => node.parentNode !== win.body) || win.body.childNodes.length !== body.length) {
+      win.body.replaceChildren(...body);
+    }
+    if (foot && badges.some((node) => node.parentNode !== foot)) foot.replaceChildren(...badges);
+    win.setTitle(title);
+    win.el.classList.remove('win--crash', 'win--nope');
+    win.el.hidden = false;
+    // A minimised window would hide every window scene the jump lands on.
+    if (win.el.classList.contains('win--min')) document.querySelector<HTMLElement>('.pc__tab')?.click();
+    if (document.documentElement.dataset.theme === 'revealed') ctx.setTheme('harmless');
+  };
   const go = (step: number): void => {
-    const at = ids.indexOf(director.currentId ?? ids[0] ?? '');
+    const current = director.currentId ?? ids[0] ?? '';
+    const at = Math.max(0, ids.indexOf(current));
     const next = ids[Math.max(0, Math.min(ids.length - 1, at + step))];
     if (!next) return;
     fillDebugProfile(profile);
     debugBond(ids, next, profile, pal);
+    pal.cancelTap();
+    restoreShell();
     director.jumpTo(next);
   };
   const label = h('span', { class: 'debug__label' });

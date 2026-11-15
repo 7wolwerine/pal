@@ -1,3 +1,5 @@
+import { KINDLY } from '../core/kindly.ts';
+
 /** The assistant looks that have a need of their own; anything else uses 'pal'. */
 export type NeedKey = 'cat' | 'dog' | 'grandma' | 'mom' | 'girl' | 'pal';
 
@@ -89,7 +91,7 @@ export const PLEA = {
   thanksExpert: (f: boolean) => `${f ? 'Věděla' : 'Věděl'} jsem, že ty si s tím poradíš! Ty jsi prostě profík.`,
   thanksYes: 'Ty jsi poklad. Fakt.',
   thanksGaveIn: (f: boolean) => `Děkuju… ${f ? 'věděla' : 'věděl'} jsem, že na mě nezapomeneš.`,
-  login: 'Mám tam účet, jen se mi teď nejde přihlásit. Přijde ti kód na telefon, stačí mi ho přepsat, jo?',
+  login: `Mám tam účet, jen se mi teď nejde přihlásit. Přijde ti kód na telefon. ${KINDLY} a přepsal mi ho?`,
   codeLabel: 'Kód z SMS',
   codeSubmit: 'Poslat',
   codeWrong: 'Hm, to nesedí. Zkus to ještě jednou, prosím.',

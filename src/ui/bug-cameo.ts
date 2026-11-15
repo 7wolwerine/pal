@@ -1,62 +1,124 @@
-import { BUG_WARNINGS, type WarningScene } from '../content/bug.ts';
+import { BUG_WARNINGS, pickLine, type WarningScene } from '../content/bug.ts';
 import type { GameContext } from '../game.ts';
-import { BUG_SIZE, bugImage, type BugFrame } from './bug-sprite.ts';
-import { h, prefersReducedMotion, sleep } from './dom.ts';
+import { ANTICS, BUG_PX, Beetle } from './beetle.ts';
+import type { BugFrame } from './bug-sprite.ts';
+import { prefersReducedMotion, sleep } from './dom.ts';
 
-/** BUG warns the player (and the witness notes that it did). */
+/** BUG strolls into the scene and gets in the way (and the witness notes that he did). */
 export function bugWarns(ctx: GameContext, host: HTMLElement, where: WarningScene, opts: CameoOptions = {}): Promise<void> {
-  ctx.witness.record({ scene: where, kind: 'bug-warning', data: { line: BUG_WARNINGS[where] } });
-  return bugCameo(host, BUG_WARNINGS[where], opts);
+  const line = pickLine(BUG_WARNINGS[where]);
+  ctx.witness.record({ scene: where, kind: 'bug-warning', data: { line } });
+  return bugCameo(host, line, opts);
 }
 
 export interface CameoOptions {
+  /** The side he walks in from. He leaves by the other one. */
   readonly side?: 'left' | 'right';
+  /** The face he pulls while he talks. */
   readonly mood?: BugFrame;
-  /** How long BUG stays, in ms. */
+  /** How long he stands there talking, in ms. */
   readonly ms?: number;
 }
 
+type VisitListener = (visiting: boolean) => void;
+const listeners = new Set<VisitListener>();
+let visits = 0;
+
+/** True while BUG is paying some scene a visit. There is only ever one of him. */
+export function bugVisiting(): boolean {
+  return visits > 0;
+}
+
+/** Tells whoever else shows BUG that a visit starts or ends, so that he is never in two places. */
+export function onBugVisit(listener: VisitListener): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function announce(delta: 1 | -1): void {
+  const was = visits > 0;
+  visits = Math.max(0, visits + delta);
+  const is = visits > 0;
+  if (was !== is) for (const listener of listeners) listener(is);
+}
+
 /**
- * BUG pops in at the bottom corner of `host`, hopping up and down in
- * distress, blurts out a warning, and scurries off again. `host` must be
- * positioned. Resolves once BUG has gone.
+ * A small performance. BUG walks in from one side of `host`, strolls along
+ * its bottom edge, stops where he is in the way, does one of his turns, says
+ * his line, and after a while walks off by the other side. Poking him only
+ * offends him; the third poke sends him flying. `host` must be positioned.
+ * Resolves once he has gone.
  */
 export async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}): Promise<void> {
-  const side = opts.side ?? 'right';
-  const mood = opts.mood ?? 'panic';
-  const canvas = h('canvas', { class: 'cameo__sprite', attrs: { width: String(BUG_SIZE), height: String(BUG_SIZE), 'aria-hidden': 'true' } });
-  const bubble = h('div', { class: 'cameo__bubble', text: line, attrs: { role: 'status' } });
-  const el = h('div', { class: `cameo cameo--${side}` }, bubble, h('div', { class: 'cameo__body' }, canvas));
-  const g = canvas.getContext('2d');
-  const draw = (frame: BugFrame): void => {
-    if (!g) return;
-    g.clearRect(0, 0, BUG_SIZE, BUG_SIZE);
-    g.drawImage(bugImage(frame), 0, 0);
-  };
-  draw('walk1');
-  host.append(el);
+  const motion = !prefersReducedMotion();
+  const fromLeft = (opts.side ?? 'right') === 'left';
+  const beetle = new Beetle();
+  beetle.el.classList.add('bug--visit');
+  beetle.leaveWhenShooed = true;
 
-  // Scurry in, then flap between the mood and a jump of despair.
-  let frame = 0;
-  const timer = prefersReducedMotion()
-    ? 0
-    : window.setInterval(() => {
-        frame++;
-        draw(mood === 'angry' ? (frame % 2 ? 'stomp1' : 'stomp2') : frame % 4 === 3 ? 'stand' : mood);
-      }, 180);
-  if (!timer) draw(mood);
-  // A click on BUG sends him off early.
-  el.classList.add('cameo--clickable');
-  await new Promise<void>((resolve) => {
-    const timer = window.setTimeout(resolve, opts.ms ?? 2600);
-    el.addEventListener('click', () => {
-      window.clearTimeout(timer);
-      resolve();
-    }, { once: true });
-  });
-  window.clearInterval(timer);
-  draw('sad');
-  el.classList.add('cameo--leave');
-  await sleep(prefersReducedMotion() ? 0 : 450);
-  el.remove();
+  const width = (): number => host.clientWidth || 320;
+  const floor = (): number => (host.clientHeight || 240) - BUG_PX - 4;
+  const off = (left: boolean): number => (left ? -BUG_PX - 10 : width() + 10);
+  /** Still on stage: not flown off, and the scene he walked into is still there. */
+  const here = (): boolean => !beetle.left && beetle.el.isConnected;
+  /** Waits, but not a moment longer than he is on stage. */
+  const hold = async (ms: number): Promise<void> => {
+    const until = performance.now() + ms;
+    while (here() && performance.now() < until) await sleep(Math.min(100, Math.max(10, until - performance.now())));
+  };
+
+  announce(1);
+  try {
+    // Whoever else was showing him gets a moment to clear the stage.
+    await sleep(240);
+    if (!host.isConnected) return;
+    // He stops a little past the middle, seen from where he came in: right where things are.
+    const reach = 0.4 + Math.random() * 0.22;
+    const stopAt = (): number => {
+      const span = Math.max(0, width() - BUG_PX);
+      return span * (fromLeft ? reach : 1 - reach);
+    };
+    host.append(beetle.el);
+    if (motion) {
+      beetle.jump(off(fromLeft), floor());
+      await beetle.stroll(stopAt(), floor(), 64);
+    } else {
+      beetle.hide();
+      beetle.jump(stopAt(), floor());
+      void beetle.el.offsetWidth;
+      beetle.hide(false);
+    }
+    await hold(250);
+
+    // One of his turns, to whoever is watching.
+    if (here()) {
+      beetle.face(fromLeft ? 'right' : 'left');
+      const antic = ANTICS[Math.floor(Math.random() * ANTICS.length)] ?? 'tongue';
+      if (opts.mood === 'angry' && Math.random() < 0.35) await beetle.stomp(2);
+      else await beetle.antic(antic);
+    }
+
+    // His line, with the face that goes with it.
+    if (here()) {
+      beetle.setMood(opts.mood && opts.mood !== 'panic' ? opts.mood : 'smug');
+      beetle.say(line);
+      await hold(opts.ms ?? Math.max(2600, 1500 + line.length * 55));
+    }
+
+    // And off he goes, by himself, across the rest of the scene.
+    if (here()) {
+      beetle.say('');
+      beetle.setMood('stand');
+      if (motion) await beetle.stroll(off(!fromLeft), floor(), 64);
+      beetle.hide();
+      await sleep(motion ? 0 : 250);
+    } else if (beetle.left) {
+      // Shooed: let him finish flying out of sight.
+      await sleep(motion ? 700 : 0);
+    }
+  } finally {
+    beetle.stop();
+    beetle.el.remove();
+    announce(-1);
+  }
 }

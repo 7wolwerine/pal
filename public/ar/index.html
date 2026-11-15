@@ -44,6 +44,12 @@
   .bye__love { font-size: 22px; font-weight: 800; margin-bottom: 12px; }
   .bye__back { font-size: 16px; font-weight: 700; }
   .gate[hidden], .bye[hidden] { display: none; }
+  /* Srdíčka, která na konci u kódu z obrazovky vylétnou z cedulky a zaplní displej. */
+  .burst { position: fixed; inset: 0; z-index: 35; pointer-events: none; overflow: hidden; }
+  .burst svg { position: absolute; left: 0; top: 0; overflow: visible; will-change: transform, opacity; }
+  .bye:not([hidden]) .bye__card { animation: bye-pop 520ms cubic-bezier(.34,1.56,.64,1) both; }
+  @keyframes bye-pop { from { transform: scale(.3) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .bye:not([hidden]) .bye__card { animation: none; } }
 </style>
 </head>
 <body>
@@ -247,7 +253,73 @@ function closeToCode() {
   });
   if (scene) { try { scene.pause(); } catch (e) { /* už stojí */ } scene.style.display = 'none'; }
   document.getElementById('bye').hidden = false;
-  setTimeout(() => { try { window.close(); } catch (e) { /* kartička zůstane */ } }, 2600);
+  setTimeout(() => {
+    try { window.close(); } catch (e) { /* kartička zůstane */ }
+    /* Kartu, kterou otevřel foťák, prohlížeč zavřít nenechá: kartička zůstane a řekne, co dál. */
+    setTimeout(() => {
+      if (window.closed) return;
+      document.querySelector('.bye__back').textContent = 'Tohle okno už můžeš zavřít. Hra na tebe čeká na počítači.';
+    }, 400);
+  }, 2600);
+}
+
+/* Barvy konfet, stejné ve 3D i v mraku srdíček na konci. */
+const HEART_COLORS = ['#ff3d7f','#ff8fb3','#ffc93c','#3cc8ff','#a06bff','#3fe0a8','#ff7a45','#ff5ad1'];
+
+/* Obrys srdíčka jako cesta pro SVG, stejná křivka jako konfety ve scéně (heartGeometry). */
+function heartPath() {
+  const N = 40, points = [];
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * Math.PI * 2;
+    const x = 16 * Math.pow(Math.sin(t), 3);
+    const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t) + 2.5);
+    points.push(x.toFixed(2) + ' ' + y.toFixed(2));
+  }
+  return 'M' + points.join(' L') + 'Z';
+}
+
+/* Z místa (x, y) na displeji vylétne mrak srdíček, rozletí se přes celý displej
+   a pomalu se snáší dál, zatímco se objeví kartička. */
+function heartBurst(x, y) {
+  const layer = document.createElement('div');
+  layer.className = 'burst';
+  layer.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(layer);
+  const NS = 'http://www.w3.org/2000/svg', d = heartPath();
+  const calm = PACE > 1, count = calm ? 30 : 150;
+  const reach = Math.hypot(innerWidth, innerHeight) * 0.62;
+  for (let i = 0; i < count; i++) {
+    const svg = document.createElementNS(NS, 'svg');
+    const size = 22 + Math.random() * 62;
+    svg.setAttribute('viewBox', '-18 -18 36 36');
+    svg.setAttribute('width', size); svg.setAttribute('height', size);
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', HEART_COLORS[i % HEART_COLORS.length]);
+    path.setAttribute('stroke', '#fff'); path.setAttribute('stroke-width', '2.2'); path.setAttribute('stroke-linejoin', 'round');
+    svg.appendChild(path);
+    /* malý odlesk, jako má fólie konfet */
+    const shine = document.createElementNS(NS, 'ellipse');
+    shine.setAttribute('cx', '-7'); shine.setAttribute('cy', '-6'); shine.setAttribute('rx', '3.2'); shine.setAttribute('ry', '1.8');
+    shine.setAttribute('transform', 'rotate(-35 -7 -6)'); shine.setAttribute('fill', 'rgba(255,255,255,.75)');
+    svg.appendChild(shine);
+    layer.appendChild(svg);
+    const angle = Math.random() * Math.PI * 2, r = reach * (0.25 + Math.pow(Math.random(), 0.6) * 0.85);
+    const ex = x + Math.cos(angle) * r, ey = y + Math.sin(angle) * r * 0.9;
+    const spin = (Math.random() - 0.5) * 120, fall = 60 + Math.random() * 160;
+    const delay = Math.random() * 260, half = size / 2;
+    const at = (px, py, scale, rot) => 'translate(' + (px - half) + 'px, ' + (py - half) + 'px) scale(' + scale + ') rotate(' + rot + 'deg)';
+    if (!svg.animate || calm) {
+      svg.style.transform = at(ex, ey, 1, spin);
+      continue;
+    }
+    svg.animate([
+      { transform: at(x, y, 0.1, 0), opacity: 0 },
+      { transform: at(x + (ex - x) * 0.85, y + (ey - y) * 0.85, 1.25, spin * 0.7), opacity: 1, offset: 0.28 },
+      { transform: at(ex, ey + fall * 0.3, 1, spin), opacity: 1, offset: 0.55 },
+      { transform: at(ex + (Math.random() - 0.5) * 40, ey + fall, 0.9, spin * 1.4), opacity: 0.85 }
+    ], { duration: 3200 + Math.random() * 1200, delay, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' });
+  }
 }
 
 /* Obal všech sítí objektu v souřadnicích jiného objektu (rámce). */
@@ -372,7 +444,7 @@ AFRAME.registerComponent('hearts', {
   },
   init: function () {
     const d = this.data;
-    const colors = ['#ff3d7f','#ff8fb3','#ffc93c','#3cc8ff','#a06bff','#3fe0a8','#ff7a45','#ff5ad1'];
+    const colors = HEART_COLORS;
     const material = foilMaterial(this.el.sceneEl.renderer, 0xffffff);
     this.mesh = new THREE.InstancedMesh(heartGeometry(d.size), material, d.count);
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -428,9 +500,32 @@ AFRAME.registerComponent('hearts', {
     h.q.setFromAxisAngle(h.axis, Math.random() * Math.PI * 2);
     h.resting = false; h.timer = 0; h.scale = 1;
   },
+  /* Konec u kódu z obrazovky: všechna srdíčka vyletí nahoru a od medvěda pryč, ke kameře. */
+  burst: function () {
+    this.bursting = true;
+    for (const h of this.items) {
+      const away = Math.atan2(h.z - this.hole.z, h.x - this.hole.x) + (Math.random() - 0.5) * 0.8;
+      const speed = 0.8 + Math.random() * 1.6;
+      h.bx = Math.cos(away) * speed; h.bz = Math.sin(away) * speed;
+      h.by = 1.4 + Math.random() * 2.2;
+      h.resting = false; h.scale = Math.max(h.scale, 0.6);
+    }
+  },
   tick: function (time, dt) {
     const s = dt / 1000; if (!s || s > 0.1) return;
     const t = time / 1000, d = this.data;
+    if (this.bursting) {
+      for (let i = 0; i < this.items.length; i++) {
+        const h = this.items[i];
+        h.x += h.bx * s; h.z += h.bz * s; h.y += h.by * s; h.by -= 0.6 * s;
+        h.scale = Math.min(4, h.scale + s * 2.4);
+        h.q.multiply(this.turn.setFromAxisAngle(h.axis, h.spin * s));
+        h.pos.set(h.x, h.y, h.z);
+        this.mesh.setMatrixAt(i, this.matrix.compose(h.pos, h.q, this.scaleV.setScalar(h.scale)));
+      }
+      this.mesh.instanceMatrix.needsUpdate = true;
+      return;
+    }
     this.items.forEach((h, i) => {
       if (!h.resting) {
         h.y -= h.vy * s;
@@ -572,6 +667,9 @@ AFRAME.registerComponent('sign', {
     } else if (this.mode === 'love' && (now - this.since) * PACE >= LOVE.readyAt) {
       this.mode = 'off'; this.since = now; this.veiled = false;
       this.scales = this.data.others.map((el) => el.object3D.scale.clone());
+      /* U kódu z obrazovky se konfety neschovají, ale vyletí. */
+      this.burst = this.data.end === 'code';
+      if (this.burst) this.data.others.forEach((el) => { if (el.components.hearts) el.components.hearts.burst(); });
     }
   },
 
@@ -690,10 +788,14 @@ AFRAME.registerComponent('sign', {
     m.material.opacity = 1 - progress(t, O.fadeAt, O.fadeLength);
     this.heart.visible = shrink <= 0;
     const k = Math.max(0.0001, 1 - ease.inBack(progress(t, 0, O.othersLength)));
-    this.data.others.forEach((el, i) => el.object3D.scale.copy(this.scales[i]).multiplyScalar(k));
+    this.data.others.forEach((el, i) => {
+      if (this.burst && el.components.hearts) return;
+      el.object3D.scale.copy(this.scales[i]).multiplyScalar(k);
+    });
     if (!this.veiled && t >= O.veilAt) {
       this.veiled = true;
       const [x, y] = this._onScreen();
+      if (this.burst) heartBurst(x, y);
       leaveTo(this.data.end === 'code' ? '' : this.data.url, x, y, O.veilLength / PACE);
     }
   },
@@ -864,7 +966,7 @@ AFRAME.registerComponent('hint-text', {
           scale="1.1 1.1 1.1"
           animation__bob="property: position; dir: alternate; to: 0.02 0.06 0.09; loop: true; dur: 1600; easing: easeInOutSine">
         </a-entity>
-        <a-entity sign="above: #bear; others: #bear, #hearts"></a-entity>
+        <a-entity sign="above: #bear; others: #bear, #hearts; url: SIGN_URL; end: SIGN_END"></a-entity>
       </a-entity>
       <!-- srdíčka prší kolem něj -->
       <a-entity id="hearts" hearts="around: #bear"></a-entity>
@@ -876,12 +978,12 @@ AFRAME.registerComponent('hint-text', {
 </template>
 
 <script>
-  document.body.insertAdjacentHTML('beforeend', document.getElementById('sceneTemplate').innerHTML.replace('DETECT', DETECT));
-
-  for (const sign of document.querySelectorAll('[sign]')) {
-    sign.setAttribute('sign', 'url', GAME_URL);
-    sign.setAttribute('sign', 'end', FROM_SCREEN ? 'code' : 'game');
-  }
+  /* Kam vede konec, se cedulce píše rovnou do šablony: setAttribute s jednou vlastností
+     na ještě nenačtené entitě v A-Frame 1.3 přepíše celá data cedulky řetězcem. */
+  document.body.insertAdjacentHTML('beforeend', document.getElementById('sceneTemplate').innerHTML
+    .replace('DETECT', DETECT)
+    .replace('SIGN_URL', GAME_URL)
+    .replace('SIGN_END', FROM_SCREEN ? 'code' : 'game'));
 
   /* Kód z obrazovky na iPhonu: napřed jedno ťuknutí, při kterém si stránka řekne
      o senzor náklonu. Bez něj by medvěd na svislé obrazovce ležel na zádech.

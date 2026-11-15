@@ -1,6 +1,7 @@
 import { audio } from '../../audio/engine.ts';
 import { SHELTER, type ShelterPath, type TaskId } from '../../content/shelter.ts';
 import { gendered, lean, type GameScene } from '../../game.ts';
+import { kindlyAsked, kindlyObeyed } from '../../core/kindly.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
@@ -181,6 +182,7 @@ export const shelter: GameScene = {
       await say(SHELTER.thanks(masculine), true);
       if (!alive) return;
       await say(SHELTER.stay);
+      kindlyAsked(ctx.witness, SCENE);
       if (!alive) return;
       const box = stage.overlay({ x: 30, y: 86, w: 100, h: 12 }, 'shelter__menu shelter__menu--row');
       for (const choice of SHELTER.stayChoices) {
@@ -193,6 +195,7 @@ export const shelter: GameScene = {
               click: () => {
                 lean(ctx.profile, choice.role);
                 ctx.witness.record({ scene: SCENE, kind: 'stay', trick: 'role-casting', data: { answer: choice.label } });
+                kindlyObeyed(ctx.witness, SCENE);
                 box.remove();
                 done();
               },

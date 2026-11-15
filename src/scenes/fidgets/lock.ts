@@ -1,8 +1,9 @@
 import { audio } from '../../audio/engine.ts';
 import { CONTRACT, CONTRACT_WORDS, EGG, FIDGETS, QUIZ } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
-import { h } from '../../ui/dom.ts';
-import { SIZE, isOn, isSolved, press, startState } from './lights.ts';
+import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
+import { HELP_AFTER_MS, SIZE, isOn, isSolved, press, startState } from './lights.ts';
+import { QuizModel } from './quiz-model.ts';
 
 const SCENE = 'fidgets';
 const ANSWER_MAX_LENGTH = 40;
@@ -10,15 +11,17 @@ const ANSWER_MAX_LENGTH = 40;
 const END_SLACK_PX = 12;
 
 /**
- * Five short questions with a lamp beside each: red until the answer is
- * right, then green. The trivia only builds momentum; the last question is
- * about the player. A wrong answer gets one kind hint from PAL, and after
- * that anything goes — nobody is stopped for not knowing whales.
+ * Five short questions with a lamp beside each: red until the field holds
+ * exactly the right answer, then green, and never green for anything else.
+ * The trivia only builds momentum; the last question is about the player. A
+ * wrong answer gets one kind hint from PAL; the same one wrong again, and PAL
+ * writes it in for them. Nobody is stopped for not knowing whales.
  */
 export function quiz(ctx: GameContext): Promise<string> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
-    const hinted = new Set<string>();
+    const model = new QuizModel();
+    let filling = false;
     const error = h('p', { class: 'error', attrs: { role: 'alert' } });
     const rows = QUIZ.map((question) => {
       const input = h('input', {
@@ -32,14 +35,9 @@ export function quiz(ctx: GameContext): Promise<string> {
         },
       });
       const light = h('span', { class: 'quiz__light', attrs: { 'aria-hidden': 'true' } });
-      const ok = (): boolean => {
-        const value = input.value.trim();
-        if (!value) return false;
-        return !question.right || question.right(value) || hinted.has(question.id);
-      };
       const update = (): void => {
         const was = light.classList.contains('quiz__light--ok');
-        const now = ok();
+        const now = model.lit(question.id, input.value);
         light.classList.toggle('quiz__light--ok', now);
         if (now && !was) audio.click(84, 0.3);
       };
@@ -47,8 +45,24 @@ export function quiz(ctx: GameContext): Promise<string> {
         error.textContent = '';
         update();
       });
-      return { question, input, light, ok, update };
+      return { question, input, light, update };
     });
+
+    /** PAL types the right answer into the field, letter by letter. */
+    async function fillIn(row: (typeof rows)[number], answer: string): Promise<void> {
+      filling = true;
+      row.input.readOnly = true;
+      row.input.value = '';
+      row.update();
+      for (const char of answer) {
+        await sleep(90);
+        row.input.value += char;
+        audio.click(70, 0.15);
+      }
+      row.update();
+      row.input.readOnly = false;
+      filling = false;
+    }
 
     const form = h(
       'form',
@@ -61,28 +75,38 @@ export function quiz(ctx: GameContext): Promise<string> {
     );
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const empty = rows.find(({ input }) => !input.value.trim());
-      if (empty) {
+      if (filling) return;
+      const values = Object.fromEntries(rows.map(({ question, input }) => [question.id, input.value]));
+      const verdict = model.submit(values);
+      const row = verdict.kind === 'done' ? undefined : rows.find((r) => r.question.id === verdict.id);
+      // Whatever PAL says, a lamp only shows what its own field holds.
+      for (const r of rows) r.update();
+      if (verdict.kind === 'incomplete') {
         error.textContent = FIDGETS.quizIncomplete;
-        empty.input.focus();
+        row?.input.focus();
         return;
       }
-      const wrong = rows.find((row) => !row.ok());
-      if (wrong) {
-        // One gentle hint; from then on this field takes whatever the player writes.
-        hinted.add(wrong.question.id);
-        wrong.update();
-        void ctx.pal.say(FIDGETS.quizHints[wrong.question.id] ?? '');
-        wrong.input.focus();
-        wrong.input.select();
+      if (verdict.kind === 'hint') {
+        void ctx.pal.say(FIDGETS.quizHints[verdict.id] ?? '');
+        // What PAL says must be seen, even where the window scrolls (a small phone).
+        ctx.pal.el.scrollIntoView({ block: 'nearest' });
+        row?.input.focus({ preventScroll: true });
+        row?.input.select();
         ctx.witness.tally('quiz-hint');
+        return;
+      }
+      if (verdict.kind === 'fill') {
+        void ctx.pal.say(FIDGETS.quizFilled);
+        ctx.pal.el.scrollIntoView({ block: 'nearest' });
+        ctx.witness.tally('quiz-filled');
+        if (row) void fillIn(row, verdict.answer);
         return;
       }
       ctx.witness.record({
         scene: SCENE,
         kind: 'form',
         trick: 'smuggled-question',
-        data: { fields: rows.length, hints: hinted.size, ms: Math.round(performance.now() - shownAt) },
+        data: { fields: rows.length, hints: model.hints, ms: Math.round(performance.now() - shownAt) },
       });
       let food = '';
       for (const { question, input } of rows) {
@@ -100,7 +124,8 @@ export function quiz(ctx: GameContext): Promise<string> {
 
 /**
  * Lights in a grid; pressing one flips it and its neighbours. Nothing says
- * what to do. A reset puts it back to the start, so it can never get stuck.
+ * what to do. A reset puts it back to the start, so it can never get stuck,
+ * and after a while a button asks PAL to do it: PAL is only too glad to.
  */
 export function sequence(ctx: GameContext, random: () => number = Math.random): Promise<void> {
   return new Promise((resolve) => {
@@ -110,6 +135,18 @@ export function sequence(ctx: GameContext, random: () => number = Math.random): 
     let presses = 0;
     let resets = 0;
     let solved = false;
+
+    const finish = (helped: boolean): void => {
+      solved = true;
+      show();
+      audio.snap(88);
+      ctx.witness.record({
+        scene: SCENE,
+        kind: 'conditioned',
+        trick: 'conditioning',
+        data: { clicks: presses, resets, ms: Math.round(performance.now() - shownAt), helped },
+      });
+    };
 
     const lamps = Array.from({ length: SIZE * SIZE }, (_, index) => {
       const lamp = h('button', {
@@ -123,14 +160,8 @@ export function sequence(ctx: GameContext, random: () => number = Math.random): 
         audio.click(isOn(state, index) ? 79 : 67, 0.35);
         show();
         if (!isSolved(state)) return;
-        solved = true;
-        audio.snap(88);
-        ctx.witness.record({
-          scene: SCENE,
-          kind: 'conditioned',
-          trick: 'conditioning',
-          data: { clicks: presses, resets, ms: Math.round(performance.now() - shownAt) },
-        });
+        window.clearTimeout(helpTimer);
+        finish(false);
         window.setTimeout(resolve, 650);
       });
       return lamp;
@@ -145,18 +176,58 @@ export function sequence(ctx: GameContext, random: () => number = Math.random): 
       show();
     });
 
+    // After a while, a way out appears. Its place is kept from the start, so nothing jumps.
+    const help = h('button', { class: 'btn btn--small lamps__help', text: FIDGETS.sequenceHelp, attrs: { type: 'button' } });
+    help.hidden = true;
+    const helpTimer = window.setTimeout(() => {
+      if (solved) return;
+      help.hidden = false;
+      audio.click(76, 0.25);
+    }, HELP_AFTER_MS);
+    help.addEventListener('click', () => {
+      if (solved) return;
+      solved = true;
+      help.disabled = true;
+      reset.disabled = true;
+      ctx.witness.record({
+        scene: SCENE,
+        kind: 'asked-help',
+        trick: 'conditioning',
+        data: { what: 'lights', clicks: presses, ms: Math.round(performance.now() - shownAt) },
+      });
+      const said = ctx.pal.say(FIDGETS.sequenceHelped);
+      // On a small phone the window may have scrolled PAL's bubble out of sight: bring it back.
+      ctx.pal.el.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      void (async () => {
+        await sleep(450);
+        // PAL switches them on one after another, quickly.
+        for (let index = 0; index < SIZE * SIZE; index++) {
+          if (isOn(state, index)) continue;
+          state |= 1 << index;
+          audio.click(72 + index * 2, 0.3);
+          show();
+          await sleep(110);
+        }
+        finish(true);
+        await said;
+        // Long enough to read what PAL said, with every light on behind it.
+        await sleep(2200);
+        resolve();
+      })();
+    });
+
     function show(): void {
       lamps.forEach((lamp, index) => {
         const on = isOn(state, index);
         lamp.classList.toggle('lit', on);
         lamp.setAttribute('aria-pressed', String(on));
       });
-      board.classList.toggle('lamps--solved', solved);
+      board.classList.toggle('lamps--solved', solved && isSolved(state));
     }
 
     const board = h('div', { class: 'lamps' }, ...lamps);
     show();
-    ctx.stage.replaceChildren(h('div', { class: 'lamps-wrap' }, board, reset));
+    ctx.stage.replaceChildren(h('div', { class: 'lamps-wrap' }, board, h('div', { class: 'lamps__tools' }, reset, help)));
   });
 }
 

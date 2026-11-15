@@ -24,6 +24,7 @@ import {
   MAILBOX_RECT,
   MAIL_SLOT,
   POT_RECT,
+  ROOF_SPOT,
   SEAL_RECT,
   STAGE_HEIGHT,
   STAGE_WIDTH,
@@ -119,6 +120,9 @@ export const mailbox: GameScene = {
     const fallen: { index: number; at: number }[] = [];
     let blooms = 0;
     let puffAt = -9999;
+    let selfPokes = 0;
+    /** Whoever ended up on the roof instead of running away. */
+    let onRoof: Critter | null = null;
 
     let phaseAtGift = false;
     const enter = (next: Phase): void => {
@@ -248,10 +252,36 @@ export const mailbox: GameScene = {
       if (bushPokes % BUSH_EVERY === 0) {
         const kind = CRITTER_ORDER[critters % CRITTER_ORDER.length] ?? 'bunny';
         critters++;
+        // Once every animal has had its run, the next one turns up somewhere it has no business being.
+        if (critters === CRITTER_ORDER.length + 1 && !onRoof) {
+          audio.boing(0.3);
+          window.setTimeout(() => {
+            if (!alive) return;
+            onRoof = kind;
+            roofSpot.hidden = false;
+            void say(C.roof.up);
+          }, 700);
+          return;
+        }
         critter = { kind, at: now + 260 };
         audio.boing(0.3);
         void say(C.bush.out[kind]);
       } else void say(C.bush.rustle[(bushPokes % BUSH_EVERY) - 1] ?? '');
+    });
+
+    const roofSpot = stage.hotspot({ x: ROOF_SPOT.x - 3, y: ROOF_SPOT.y - 10, w: 15, h: 11 }, C.roof.label, () => {
+      if (!free()) return;
+      void say(C.roof.poke);
+      poke(C.roof.label);
+    });
+    roofSpot.hidden = true;
+
+    // The character itself: poke it often enough and it gets short with you.
+    const selfSpot = stage.hotspot({ x: 0, y: 0, w: HERO_WIDTH, h: HERO_HEIGHT }, C.self.label, () => {
+      if (!free()) return;
+      void say(C.self.lines[Math.min(selfPokes, C.self.lines.length - 1)] ?? '');
+      selfPokes++;
+      poke(C.self.label);
     });
 
     stage.hotspot(POT_RECT, C.pot.label, () => {
@@ -342,7 +372,13 @@ export const mailbox: GameScene = {
         }
       }
 
+      // The click area on the character follows it around.
+      selfSpot.style.left = `${(charX / STAGE_WIDTH) * 100}%`;
+      selfSpot.style.top = `${((charY - HERO_HEIGHT) / STAGE_HEIGHT) * 100}%`;
+      selfSpot.hidden = !free();
+
       paintBackdrop(g, t, motion, fallen.length);
+      if (onRoof) paintCritter(g, onRoof, ROOF_SPOT.x, ROOF_SPOT.y, 0);
       if (motion) paintBirds(g, t);
       if (t - puffAt < 1400) paintPuff(g, (t - puffAt) / 1400);
 

@@ -30,16 +30,22 @@ export const crash: GameScene = {
       pal.setMood('dark');
       await pal.say(CRASH.palDark);
       if (!alive) return;
-      const w = board.clientWidth || 320;
-      beetle.jump(w + 10, 90);
+      // The window clips whatever is in it, and BUG stands on top of it: he goes on the computer instead.
+      const layer = ctx.window.el.closest<HTMLElement>('.pc') ?? board;
+      layer.append(beetle.el);
+      const winBox = ctx.window.el.getBoundingClientRect();
+      const layerBox = layer.getBoundingClientRect();
+      const w = layer === board ? board.clientWidth || 320 : winBox.right - layerBox.left;
+      beetle.jump(w + (layer === board ? 10 : 110), layer === board ? 90 : winBox.top - layerBox.top + 60);
       beetle.setMood('panic');
       // No words. BUG runs to the window's close button and pulls at it with all he has:
       // the one thing he has been trying to do for the player all along.
       const close = ctx.window.el.querySelector<HTMLElement>('[aria-label="Zavřít"]');
-      const from = board.getBoundingClientRect();
+      const from = layer.getBoundingClientRect();
       const to = close?.getBoundingClientRect();
-      const x = to ? to.left - from.left + to.width / 2 - BUG_PX / 2 : w / 2 - BUG_PX / 2;
-      const y = to ? to.top - from.top - BUG_PX + 14 : 90;
+      // He comes in from the right, so he faces left: his outstretched hands close round the cross.
+      const x = to ? to.left - from.left + to.width / 2 - (BUG_PX * 3) / 32 : w / 2 - BUG_PX / 2;
+      const y = to ? to.top - from.top + to.height / 2 - (BUG_PX * 20.5) / 32 : 90;
       beetle.el.style.zIndex = '20';
       await beetle.moveTo(x, y);
       if (!alive) return;
@@ -67,11 +73,13 @@ export const crash: GameScene = {
     async function dissolve(): Promise<void> {
       const words = witness.events.map((e) => e.kind.toUpperCase()).join(' ') || 'BUG';
       const box = beetle.el.getBoundingClientRect();
-      const host = board.getBoundingClientRect();
+      const layer = beetle.el.parentElement ?? board;
+      const host = layer.getBoundingClientRect();
       const canvas = h('canvas', { class: 'crash__rain', attrs: { 'aria-hidden': 'true' } });
       canvas.width = Math.max(1, Math.round(host.width));
       canvas.height = Math.max(1, Math.round(host.height + 60));
-      board.append(canvas);
+      canvas.style.zIndex = '20';
+      layer.append(canvas);
       const g = canvas.getContext('2d');
       const sprite = bugImage('stand').getContext('2d')?.getImageData(0, 0, BUG_SIZE, BUG_SIZE);
       beetle.el.classList.add('bug--gone');
@@ -173,6 +181,7 @@ export const crash: GameScene = {
       alive = false;
       cancelAnimationFrame(raf);
       beetle.stop();
+      beetle.el.remove();
       screen?.remove();
       ctx.window.el.classList.remove('win--crash');
       pal.setMood('neutral');

@@ -330,7 +330,7 @@ body {
 }
 
 .reveal li {
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .reveal li strong {
@@ -357,7 +357,8 @@ body {
 /* Replayed whenever the window appears after a full-screen scene: an old CRT
    powering on — a bright line snaps open into the full window. */
 .win--boot {
-  animation: win-boot 560ms cubic-bezier(0.2, 1.1, 0.3, 1) both;
+  /* Slow and calm: twice the old 560 ms, eased without a springy overshoot. */
+  animation: win-boot 1120ms cubic-bezier(0.25, 0.8, 0.35, 1) both;
   transform-origin: center;
 }
 
@@ -373,7 +374,7 @@ body {
     filter: brightness(2.4);
   }
   42% {
-    transform: scale(1.02, 1.05);
+    transform: scale(1.01, 1.02);
     filter: brightness(1.4);
   }
   72% {
@@ -821,8 +822,8 @@ body {
   left: 0;
   top: 0;
   z-index: 3;
-  width: 64px;
-  height: 64px;
+  width: var(--bug-px, 96px);
+  height: var(--bug-px, 96px);
   pointer-events: none;
   transition: opacity 600ms;
   will-change: transform;
@@ -1261,54 +1262,13 @@ body {
 .surprise__code {
   width: 150px;
   height: 150px;
-  image-rendering: pixelated;
 }
 
-.surprise__caption {
-  font-size: 12px;
-  font-weight: 700;
+.surprise:has(.surprise__bear) {
+  margin: 0 0 6px;
 }
 
-.print-sheet {
-  display: none;
-}
-
-@media print {
-  body {
-    background: none;
-  }
-
-  #app {
-    display: none;
-  }
-
-  .print-sheet {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    margin: 0;
-    color: #000000;
-    font-family: sans-serif;
-  }
-
-  .print-sheet .surprise {
-    gap: 8mm;
-    align-items: center;
-    text-align: center;
-  }
-
-  /* Half the earlier 18 cm, centred on the page. */
-  .print-sheet .surprise__code {
-    width: 90mm;
-    height: 90mm;
-  }
-
-  .print-sheet .surprise__caption {
-    font-size: 14pt;
-  }
-}
+/* The bear's picture, the code filling the scene (.desk--viewer) and the printed sheet: see q3-desk.css. */
 
 /* ---------- PAL's name tag ---------- */
 
@@ -1331,90 +1291,6 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
   animation: rise 260ms ease-out both;
-}
-
-/* ---------- fidgets: the fallen cog ---------- */
-
-.gear-socket {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  color: var(--line);
-  opacity: 0.45;
-}
-
-.gear-socket svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.gear-socket--filled {
-  opacity: 0;
-}
-
-.gear {
-  display: block;
-  width: 38px;
-  height: 38px;
-  margin: 10px auto 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ink-soft);
-  cursor: var(--cursor-hand);
-}
-
-.gear svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.gear--fallen {
-  animation: gear-wobble 1.8s ease-in-out infinite;
-}
-
-.gear--fallen:hover {
-  color: var(--btn);
-}
-
-.gear--placing {
-  animation: gear-fly 620ms cubic-bezier(0.3, 0.9, 0.3, 1) forwards;
-}
-
-.gear:focus-visible {
-  outline: 3px solid var(--ink-soft);
-  outline-offset: 3px;
-  border-radius: 50%;
-}
-
-@keyframes gear-wobble {
-  0%, 100% {
-    transform: rotate(-12deg);
-  }
-  50% {
-    transform: rotate(8deg) translateY(-2px);
-  }
-}
-
-@keyframes gear-fly {
-  to {
-    transform: translate(var(--gx, 0), var(--gy, 0)) rotate(360deg);
-    color: var(--line);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .gear--fallen,
-  .gear--placing {
-    animation: none;
-  }
-  .gear--placing {
-    transform: translate(var(--gx, 0), var(--gy, 0));
-  }
 }
 
 /* ---------- music toggle ---------- */
@@ -1700,105 +1576,7 @@ body {
   }
 }
 
-/* ---------- BUG's warnings (cameos) ---------- */
-
-.cameo {
-  position: absolute;
-  bottom: 8px;
-  z-index: 8;
-  width: 64px;
-  height: 64px;
-  pointer-events: none;
-  animation: cameo-in 380ms cubic-bezier(0.3, 1.4, 0.4, 1) both;
-}
-
-.cameo--right {
-  right: 10px;
-}
-
-.cameo--left {
-  left: 10px;
-  --from: -90px;
-}
-
-.cameo--right {
-  --from: 90px;
-}
-
-.cameo--leave {
-  animation: cameo-out 450ms ease-in forwards;
-}
-
-.cameo__body {
-  width: 100%;
-  height: 100%;
-  animation: cameo-hop 360ms ease-in-out infinite;
-}
-
-.cameo__sprite {
-  display: block;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
-}
-
-.cameo__bubble {
-  position: absolute;
-  bottom: calc(100% + 4px);
-  width: max-content;
-  max-width: 170px;
-  padding: 4px 9px;
-  border: 2px solid var(--line);
-  border-radius: 10px;
-  background: var(--win);
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 800;
-  animation: cameo-pop 180ms 200ms ease-out both;
-}
-
-.cameo--right .cameo__bubble {
-  right: 0;
-}
-
-.cameo--left .cameo__bubble {
-  left: 0;
-}
-
-@keyframes cameo-in {
-  from {
-    transform: translateX(var(--from, 90px));
-    opacity: 0;
-  }
-}
-
-@keyframes cameo-out {
-  to {
-    transform: translateX(var(--from, 90px));
-    opacity: 0;
-  }
-}
-
-@keyframes cameo-pop {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
-@keyframes cameo-hop {
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cameo,
-  .cameo--leave,
-  .cameo__body {
-    animation: none;
-  }
-}
+/* BUG's visits to a scene are in q3-bug.css. */
 
 /* ---------- role casting ---------- */
 
@@ -3028,7 +2806,8 @@ body {
 
 .debug {
   position: fixed;
-  z-index: 50;
+  /* Above every overlay the game puts up (the blue screen, the replay, the keygen, SMS). */
+  z-index: 2147483000;
   left: 50%;
   bottom: 8px;
   display: flex;
@@ -3060,16 +2839,27 @@ body {
 
 /* ---------- grandma's letter ---------- */
 
+/* Anywhere the character can walk: two boot prints instead of the arrow. */
+.scene__hotspot--walk {
+  cursor: var(--cursor-walk);
+}
+
+.scene__hotspot--walk:focus-visible {
+  outline: none;
+}
+
 .mb-sender {
   position: absolute;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: flex-end;
   color: #3a4a8a;
-  font-family: 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
-  font-size: clamp(8px, 1.9vw, 13px);
-  line-height: 1.25;
-  transform: rotate(-3deg);
+  font-family: 'Segoe Script', 'Bradley Hand', 'Snell Roundhand', 'Dancing Script', cursive;
+  font-size: clamp(7px, 1.7vw, 12px);
+  line-height: 1.3;
+  white-space: nowrap;
+  transform: rotate(3deg);
   pointer-events: none;
   animation: rise 400ms ease-out both;
 }
@@ -3080,19 +2870,30 @@ body {
   pointer-events: none;
 }
 
+/* A sheet of writing paper: faint ruled lines, a soft fold across it, a red margin, and a slight tilt
+   from being pulled out of the envelope by one corner. */
 .mb-letter {
   position: absolute;
-  left: 4%;
-  right: 4%;
-  bottom: 0;
-  padding: 4% 7% 5%;
-  border-radius: 3px 3px 0 0;
-  background: #fffdf6;
-  box-shadow: 0 0 0 2px #ecdcb6, 0 -4px 14px rgba(0, 0, 0, 0.18);
+  left: 11%;
+  right: 11%;
+  bottom: -4%;
+  padding: 5% 8% 9% 11%;
+  border-radius: 10px 12px 0 0;
+  background:
+    linear-gradient(to right, transparent 7%, rgba(226, 75, 74, 0.28) 7%, rgba(226, 75, 74, 0.28) calc(7% + 1px), transparent calc(7% + 1px)),
+    linear-gradient(to bottom, transparent 49.6%, rgba(160, 130, 80, 0.16) 49.6%, rgba(255, 255, 255, 0.7) 50.4%, transparent 51%),
+    repeating-linear-gradient(to bottom, transparent 0 1.52em, rgba(90, 120, 190, 0.2) 1.52em calc(1.52em + 1px)),
+    linear-gradient(160deg, #fffef9 0%, #fdf7e6 60%, #f8eed6 100%);
+  box-shadow:
+    0 0 0 1px #e6d5ab,
+    0 -6px 16px rgba(0, 0, 0, 0.2),
+    inset 0 0 18px rgba(214, 186, 128, 0.25);
   color: #2f3d7a;
-  font-family: 'Segoe Print', 'Bradley Hand', 'Comic Sans MS', cursive;
-  font-size: clamp(9px, 2vw, 14px);
-  line-height: 1.45;
+  font-family: 'Segoe Script', 'Bradley Hand', 'Snell Roundhand', 'Dancing Script', cursive;
+  font-size: clamp(8px, 1.75vw, 13px);
+  line-height: 1.52;
+  transform: rotate(-2.2deg);
+  transform-origin: 50% 100%;
   pointer-events: auto;
   cursor: var(--cursor-hand);
   animation: mb-letter-up 1100ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
@@ -3103,24 +2904,17 @@ body {
   color: #e24b4a;
 }
 
-.mb-letter__more {
-  position: absolute;
-  right: 5%;
-  bottom: 6%;
-  width: 0;
-  height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 9px solid #e24b4a;
-  animation: say-nudge 800ms 1400ms ease-in-out infinite both;
-}
-
 .mb-letter p {
   margin: 0;
 }
 
+.mb-letter__hi {
+  font-size: 1.12em;
+}
+
 .mb-letter__sig {
-  margin-top: 0.3em !important;
+  margin-top: 0.2em !important;
+  padding-right: 4%;
   text-align: right;
 }
 
@@ -3130,211 +2924,26 @@ body {
 
 @keyframes mb-letter-up {
   from {
-    transform: translateY(100%);
+    transform: translateY(104%) rotate(0deg);
   }
   to {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-2.2deg);
   }
 }
 
 @keyframes mb-letter-away {
   from {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-2.2deg);
   }
   to {
-    transform: translateY(100%);
+    transform: translateY(104%) rotate(0deg);
   }
 }
 
-/* ---------- the computer PAL's window lives on ---------- */
-
-body.on-pc {
-  background-color: #f3e3c7;
-  background-image:
-    linear-gradient(to bottom, transparent calc(100% - 64px), #cf9a6a calc(100% - 64px), #cf9a6a calc(100% - 62px), #b98556 calc(100% - 62px), #b98556 calc(100% - 6px), #a06f44 calc(100% - 6px)),
-    repeating-linear-gradient(to right, #f3e3c7 0 34px, #ecd8b8 34px 40px);
-  background-size: 100% 100%, 100% 100%;
-  background-attachment: fixed;
-}
-
-.pc {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: min(100%, 640px);
-}
+/* ---------- the computer PAL's window lives on: see q3-pc.css ---------- */
 
 .pc[hidden] {
   display: none;
-}
-
-.pc__monitor {
-  position: relative;
-  width: 100%;
-  padding: 16px 16px 22px;
-  border-radius: 14px;
-  background: #3b3a44;
-  box-shadow: inset 0 -4px 0 #2f2e37, 0 6px 0 rgba(0, 0, 0, 0.12);
-}
-
-.pc__led {
-  position: absolute;
-  right: 18px;
-  bottom: 8px;
-  width: 6px;
-  height: 6px;
-  border-radius: 1px;
-  background: #5dcaa5;
-}
-
-.pc__screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 420px;
-  padding: 22px 18px 40px;
-  border-radius: 4px;
-  background-color: #8fd0ee;
-  background-position: center;
-  background-size: cover;
-  image-rendering: pixelated;
-  overflow: hidden;
-}
-
-.pc__taskbar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 22px;
-  padding: 0 6px;
-  background: #3a6fb0;
-  border-top: 2px solid #5a8fd0;
-}
-
-.pc__start {
-  width: 38px;
-  height: 14px;
-  border-radius: 3px;
-  background: #5dcaa5;
-}
-
-.pc__clock {
-  padding: 0 6px;
-  border-radius: 3px;
-  background: #2c5a92;
-  color: #fff;
-  font: 700 11px/16px ui-monospace, Consolas, monospace;
-}
-
-.pc__stand {
-  width: 70px;
-  height: 18px;
-  background: #2f2e37;
-  border-radius: 0 0 4px 4px;
-}
-
-.pc__stand::after {
-  content: '';
-  display: block;
-  width: 150px;
-  height: 8px;
-  margin: 18px 0 0 -40px;
-  border-radius: 3px;
-  background: #2f2e37;
-}
-
-.pc__tower {
-  position: absolute;
-  right: -150px;
-  bottom: -26px;
-  width: 110px;
-  height: 260px;
-  border: 3px solid #bdb7a8;
-  border-radius: 6px;
-  background:
-    linear-gradient(#bdb7a8, #bdb7a8) 14px 22px / 76px 20px no-repeat,
-    linear-gradient(#bdb7a8, #bdb7a8) 14px 50px / 76px 12px no-repeat,
-    linear-gradient(#a9a394, #a9a394) 16px 150px / 72px 52px no-repeat,
-    #d9d4c7;
-}
-
-.pc__tower::before,
-.pc__tower::after {
-  content: '';
-  position: absolute;
-  left: 26px;
-  width: 26px;
-  height: 10px;
-  background: #3b2a3a;
-}
-
-.pc__tower::before {
-  top: 162px;
-}
-
-.pc__tower::after {
-  top: 180px;
-}
-
-.pc__drive {
-  position: absolute;
-  z-index: 1;
-  left: -12px;
-  top: 158px;
-  width: 42px;
-  height: 18px;
-  border: 3px solid #d4537e;
-  border-radius: 3px;
-  background: #ed93b1;
-}
-
-:root[data-theme='revealed'] body.on-pc {
-  background: var(--desk);
-}
-
-:root[data-theme='revealed'] .pc__monitor {
-  background: #000;
-  box-shadow: none;
-}
-
-:root[data-theme='revealed'] .pc__screen {
-  background: #000 !important;
-}
-
-:root[data-theme='revealed'] .pc__taskbar,
-:root[data-theme='revealed'] .pc__stand,
-:root[data-theme='revealed'] .pc__tower {
-  display: none;
-}
-
-@media (max-width: 960px) {
-  .pc__tower {
-    display: none;
-  }
-}
-
-@media (max-width: 560px) {
-  .pc__monitor {
-    padding: 8px 8px 14px;
-    border-radius: 10px;
-  }
-
-  .pc__screen {
-    min-height: 0;
-    padding: 10px 6px 30px;
-  }
-
-  .pc__led {
-    right: 10px;
-    bottom: 4px;
-  }
 }
 
 .bug__bubble--scribble {
@@ -3420,186 +3029,7 @@ body.on-pc {
     linear-gradient(to bottom, #a6dcef 0 58%, #7cc66b 58% 100%);
 }
 
-/* One screw stands proud of a plate; the others are flush. */
-.fx-screw__plate {
-  position: absolute;
-  left: 50%;
-  top: 8px;
-  width: 78px;
-  height: 60px;
-  margin-left: -39px;
-  border-radius: 6px;
-  background: linear-gradient(#d7dee5, #a9b4bf);
-  box-shadow: inset 0 0 0 2px #8a96a3;
-}
-
-.fx-screw__dot {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #8a96a3;
-  box-shadow: inset 0 0 0 2px #6b7682;
-}
-
-.fx-screw__dot:nth-child(1) {
-  left: 8px;
-  top: 8px;
-}
-
-.fx-screw__dot:nth-child(2) {
-  right: 8px;
-  top: 8px;
-}
-
-.fx-screw__dot:nth-child(3) {
-  left: 8px;
-  bottom: 8px;
-}
-
-.fx-screw__spot {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  width: 16px;
-  height: 16px;
-}
-
-.fx-screw__shaft {
-  position: absolute;
-  left: 3px;
-  top: calc(7px - var(--out, 0) * 3px);
-  width: 8px;
-  height: calc(var(--out, 0) * 3px + 4px);
-  background: repeating-linear-gradient(#c9c9d1 0 2px, #8a8a96 2px 3px);
-  opacity: calc(min(var(--out, 0), 1));
-}
-
-.fx-screw__head {
-  position: absolute;
-  left: -2px;
-  top: calc(-2px - var(--out, 0) * 3px);
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #eef2f5, #8a96a3);
-  box-shadow: 0 calc(var(--out, 0) * 1px) 0 rgba(0, 0, 0, 0.25), inset 0 0 0 1px #5a6470;
-  transform: rotate(var(--turn, 0deg));
-  transition: transform 200ms ease-out, top 200ms ease-out;
-}
-
-.fx-screw__slot {
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  top: 9px;
-  height: 2px;
-  background: #4b5562;
-}
-
-/* A little chest of drawers; the top drawer is left open. */
-.fx-drawer__case {
-  position: absolute;
-  left: 50%;
-  top: 6px;
-  width: 80px;
-  height: 64px;
-  margin-left: -40px;
-  border-radius: 4px;
-  background: #c58c52;
-  box-shadow: inset 0 0 0 3px #8a5a3c, inset 0 34px 0 #a0703f, inset 0 36px 0 #8a5a3c;
-}
-
-.fx-drawer__front {
-  position: absolute;
-  left: 50%;
-  top: calc(9px + var(--open, 0) * 1.1px);
-  width: calc(74px + var(--open, 0) * 0.8px);
-  height: 25px;
-  margin-left: calc(-37px - var(--open, 0) * 0.4px);
-  border-radius: 3px;
-  background: #d9a066;
-  box-shadow: inset 0 0 0 2px #8a5a3c, 0 2px 0 rgba(0, 0, 0, 0.18);
-  transition: top 160ms ease-out, width 160ms ease-out, margin-left 160ms ease-out;
-}
-
-/* The dark gap you see above an open drawer. */
-.fx-drawer__front::before {
-  content: '';
-  position: absolute;
-  left: 3px;
-  right: 3px;
-  bottom: 100%;
-  height: calc(var(--open, 0) * 1.1px);
-  background: #3d2414;
-}
-
-.fx-drawer__handle {
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  width: 22px;
-  height: 5px;
-  margin-left: -11px;
-  border-radius: 3px;
-  background: #6b4428;
-}
-
-/* A shelf of books; one sticks up out of line. */
-.fx-book__row {
-  position: absolute;
-  left: 50%;
-  bottom: 12px;
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  margin-left: -42px;
-}
-
-.fx-book__b {
-  display: block;
-  width: 14px;
-  height: 48px;
-  border-radius: 2px 2px 0 0;
-  box-shadow: inset 0 6px 0 rgba(255, 255, 255, 0.35), inset 0 -6px 0 rgba(0, 0, 0, 0.15);
-}
-
-.fx-book__b--0 {
-  height: 44px;
-  background: #5b6bb5;
-}
-
-.fx-book__b--1 {
-  height: 50px;
-  background: #e24b4a;
-}
-
-.fx-book__b--2 {
-  background: #5dcaa5;
-  transform: translateY(calc(var(--out, 0) * -4px));
-  transition: transform 160ms ease-out;
-}
-
-.fx-book__b--3 {
-  height: 46px;
-  background: #ffd23f;
-}
-
-.fx-book__b--4 {
-  height: 50px;
-  background: #ed93b1;
-}
-
-.fx-book__shelf {
-  position: absolute;
-  left: 50%;
-  bottom: 6px;
-  width: 96px;
-  height: 6px;
-  margin-left: -48px;
-  border-radius: 2px;
-  background: #8a5a3c;
-}
+/* Screws, the chain lamp, the books and the cogs: see q3-fidgets.css. */
 
 /* A lamp and its plug lying next to the socket. */
 .fx-plug__lamp {
@@ -4720,35 +4150,8 @@ body.on-pc {
   cursor: var(--cursor-hand);
 }
 
-.bug--away .bug__flip {
-  animation: bug-flee 3500ms ease-in-out both;
-}
-
 .bug--away .bug__bubble {
   display: none;
-}
-
-.cameo--clickable {
-  pointer-events: auto;
-  cursor: var(--cursor-hand);
-}
-
-@keyframes bug-flee {
-  0% {
-    transform: none;
-  }
-  12% {
-    transform: translate(60px, -30px) rotate(25deg);
-    opacity: 0;
-  }
-  85% {
-    transform: translate(60px, -30px);
-    opacity: 0;
-  }
-  100% {
-    transform: none;
-    opacity: 1;
-  }
 }
 
 /* ---------- a real minimise: into the taskbar, with a nagging notification ---------- */

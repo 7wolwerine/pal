@@ -1,3 +1,4 @@
+import { pickLine } from '../content/bug.ts';
 import { DONTCLICK } from '../content/dontclick.ts';
 import type { GameScene } from '../game.ts';
 import { BUG_PX, Beetle } from '../ui/beetle.ts';
@@ -105,9 +106,9 @@ export const dontclick: GameScene = {
       beetle.grumble();
       await beetle.stomp(3);
       if (!alive) return;
-      beetle.say(DONTCLICK.bugRehang[i] ?? '');
+      beetle.say(i >= 1 ? pickLine(DONTCLICK.bugRepeat) : (DONTCLICK.bugRehang[i] ?? ''));
       beetle.setMood(i >= 1 ? 'angry' : 'panic');
-      await sleep(1300);
+      await sleep(i >= 1 ? 2400 : 1300);
       if (!alive) return;
       beetle.say('');
       await beetle.strain(900);

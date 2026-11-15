@@ -1,0 +1,324 @@
+/* pc: styles added with the third feedback round. Loaded after app.css, so rules here win. */
+
+/* ---------- the computer PAL's window lives on ----------
+   The desk scene again, as a card like every pixel scene: a canvas with the wall, the desk and
+   everything on it, the monitor's glass laid over it as page content. src/ui/pc.ts measures it
+   all for the page and hands the sizes over as --pc-* variables. */
+
+/* At the end, in the dark, only a black monitor is left. */
+.pc {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 640px);
+}
+
+.pc__monitor {
+  position: relative;
+  width: 100%;
+  padding: 16px 16px 22px;
+  border-radius: 14px;
+  background: #000;
+}
+
+.pc__screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 420px;
+  padding: 22px 18px 40px;
+  border-radius: 4px;
+  background: #000;
+  overflow: hidden;
+}
+
+.pc__room,
+.pc__glass,
+.pc__taskbar,
+.pc__errors,
+.pc__tower,
+.pc__spot,
+.pc > .say {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .pc__monitor {
+    padding: 8px 8px 14px;
+    border-radius: 10px;
+  }
+
+  .pc__screen {
+    min-height: 0;
+    padding: 10px 6px 30px;
+  }
+}
+
+/* ---------- the desk ---------- */
+
+:root:not([data-theme='revealed']) .pc {
+  display: block;
+  box-sizing: content-box;
+  width: var(--pc-w);
+  height: var(--pc-h);
+  border: 3px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 var(--edge) 0 var(--line);
+  background: #f3e3c7;
+}
+
+:root .pc[hidden] {
+  display: none;
+}
+
+:root:not([data-theme='revealed']) .pc__room {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius) - 3px);
+  image-rendering: pixelated;
+}
+
+/* The little thoughts never stand in the way of PAL's window or its buttons. */
+:root:not([data-theme='revealed']) .pc > .say {
+  display: block;
+  pointer-events: none;
+}
+
+:root:not([data-theme='revealed']) .pc > .say[hidden] {
+  display: none;
+}
+
+:root:not([data-theme='revealed']) .pc__spot {
+  display: block;
+}
+
+:root:not([data-theme='revealed']) .pc__spot[hidden] {
+  display: none;
+}
+
+/* The monitor is painted; this box only gives it a place (BUG sits on its corners). */
+:root:not([data-theme='revealed']) .pc__monitor {
+  position: absolute;
+  left: var(--pc-mx);
+  top: var(--pc-my);
+  width: var(--pc-mw);
+  height: var(--pc-mh);
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  pointer-events: none;
+}
+
+/* The glass: always the same size, whatever the window shows. The window stands at the top
+   (so it only ever grows downwards), clear of the taskbar and, where there is room, of the
+   desktop icons; what does not fit scrolls inside the window. */
+:root:not([data-theme='revealed']) .pc__screen {
+  position: absolute;
+  left: var(--pc-gx);
+  top: var(--pc-gy);
+  width: var(--pc-gw);
+  height: var(--pc-gh);
+  min-height: 0;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--pc-win-top) 8px var(--pc-win-bottom) var(--pc-win-left);
+  border-radius: 0;
+  background: #101016;
+  pointer-events: auto;
+}
+
+:root:not([data-theme='revealed']) .pc__glass {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: var(--cursor-hand);
+}
+
+.pc__glass:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: -3px;
+}
+
+.pc__wallpaper {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  max-height: 100%;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__bar,
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__foot {
+  flex: none;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  /* A soft shadow at an edge where there is more to scroll to; it goes once the end is reached. */
+  background:
+    linear-gradient(var(--win), rgba(255, 255, 255, 0)) top / 100% 18px no-repeat local,
+    linear-gradient(rgba(255, 255, 255, 0), var(--win)) bottom / 100% 18px no-repeat local,
+    radial-gradient(farthest-side at 50% 0, rgba(75, 21, 40, 0.16), transparent) top / 100% 9px no-repeat scroll,
+    radial-gradient(farthest-side at 50% 100%, rgba(75, 21, 40, 0.16), transparent) bottom / 100% 9px no-repeat scroll;
+}
+
+/* Over the painted taskbar: only the button of a minimised window lives here. */
+:root:not([data-theme='revealed']) .pc__taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  height: var(--pc-bar);
+  padding: 0;
+  pointer-events: none;
+}
+
+.pc__start {
+  flex: none;
+  width: var(--pc-start);
+}
+
+.pc__tab {
+  height: calc(var(--pc-bar) - 2 * var(--pc-s) - 2px);
+  max-height: 26px;
+  margin-left: calc(var(--pc-s) * 2);
+  border: 2px solid #2c5a92;
+  border-radius: 2px;
+  background: #5a8fd0;
+  font-size: clamp(10px, calc(var(--pc-bar) * 0.42), 13px);
+  line-height: 1;
+  pointer-events: auto;
+}
+
+/* The minimised window's nagging note stays above the taskbar and the day/night switch. */
+.pc__screen > .notify {
+  bottom: calc(var(--pc-bar, 22px) + 10px);
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .notify {
+  bottom: calc(var(--pc-bar) + var(--pc-u) * 8 + 6px);
+}
+
+/* The CRT line opens a little above the window's middle, so its overshoot never reaches past
+   the top of the glass (the window stands 8px under it). */
+:root:not([data-theme='revealed']) .pc__screen > .win.win--boot {
+  transform-origin: 50% 25%;
+}
+
+/* The line opens hardly wider than the window, so it never reaches past the glass's sides either
+   (the window can stand only 8px from them). */
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-theme='revealed']) .pc__screen > .win.win--boot {
+    animation-name: pc-win-boot;
+  }
+
+  /* On a phone the window fills the glass's width: the head-shake stays within its 8px margin. */
+  :root:not([data-theme='revealed']) .pc[data-mode='compact'] .pc__screen > .win.win--nope {
+    animation-name: pc-nope;
+  }
+}
+
+@keyframes pc-win-boot {
+  0% {
+    opacity: 0;
+    transform: scale(1.03, 0.02);
+    filter: brightness(2.4);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.02, 0.03);
+    filter: brightness(2.4);
+  }
+  42% {
+    transform: scale(1.02, 1.05);
+    filter: brightness(1.4);
+  }
+  72% {
+    transform: scale(0.99, 0.99);
+    filter: brightness(1);
+  }
+  100% {
+    transform: scale(1, 1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes pc-nope {
+  25% {
+    transform: translateX(-4px) rotate(-0.5deg);
+  }
+  75% {
+    transform: translateX(4px) rotate(0.5deg);
+  }
+}
+
+/* BUG's falling letters at the crash stay on the computer instead of lengthening the page. */
+.pc > .crash__rain {
+  width: 100%;
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+
+/* At the end, in the dark, the page round the black monitor is plain, as it always was. */
+:root[data-theme='revealed'] body.on-pc {
+  background: var(--desk);
+}
+
+/* The old programs' errors: bottom left, over the window for a moment. */
+:root:not([data-theme='revealed']) .pc__errors {
+  position: absolute;
+  left: 8px;
+  bottom: calc(var(--pc-bar) + 8px);
+  z-index: 3;
+  display: block;
+  max-width: calc(100% - 16px);
+  pointer-events: none;
+}
+
+.pc__errors .desk__error {
+  margin: 0;
+  max-width: 100%;
+  animation: pop 200ms ease-out both;
+}
+
+/* The case with the hamster's cage on it; only a place for BUG to sit. */
+:root:not([data-theme='revealed']) .pc__tower {
+  position: absolute;
+  left: var(--pc-tx);
+  top: var(--pc-ty);
+  display: block;
+  width: var(--pc-tw);
+  height: var(--pc-th);
+  pointer-events: none;
+}
+
+:root:not([data-theme='revealed']) .pc__tower[hidden] {
+  display: none;
+}

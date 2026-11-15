@@ -27,4 +27,21 @@ export const ROLES = {
 
 export type RoleId = keyof typeof ROLES;
 
+/**
+ * Three ready-made names for the assistant, one per role, offered as chips when the player names it.
+ * Common Czech nicknames that fit a boy and a girl alike: Míša the cuddly helper, Saša the lone
+ * wolf, Nikola the inventor who can fix anything.
+ */
+export const ROLE_NAMES: Readonly<Record<RoleId, string>> = {
+  helper: 'Míša',
+  loner: 'Saša',
+  fixer: 'Nikola',
+};
+
+/** The role whose ready-made name this is (typed or picked, any case), or undefined. */
+export function roleForName(name: string): RoleId | undefined {
+  const wanted = name.trim().toLocaleLowerCase('cs');
+  return (Object.keys(ROLE_NAMES) as RoleId[]).find((role) => ROLE_NAMES[role].toLocaleLowerCase('cs') === wanted);
+}
+
 export const ROLE_QUESTION = 'Jak by Tě nejspíš popsali kamarádi?';

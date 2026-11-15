@@ -6,8 +6,9 @@ import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '.
 import { h, sleep } from '../ui/dom.ts';
 import { livingSprite } from '../ui/sprites.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
-import { ROLES, ROLE_QUESTION, type RoleId } from '../content/roles.ts';
+import { ROLES, ROLE_NAMES, ROLE_QUESTION, roleForName, type RoleId } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
+import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
 
 const SCENE = 'welcome';
 
@@ -44,6 +45,7 @@ export const welcome: Scene<GameContext> = {
       await pal.tapToContinue();
       if (!alive) return;
       await pal.say(WELCOME.askName);
+      kindlyAsked(witness, SCENE);
       if (!alive) return;
       // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
       let named = false;
@@ -60,6 +62,7 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       profile.name = name.value;
       witness.disclose(SCENE, 'rapport', 'name', name.value, { ms: name.ms });
+      kindlyObeyed(witness, SCENE);
       step(1);
 
       // Role casting: an innocent "what type are you", praised and remembered.
@@ -100,12 +103,16 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.say(WELCOME.askOwnName);
       if (!alive) return;
-      const own = await askOwnName(stage, look.value);
+      const own = await askOwnName(stage, role);
       if (!alive) return;
+      // A role's ready-made name, picked or typed, also counts as one answer towards that role.
+      const nameRole = roleForName(own.value.name);
       witness.disclose(SCENE, 'osint', 'assistantName', own.value.name, {
         ms: own.ms,
         custom: own.value.custom,
+        ...(nameRole ? { role: nameRole } : {}),
       });
+      if (nameRole) lean(profile, nameRole);
       profile.assistantName = own.value.name;
       step(3);
 
@@ -115,7 +122,8 @@ export const welcome: Scene<GameContext> = {
       await sleep(250);
       if (!alive) return;
       const go = h('button', { class: 'btn', text: WELCOME.go, attrs: { type: 'button' }, on: { click: done } });
-      stage.replaceChildren(go);
+      // The confirming button of a conversation with PAL stands on the right.
+      stage.replaceChildren(h('div', { class: 'row row--end' }, go));
       go.focus();
     }
 
@@ -220,20 +228,22 @@ function askLook(stage: HTMLElement): Promise<Answer<AssistantKind>> {
   });
 }
 
-function askOwnName(
-  stage: HTMLElement,
-  kind: AssistantKind,
-): Promise<Answer<{ name: string; custom: boolean }>> {
+/**
+ * Names the assistant: three ready-made names as small chips (one per role, the player's own role
+ * first, a quiet nudge), or a name of the player's own in the field.
+ */
+function askOwnName(stage: HTMLElement, role: RoleId): Promise<Answer<{ name: string; custom: boolean }>> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
-    const presets = kind.names.map((name) =>
+    const order = [role, ...(Object.keys(ROLE_NAMES) as RoleId[]).filter((r) => r !== role)];
+    const presets = order.map((r) =>
       h('button', {
-        class: 'btn btn--quiet',
-        text: name,
+        class: 'name-chip',
+        text: ROLE_NAMES[r],
         attrs: { type: 'button' },
         on: {
           click: () =>
-            resolve({ value: { name, custom: false }, ms: Math.round(performance.now() - shownAt) }),
+            resolve({ value: { name: ROLE_NAMES[r], custom: false }, ms: Math.round(performance.now() - shownAt) }),
         },
       }),
     );
@@ -241,6 +251,8 @@ function askOwnName(
       { placeholder: WELCOME.ownNamePlaceholder, submit: WELCOME.ownNameSubmit, empty: WELCOME.ownNameEmpty },
       (answer) => resolve({ value: { name: answer.value, custom: true }, ms: answer.ms }),
     );
-    stage.replaceChildren(h('div', {}, h('div', { class: 'names' }, ...presets), form));
+    stage.replaceChildren(
+      h('div', { class: 'own-name' }, h('div', { class: 'names', attrs: { role: 'group', 'aria-label': WELCOME.ownNameChips } }, ...presets), form),
+    );
   });
 }

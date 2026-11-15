@@ -2,28 +2,36 @@
  * BUG, a little beetle who stands on two legs like a person: a round head
  * with big eyes and two antennae, a shell worn like a coat, arms that wave,
  * and feet to stamp with. Drawn from parts at 32x32 so every mood can move
- * the eyes, brows, mouth, arms, legs and antennae on its own.
+ * the eyes, brows, mouth, arms, legs and antennae on its own. The colours are
+ * soft and pastel, like the rest of the game.
  */
 
 export const BUG_SIZE = 32;
 
 const C = {
-  k: '#2b1a16',
-  head: '#4a2c22',
-  headHi: '#7a4a36',
-  shell: '#b5492f',
-  shellHi: '#e0704a',
-  shellLo: '#8a3220',
-  belly: '#f2d5a0',
-  bellyLo: '#d9b47a',
-  limb: '#3a2018',
+  k: '#7d5a6e',
+  head: '#c9a3b4',
+  headHi: '#ead0d9',
+  shell: '#f4a091',
+  shellHi: '#ffd0c2',
+  shellLo: '#dc8082',
+  belly: '#fff3d6',
+  bellyLo: '#f4d9a8',
+  limb: '#ad8799',
   white: '#ffffff',
-  pupil: '#140b08',
-  mouth: '#c0485c',
-  cheek: '#ff9aa8',
-  tear: '#7fc4f0',
-  sweat: '#bfe6ff',
-  dust: '#d9c9b0',
+  pupil: '#3b2536',
+  mouth: '#d9607a',
+  tongue: '#ff8fab',
+  tongueLo: '#e86a8c',
+  cheek: '#ffb3c1',
+  tear: '#8fd0f5',
+  sweat: '#c9ecff',
+  dust: '#e6d8c4',
+  wing: '#e3f5ff',
+  wingLo: '#b9def2',
+  wingLine: '#8fbfe0',
+  zed: '#8fb1e6',
+  note: '#9a7fc4',
 } as const;
 
 export const BUG_FRAMES = [
@@ -39,6 +47,24 @@ export const BUG_FRAMES = [
   'sad',
   'effort1',
   'effort2',
+  'sit',
+  'tongue',
+  'raspberry1',
+  'raspberry2',
+  'fly1',
+  'fly2',
+  'back',
+  'yawn',
+  'sleep1',
+  'sleep2',
+  'polish1',
+  'polish2',
+  'flex1',
+  'flex2',
+  'aloof',
+  'smug',
+  'press1',
+  'press2',
 ] as const;
 
 export type BugFrame = (typeof BUG_FRAMES)[number];
@@ -75,15 +101,30 @@ type Arm = readonly [number, number];
 interface Pose {
   readonly left: Arm;
   readonly right: Arm;
-  readonly legs: 'stand' | 'a' | 'b' | 'lift' | 'stamp';
+  /** Where the arm bends, for poses that need an elbow (flexing). */
+  readonly leftElbow?: Arm;
+  readonly rightElbow?: Arm;
+  readonly legs: 'stand' | 'a' | 'b' | 'lift' | 'stamp' | 'tuck' | 'sit';
   readonly antennae: 'up' | 'droop' | 'zig' | 'bounce';
-  readonly eyes: 'open' | 'happy' | 'angry' | 'wide' | 'sad' | 'squeeze';
-  readonly mouth: 'smile' | 'grin' | 'frown' | 'o' | 'wobble' | 'teeth' | 'flat';
+  readonly eyes: 'open' | 'happy' | 'angry' | 'wide' | 'sad' | 'squeeze' | 'side' | 'closed' | 'wink' | 'smug';
+  readonly mouth: 'smile' | 'grin' | 'frown' | 'o' | 'wobble' | 'teeth' | 'flat' | 'tongue' | 'yawn' | 'whistle';
   readonly lean?: number;
   readonly tears?: boolean;
   readonly sweat?: boolean;
   readonly cheeks?: boolean;
   readonly dust?: boolean;
+  /** Wing cases open, with the thin wings under them up or down. */
+  readonly wings?: 'up' | 'down';
+  /** Seen from behind: all shell, no face. */
+  readonly back?: boolean;
+  /** Droplets flying from a raspberry, in two alternating patterns. */
+  readonly spit?: 1 | 2;
+  /** Little z's of a nap, one or two. */
+  readonly zzz?: 1 | 2;
+  /** A glint on the shell he has just polished. */
+  readonly shine?: 1 | 2;
+  /** A whistled note: he has not seen anybody, no sir. */
+  readonly note?: boolean;
 }
 
 const POSES: Record<BugFrame, Pose> = {
@@ -99,11 +140,46 @@ const POSES: Record<BugFrame, Pose> = {
   sad: { left: [8, 25], right: [24, 25], legs: 'stand', antennae: 'droop', eyes: 'sad', mouth: 'flat' },
   effort1: { left: [29, 19], right: [29, 22], legs: 'a', antennae: 'zig', eyes: 'squeeze', mouth: 'teeth', lean: 1, sweat: true },
   effort2: { left: [30, 18], right: [30, 21], legs: 'b', antennae: 'up', eyes: 'squeeze', mouth: 'teeth', lean: 2, sweat: true },
+  sit: { left: [7, 25], right: [25, 25], legs: 'sit', antennae: 'up', eyes: 'smug', mouth: 'smile' },
+  tongue: { left: [5, 9], right: [27, 9], legs: 'stand', antennae: 'bounce', eyes: 'wink', mouth: 'tongue' },
+  raspberry1: { left: [4, 8], right: [28, 10], legs: 'stand', antennae: 'zig', eyes: 'squeeze', mouth: 'tongue', spit: 1 },
+  raspberry2: { left: [4, 10], right: [28, 8], legs: 'stand', antennae: 'bounce', eyes: 'squeeze', mouth: 'tongue', spit: 2 },
+  fly1: { left: [9, 25], right: [23, 25], legs: 'tuck', antennae: 'bounce', eyes: 'open', mouth: 'grin', wings: 'up' },
+  fly2: { left: [8, 24], right: [24, 24], legs: 'tuck', antennae: 'up', eyes: 'open', mouth: 'grin', wings: 'down' },
+  back: { left: [7, 22], right: [25, 22], legs: 'stand', antennae: 'up', eyes: 'open', mouth: 'flat', back: true },
+  yawn: { left: [14, 16], right: [26, 24], legs: 'stand', antennae: 'droop', eyes: 'squeeze', mouth: 'yawn' },
+  sleep1: { left: [8, 25], right: [24, 25], legs: 'sit', antennae: 'droop', eyes: 'closed', mouth: 'flat', zzz: 1 },
+  sleep2: { left: [8, 25], right: [24, 25], legs: 'sit', antennae: 'droop', eyes: 'closed', mouth: 'o', zzz: 2 },
+  polish1: { left: [12, 19], right: [27, 16], legs: 'stand', antennae: 'up', eyes: 'smug', mouth: 'smile', shine: 1 },
+  polish2: { left: [10, 22], right: [27, 16], legs: 'stand', antennae: 'bounce', eyes: 'smug', mouth: 'smile', shine: 2 },
+  flex1: { left: [6, 11], leftElbow: [3, 17], right: [26, 11], rightElbow: [29, 17], legs: 'stand', antennae: 'up', eyes: 'smug', mouth: 'grin' },
+  flex2: { left: [7, 10], leftElbow: [2, 16], right: [25, 10], rightElbow: [30, 16], legs: 'stand', antennae: 'bounce', eyes: 'happy', mouth: 'grin', cheeks: true },
+  aloof: { left: [9, 24], right: [23, 24], legs: 'stand', antennae: 'up', eyes: 'side', mouth: 'whistle', note: true },
+  smug: { left: [5, 16], right: [27, 16], legs: 'stand', antennae: 'up', eyes: 'smug', mouth: 'grin' },
+  press1: { left: [6, 24], right: [30, 17], legs: 'stand', antennae: 'up', eyes: 'side', mouth: 'smile' },
+  press2: { left: [6, 24], right: [31, 20], legs: 'stand', antennae: 'bounce', eyes: 'side', mouth: 'grin' },
 };
 
 function paint(g: G, pose: Pose): void {
   const lean = pose.lean ?? 0;
   const hx = 16 + lean;
+
+  // Open wing cases and the thin wings under them, behind everything else.
+  if (pose.wings) {
+    const up = pose.wings === 'up';
+    for (const side of [-1, 1] as const) {
+      const wx = hx + side * 10;
+      const wy = up ? 11.5 : 23.5;
+      ellipse(g, C.wingLine, wx, wy, 6, 4.2);
+      ellipse(g, C.wing, wx, wy, 5, 3.2);
+      dot(g, C.wingLo, wx - 3, Math.floor(wy), 6, 1);
+      dot(g, C.white, wx - side * 2, Math.floor(wy) - 2, 2, 1);
+      // The wing case, tipped up and out.
+      ellipse(g, C.k, hx + side * 10, 17.5, 3.8, 5.2);
+      ellipse(g, C.shell, hx + side * 10, 17.5, 2.8, 4.2);
+      dot(g, C.shellHi, hx + side * 10 - 1, 14, 1, 3);
+    }
+  }
 
   // Legs and feet.
   const leg = (hipX: number, footX: number, footY: number): void => {
@@ -133,6 +209,14 @@ function paint(g: G, pose: Pose): void {
       leg(13, 12, 30);
       leg(19, 21, 30);
       break;
+    case 'tuck':
+      leg(13, 12, 29);
+      leg(19, 20, 29);
+      break;
+    case 'sit':
+      leg(12, 7, 30);
+      leg(20, 25, 30);
+      break;
   }
   if (pose.dust) {
     dot(g, C.dust, 24, 29, 2, 1);
@@ -142,23 +226,48 @@ function paint(g: G, pose: Pose): void {
   }
 
   // Arms behind the body.
-  const arm = (fromX: number, [x, y]: Arm): void => {
-    line(g, C.k, fromX, 19, x + lean, y, 3);
-    line(g, C.limb, fromX, 19, x + lean, y, 1);
+  const arm = (fromX: number, [x, y]: Arm, elbow?: Arm): void => {
+    const ex = elbow ? elbow[0] + lean : fromX;
+    const ey = elbow ? elbow[1] : 19;
+    if (elbow) {
+      line(g, C.k, fromX, 19, ex, ey, 3);
+      line(g, C.limb, fromX, 19, ex, ey, 1);
+    }
+    line(g, C.k, ex, ey, x + lean, y, 3);
+    line(g, C.limb, ex, ey, x + lean, y, 1);
     ellipse(g, C.k, x + lean, y, 1.9, 1.9);
     ellipse(g, C.limb, x + lean, y, 1.1, 1.1);
   };
-  arm(10 + lean, pose.left);
-  arm(22 + lean, pose.right);
+  if (!pose.back) {
+    arm(10 + lean, pose.left, pose.leftElbow);
+    arm(22 + lean, pose.right, pose.rightElbow);
+  }
 
   // Body: the shell worn like a coat, a striped belly in front.
   ellipse(g, C.k, hx, 21, 8, 6.5);
   ellipse(g, C.shell, hx, 21, 7, 5.6);
   ellipse(g, C.shellHi, hx - 4, 19, 1.6, 2.4);
   ellipse(g, C.shellLo, hx + 5, 23, 1.4, 2);
-  ellipse(g, C.belly, hx, 22, 3.6, 4.4);
-  dot(g, C.bellyLo, hx - 3, 21, 7, 1);
-  dot(g, C.bellyLo, hx - 3, 24, 7, 1);
+  if (pose.back) {
+    // From behind there is only shell: the seam between the wing cases and a few spots.
+    dot(g, C.shellLo, hx, 16, 1, 10);
+    dot(g, C.shellLo, hx - 4, 23, 2, 2);
+    dot(g, C.shellLo, hx + 3, 19, 2, 2);
+    // Arms folded, elbows sticking out at the sides.
+    arm(10, pose.left);
+    arm(22, pose.right);
+  } else {
+    ellipse(g, C.belly, hx, 22, 3.6, 4.4);
+    dot(g, C.bellyLo, hx - 3, 21, 7, 1);
+    dot(g, C.bellyLo, hx - 3, 24, 7, 1);
+  }
+  if (pose.shine) {
+    const sx = hx - 5;
+    const sy = pose.shine === 1 ? 18 : 20;
+    dot(g, C.white, sx - 1, sy, 3, 1);
+    dot(g, C.white, sx, sy - 1, 1, 3);
+    if (pose.shine === 2) dot(g, C.white, hx + 5, 18, 1, 1);
+  }
 
   // Antennae.
   const tip = (x: number, y: number): void => {
@@ -200,10 +309,12 @@ function paint(g: G, pose: Pose): void {
   ellipse(g, C.k, hx, 11, 9, 7);
   ellipse(g, C.head, hx, 11, 8, 6.1);
   ellipse(g, C.headHi, hx - 4, 7, 2.2, 1.2);
+  if (pose.back) return;
 
   // Eyes.
   const eye = (cx: number): void => {
-    switch (pose.eyes) {
+    const kind = pose.eyes === 'wink' ? (cx < hx ? 'open' : 'happy') : pose.eyes;
+    switch (kind) {
       case 'open':
         dot(g, C.white, cx - 2, 8, 4, 5);
         dot(g, C.pupil, cx - (cx < hx ? 0 : 1), 9, 2, 3);
@@ -234,6 +345,20 @@ function paint(g: G, pose: Pose): void {
       case 'squeeze':
         line(g, C.white, cx - 2, 9, cx + 1, 10, 1);
         line(g, C.white, cx - 2, 11, cx + 1, 10, 1);
+        break;
+      case 'side':
+        // Both eyes rolled up and away: nobody here but us beetles.
+        dot(g, C.white, cx - 2, 8, 4, 5);
+        dot(g, C.pupil, cx, 8, 2, 2);
+        break;
+      case 'closed':
+        dot(g, C.k, cx - 2, 11, 4, 1);
+        break;
+      case 'smug':
+        // Half-closed lids: very pleased with himself.
+        dot(g, C.white, cx - 2, 10, 4, 3);
+        dot(g, C.pupil, cx - 1, 10, 2, 2);
+        dot(g, C.k, cx - 2, 9, 4, 1);
         break;
     }
   };
@@ -278,6 +403,20 @@ function paint(g: G, pose: Pose): void {
     case 'flat':
       dot(g, C.mouth, hx - 2, my, 4, 1);
       break;
+    case 'tongue':
+      // The tongue hangs right out over the chin.
+      dot(g, C.k, hx - 3, my - 1, 6, 1);
+      dot(g, C.k, hx - 2, my, 4, 4);
+      dot(g, C.tongue, hx - 1, my, 2, 3);
+      dot(g, C.tongueLo, hx - 1, my + 2, 2, 1);
+      break;
+    case 'yawn':
+      ellipse(g, C.k, hx, my, 3, 2.6);
+      ellipse(g, C.mouth, hx, my + 0.5, 1.8, 1.4);
+      break;
+    case 'whistle':
+      dot(g, C.k, hx + 1, my - 1, 2, 2);
+      break;
   }
   if (pose.cheeks) {
     dot(g, C.cheek, hx - 7, 12, 2, 1);
@@ -292,6 +431,27 @@ function paint(g: G, pose: Pose): void {
   if (pose.sweat) {
     dot(g, C.sweat, hx - 9, 5, 1, 2);
     dot(g, C.sweat, hx - 10, 7, 2, 2);
+  }
+  if (pose.spit) {
+    const a = pose.spit === 1;
+    dot(g, C.sweat, hx - (a ? 6 : 7), a ? 17 : 15, 1, 1);
+    dot(g, C.sweat, hx + (a ? 5 : 6), a ? 15 : 17, 1, 1);
+    dot(g, C.sweat, hx - (a ? 4 : 5), a ? 19 : 18, 1, 1);
+    dot(g, C.sweat, hx + (a ? 4 : 3), a ? 18 : 19, 1, 1);
+  }
+  if (pose.zzz) {
+    const zed = (x: number, y: number): void => {
+      dot(g, C.zed, x, y, 3, 1);
+      dot(g, C.zed, x + 1, y + 1, 1, 1);
+      dot(g, C.zed, x, y + 2, 3, 1);
+    };
+    zed(hx + 9, 3);
+    if (pose.zzz === 2) zed(hx + 12, 0);
+  }
+  if (pose.note) {
+    dot(g, C.note, hx + 12, 6, 1, 5);
+    dot(g, C.note, hx + 13, 6, 2, 1);
+    dot(g, C.note, hx + 10, 10, 3, 2);
   }
 }
 

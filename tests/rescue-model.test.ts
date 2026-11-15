@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { E, N, S, W, createLayout, isConnected, rotateCW, rotatePiece, wetPieces, type PipeLayout } from '../src/scenes/rescue/model.ts';
+import { E, MERCY_AFTER, N, RISE_PER_S, S, START_LEVEL, W, createLayout, isConnected, riseRate, rise, rotateCW, rotatePiece, secondsOfAir, wetPieces, type PipeLayout } from '../src/scenes/rescue/model.ts';
 
 describe('rotateCW', () => {
   it('moves every open side one quarter turn clockwise', () => {
@@ -109,5 +109,30 @@ describe('leaks', () => {
       for (let i = 0; i < 4 && p.openings !== o; i++) rotatePiece(layout, id);
     }
     expect(isPerfect(layout)).toBe(true);
+  });
+});
+
+describe('the water', () => {
+  it('rises half as fast as it used to: about 25 seconds of air per attempt', () => {
+    expect(RISE_PER_S).toBeCloseTo(1 / 30, 6);
+    expect(secondsOfAir(0)).toBeGreaterThan(23);
+    expect(secondsOfAir(0)).toBeLessThan(26);
+    expect(riseRate(MERCY_AFTER - 1)).toBe(RISE_PER_S);
+  });
+
+  it('slows down after three drownings, so nobody gets stuck', () => {
+    expect(riseRate(MERCY_AFTER)).toBeLessThan(RISE_PER_S);
+    expect(riseRate(MERCY_AFTER + 4)).toBe(riseRate(MERCY_AFTER));
+    expect(secondsOfAir(MERCY_AFTER)).toBeGreaterThan(secondsOfAir(0) * 1.5);
+    expect(secondsOfAir(MERCY_AFTER)).toBeLessThan(60);
+  });
+
+  it('climbs steadily from the starting level and never over the brim', () => {
+    expect(rise(START_LEVEL, 0, 0)).toBe(START_LEVEL);
+    expect(rise(START_LEVEL, 0, 3)).toBeCloseTo(START_LEVEL + 0.1, 6);
+    expect(rise(0.99, 0, 5)).toBe(1);
+    let level = START_LEVEL;
+    for (let i = 0; i < Math.ceil(secondsOfAir(0)); i++) level = rise(level, 0, 1);
+    expect(level).toBe(1);
   });
 });

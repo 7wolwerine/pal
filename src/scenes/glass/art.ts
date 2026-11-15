@@ -1,3 +1,4 @@
+import { HERO_WIDTH, paintHero, type HeroPose } from '../../pixel/hero.ts';
 import { px, type Rect } from '../../pixel/stage.ts';
 import { FLOOR_Y, GLASS_H, GLASS_W, GRAVITY, TABLE_EDGE, TABLE_SPOT, glassPose } from './model.ts';
 
@@ -6,6 +7,26 @@ type G = CanvasRenderingContext2D;
 export const STAGE_W = 160;
 export const STAGE_H = 100;
 export const GLASS_RECT: Rect = { x: TABLE_SPOT[0] - 3, y: TABLE_SPOT[1] - 3, w: GLASS_W + 6, h: GLASS_H + 4 };
+
+/** The mirror on the wall, left of the table, at the height of a face. */
+export const MIRROR: Rect = { x: 1, y: 57, w: 16, h: 25 };
+/** Click area for the mirror: the frame and a little around it. */
+export const MIRROR_RECT: Rect = { x: 0, y: 52, w: 19, h: 32 };
+/** Where the character's feet are: on the floor, in front of everything. */
+export const HERO_FEET_Y = 97;
+/** Where the character waits at first (left edge), clear of where the glass lands. */
+export const HERO_HOME_X = 138;
+/**
+ * Where the character stands to look into the mirror (left edge): a step back
+ * from it, so his bubble hangs beside the mirror and not over his reflection.
+ */
+export const HERO_MIRROR_X = 40;
+
+export interface HeroState {
+  readonly x: number;
+  readonly pose: HeroPose;
+  readonly facing: -1 | 0 | 1;
+}
 
 const TABLE_Y = TABLE_SPOT[1] + GLASS_H;
 /** When the water leaves the glass, and where it hits the floor. */
@@ -41,8 +62,9 @@ function glassSprite(full: boolean): HTMLCanvasElement {
 
 let fullSprite: HTMLCanvasElement | null = null;
 
-export function paintGlassScene(g: G, t: number, fallAt: number | undefined, motion: boolean): void {
+export function paintGlassScene(g: G, t: number, fallAt: number | undefined, motion: boolean, hero?: HeroState): void {
   paintRoom(g);
+  paintMirror(g, t, motion, hero);
   const since = fallAt === undefined ? -1 : motion ? t - fallAt : 99999;
   const pose = glassPose(since);
   const full = since < SPILL_MS;
@@ -55,6 +77,73 @@ export function paintGlassScene(g: G, t: number, fallAt: number | undefined, mot
   g.drawImage(img, -GLASS_W / 2, -GLASS_H);
   g.restore();
   if (since >= SPILL_MS) paintWater(g, since);
+  if (hero) paintHero(g, hero.x, HERO_FEET_Y, { pose: hero.pose, facing: hero.facing, t, motion, worn: true });
+}
+
+/**
+ * The mirror: a rounded wooden frame and pale glass that catches the light now
+ * and then. When the character stands right in front of it, his tired face
+ * looks back out of it.
+ */
+function paintMirror(g: G, t: number, motion: boolean, hero: HeroState | undefined): void {
+  const { x, y, w, h } = MIRROR;
+  // Frame, with rounded corners and a nail and string above.
+  px(g, '#8a7aa8', x + w / 2 - 0.5, y - 4, 1, 1);
+  px(g, '#6e5a8a', x + 3, y - 3, 2, 1);
+  px(g, '#6e5a8a', x + w - 5, y - 3, 2, 1);
+  px(g, '#6e5a8a', x + 5, y - 4, w - 10, 1);
+  px(g, '#b98450', x + 1, y, w - 2, h);
+  px(g, '#b98450', x, y + 1, w, h - 2);
+  px(g, '#8a5a34', x + 1, y + h - 1, w - 2, 1);
+  px(g, '#8a5a34', x + w - 1, y + 2, 1, h - 3);
+  px(g, '#e3b57a', x + 1, y + 1, 1, h - 3);
+  // The glass.
+  const gx = x + 2;
+  const gy = y + 2;
+  const gw = w - 4;
+  const gh = h - 4;
+  px(g, '#b9b0e0', gx, gy, gw, gh);
+  px(g, '#cfc8ee', gx, gy, gw, Math.round(gh * 0.45));
+  px(g, '#a59bd2', gx, gy + gh - 3, gw, 3);
+  // His reflection: only when he stands right in front of it, looking in.
+  if (hero && hero.pose === 'side' && Math.abs(hero.x - HERO_MIRROR_X) < 2) {
+    g.save();
+    g.beginPath();
+    g.rect(gx, gy, gw, gh);
+    g.clip();
+    // The reflection faces him: back to the right, seen from a little closer.
+    paintHero(g, gx + gw / 2 - HERO_WIDTH / 2 - 2, gy + 31, { pose: 'side', facing: 1, t, motion, worn: true });
+    g.globalAlpha = 0.28;
+    px(g, '#d9d2f5', gx, gy, gw, gh);
+    g.globalAlpha = 1;
+    g.restore();
+  }
+  // A glint that runs across the glass every few seconds.
+  const cycle = motion ? t % 3800 : 0;
+  if (motion && cycle < 520) {
+    const u = cycle / 520;
+    const d = Math.round(-6 + u * (gw + gh + 6));
+    g.save();
+    g.beginPath();
+    g.rect(gx, gy, gw, gh);
+    g.clip();
+    for (let k = 0; k < 3; k++) {
+      g.globalAlpha = k === 1 ? 0.9 : 0.5;
+      for (let i = 0; i < gh; i++) px(g, '#ffffff', gx + d + k - i * 0.6, gy + i, 1, 1);
+    }
+    g.globalAlpha = 1;
+    g.restore();
+    // A tiny star at the corner as the glint passes it.
+    if (u > 0.35 && u < 0.7) {
+      const s = u < 0.52 ? 1 : 2;
+      px(g, '#ffffff', x + w - 2, y + 2 - s, 1, s * 2 + 1);
+      px(g, '#ffffff', x + w - 2 - s, y + 2, s * 2 + 1, 1);
+    }
+  } else {
+    // A still highlight.
+    px(g, '#ffffff', gx + 1, gy + 1, 1, 3);
+    px(g, '#ffffff', gx + 2, gy + 1, 1, 1);
+  }
 }
 
 function paintRoom(g: G): void {

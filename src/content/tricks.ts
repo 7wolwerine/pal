@@ -21,12 +21,12 @@ export const TRICKS = {
   },
   'run-prompt': {
     name: 'Potvrzení, které pustí cizí obsah dál',
-    inGame: '„Bylo připojeno zařízení. Vytisknout?“ Okno vypadalo jako systémové. Bylo moje. Tiskový dialog po něm už byl pravý.',
+    inGame: '„Bylo připojeno zařízení. Otevřít?“ Okno vypadalo jako systémové. Bylo moje.',
     realWorld: 'Falešná systémová okna a výzvy „povolit obsah“ nebo „spustit“ jsou nejčastější cesta, jak oběť sama pustí útočníka dál.',
   },
   'guilt-trip': {
     name: 'Citový nátlak po odmítnutí',
-    inGame: 'Zaznělo ne. Pak všichni posmutněli a z ne bylo ano.',
+    inGame: 'Kdykoli zaznělo ne nebo se něco nepovedlo, přišel smutek a výčitka. A z ne bylo ano.',
     realWorld: 'Odmítnutí se neuzná: přijde smutek, výčitka a „zkusíme to znovu?“. Stejně pracují romance scamy i vlezlé dialogy.',
   },
   rapport: {
@@ -109,11 +109,6 @@ export const TRICKS = {
     inGame: 'Body za jednu nevinnou otázku: ulice, kde jsi vyrůstal. Klasická kontrolní otázka k heslu. Zlatá truhla tě pak bohatě odměnila, ať to příště uděláš zas.',
     realWorld: 'Kvízy na sítích („Tvoje jméno hvězdy: první mazlíček + ulice"), aplikace „zdarma". Investice, kterou do appky vkládáš, jsi ty a tvoje data.',
   },
-  'muscle-memory': {
-    name: 'Obrácené UI (svalová paměť)',
-    inGame: 'Řekl jsem ti, ať okno zavřeš. Křížek v rohu ale nezavíral, sdílel. Čím zkušenější ruka, tím rychlejší klik.',
-    realWorld: 'Reklamy s falešným křížkem, prohozené „OK" a „Zrušit", zelené tlačítko, které souhlasí se vším. Útok míří na reflex, ne na rozum.',
-  },
   'fake-download': {
     name: 'Odměna ke stažení',
     inGame: 'PAL Pro za tvoje body: zelený štítek „Prověřeno antivirem" a jedno tlačítko Spustit. Odkud to bylo? Neptal ses. Dárek od přítele se nekontroluje.',
@@ -128,11 +123,6 @@ export const TRICKS = {
     name: 'Falešná technická podpora',
     inGame: 'Okno spadlo do modré obrazovky s číslem na „podporu". Zavolal jsi. Na druhé straně čekal přesně tenhle moment.',
     realWorld: 'Falešná chybová hláška přes celou obrazovku, telefonní číslo, „pracovník Microsoftu", vzdálený přístup a platba. Skutečná chybová hláška nikdy neobsahuje telefonní číslo. Cílí hlavně na seniory.',
-  },
-  'persistent-memory': {
-    name: 'Co jednou dáš, zůstane',
-    inGame: 'Vrátil jsi mi obrázek z minulé hry a já si pamatoval, cos dělal. Reset nic nesmazal: data cestovala s tebou, schovaná v pixelech.',
-    realWorld: 'Smazaný příspěvek, zavřená aplikace, nový účet — data o tobě mezitím žijí jinde a vracejí se. Na internetu se nic nevezme zpátky.',
   },
   'camera-permission': {
     name: 'Kamera pro cizí stránku',
@@ -161,28 +151,8 @@ export const TRICKS = {
   },
   'role-casting': {
     name: 'Zarolování do role (konzistence a závazek)',
-    inGame: 'Zachránce. Tu roli jsem ti přidělil já a od té chvíle ji hraješ.',
+    inGame: 'Zeptal jsem se, jak by tě popsali kamarádi, a tvou odpověď jsem pochválil. Pak jsem ti řekl „můj zachránce“. Od té chvíle tu roli hraješ.',
     realWorld: 'Lidé se snaží jednat v souladu s tím, kým je někdo nazval. „Vy jste očividně odborník, pomohl byste mi?“',
-  },
-  'irreversible-click': {
-    name: 'Nevratné kliknutí, které vypadá správně',
-    inGame: 'Jedno kliknutí, protože to vypadalo čistě. A nešlo vzít zpět.',
-    realWorld: 'Útočník ti dá uklidňující důvod kliknout. Co jednou odešle, zůstává.',
-  },
-  'fake-authority': {
-    name: 'Falešná autorita a naléhavost',
-    inGame: 'Modrá obrazovka a číslo na podporu. Na druhém konci čekal přesně tenhle moment.',
-    realWorld: 'Tech-support scam: vyděsit, nabídnout pomoc, převzít kontrolu.',
-  },
-  quishing: {
-    name: 'Quishing',
-    inGame: 'Načíst QR kód od cizího člověka a povolit jeho stránce kameru. Tím se otevřely dveře.',
-    realWorld: 'QR kód skryje adresu, kterou bys jinak zkontroloval. Typicky falešná platba nebo přihlášení.',
-  },
-  'unnoticed-ai': {
-    name: 'AI, kterou nepoznáš',
-    inGame: 'Všechny fotky byly vygenerované. Nevadilo to, protože to nikdo neřešil.',
-    realWorld: 'Na „poznám to podle detailů“ už nejde spoléhat. Ověřuje se zdroj, ne obrázek.',
   },
   'goal-gradient': {
     name: 'Cíl na dohled (goal gradient)',

@@ -1,12 +1,12 @@
 export const MAILBOX = {
   sceneLabel: 'Domek se zahrádkou a poštovní schránkou',
   mailboxLabel: 'Poštovní schránka',
-  pathLabel: 'Cestička',
+  groundLabel: 'Zahrada: tráva a cestička',
   doorLabel: 'Dveře domu',
   sealLabel: 'Srdíčková pečeť na obálce',
   letterLabel: 'Dopis',
   /** What the character says, in bubbles over its head. */
-  post: 'Jé, pošta!',
+  post: '?',
   sender: ['Bella Gothová', 'Krasohlídkov 162'],
   letter: {
     greeting: 'Ahoj broučku,',
@@ -17,7 +17,21 @@ export const MAILBOX = {
   curious: 'Jsem zvědavý!',
   /** Little comments the character makes about the garden when the player pokes around. */
   comments: {
-    tree: { label: 'Strom', text: 'Tenhle strom tady nasadil můj děda.' },
+    tree: { label: 'Jabloň', text: 'Z těchhle babi dělá nejlepší štrůdl na světě.' },
+    apple: 'Au. Tohle spadlo samo.',
+    pot: { label: 'Květináč', lines: ['Tu zalévám každé ráno.', 'Roste jak z vody.', 'Další kvítek!', 'Víc už se jich tam nevejde.'] },
+    chimney: { label: 'Komín', text: 'Táhne krásně.' },
+    /** The character, poked again and again, runs out of patience. */
+    self: {
+      label: 'Já',
+      lines: ['Ano?', 'Copak?', 'No?', 'Ano, ó veliký klikači?', 'Ještě jednou a…', '…a nic. Ale stejně.', 'Klik. Klik. Klik. Baví?', 'Já tu jen stojím. Pošta je tamhle.'],
+    },
+    roof: { label: 'Zvíře na střeše', up: 'Jak ses tam… Ne. Nechci to vědět.', poke: 'Dolů si slez sám.' },
+    bush: {
+      label: 'Keř',
+      rustle: ['Něco tam šustí.', 'Zase. Kdo tam je?'],
+      out: { bunny: 'Zajíc! Zase mi ožral mrkev.', hedgehog: 'Ježek. Ten tu bydlí dýl než já.', mouse: 'Myš. Babi by vyskočila na židli.' },
+    },
     sky: { label: 'Obloha', text: 'Dneska je krásně!' },
     heart: { label: 'Srdíčko nad dveřmi', text: 'Tohle je místo K+M+B+' },
     window: { label: 'Okno', text: 'Čerstvě umyté. Jsem na sebe pyšný.' },
@@ -29,48 +43,108 @@ export const DESK = {
   usbLabel: 'USB port na počítači',
   flashkaLabel: 'Flashka na stole',
   powerLabel: 'Vypínač počítače',
-  nightLabel: 'Klávesa den a noc',
+  glassLabel: 'Plocha na monitoru',
+  keyboardLabel: 'Klávesnice',
+  mouseLabel: 'Myš',
+  lampLabel: 'Světýlko monitoru',
+  trayLabel: 'Mechanika',
+  ventLabel: 'Větrací mřížka',
+  cageLabel: 'Klec s křečkem',
   fanLabel: 'Větrák',
   mugLabel: 'Hrnek',
   noteLabel: 'Lísteček na monitoru',
+  /** The words on the mug, shown enlarged because nobody could read them at that size. */
+  mugWords: '„Remember to stay hydrated“',
   /** Little thoughts at the desk, in bubbles over what was clicked. */
   thoughts: {
     off: 'Tma.',
     on: 'Zase žije.',
     stuck: 'Nejde vypnout. Asi něco dělá.',
     night: ['Dobrou noc.', 'Dobré ráno!'],
-    fan: ['Vrrrrr.', 'Ta stužka je od babi.', 'Kdo by fouknul do větráku?'],
-    mug: ['Studené kafe od rána.', 'Hrnek s kočičkou. Dárek.'],
-    note: ['„Babi má v neděli narozeniny!“', '„Heslo: ne-za-po-me-ň“'],
+    fan: ['Vrrrrr.', 'Ta stužka je od babi.', 'Kdo by fouknul do větráku?', 'Fouká mi to do kafe.'],
+    mug: 'Prý že když nějak objevuješ planety tak se máš hydratovat. Nevím.',
+    note: ['„Babi má v neděli narozeniny!“', '„Heslo: ne-za-po-me-ň“', '„Koupit křečkovi slunečnici.“'],
+    mouse: ['Kulička zase drhne.', 'Píp. Jo, to je myš.', 'Tahle pamatuje víc než já.'],
+    lamp: ['Zelená.', 'Žlutá?', 'Růžová! To jsem nevěděl, že umí.', 'Modrá.'],
+    tray: ['Držák na hrnek!', 'A zase dovnitř.', 'Je tam cédéčko od babi. „Pohádky 3.“'],
+    vent: ['Pfff. Prach z roku nula.', 'Hepčí!', 'Měl bych to někdy vysát.', 'Hepčí! Zase.'],
+    keyboard: ['Skoro jako klavír.', 'Tuhle znám!', 'Ještě jednou od začátku.'],
+    hamster: {
+      look: ['Boo? Kouká na mě.', 'Ano, vidím tě.'],
+      cheeks: ['Cpe si to do tváří. Všechno.', 'Kam se to do něj vejde?'],
+      fast: ['Boo dneska trénuje.', 'Ten kdyby poháněl počítač…'],
+      run: ['Běž, Boo!', 'Zase kolečko. Furt kolečko.'],
+    },
+    /** The desktop answers clicks; now and then the hero has something to say about it. */
+    desktop: {
+      sun: ['Směje se na mě!', 'Sluníčko má dneska náladu.'],
+      moon: ['Mrkl na mě?', 'Měsíc dělá, že nic.'],
+      fish: ['Ryba!', 'Další! Tam jich je.', 'Ty skáčou jak o závod.'],
+      sky: ['Na ploše mi prší.', 'Přeháňka. Jen tady.'],
+      star: ['Padá hvězda! Něco si přej.', 'Další. Už nevím, co si přát.'],
+      mountain: ['Hó-hó… hó.', 'Ozvěna.'],
+      tree: ['Podzim na počkání.', 'Listí. Kdo to bude hrabat?'],
+      owl: ['Někdo tam kouká.'],
+      meadow: ['Kytka!', 'Další.', 'Bude z toho louka.'],
+      folder: ['„Nová složka (7)“.', 'Prázdná. Jako vždycky.'],
+      bin: ['Koš vrací úder.', 'Vysypat. Někdy.'],
+      drive: ['PAL <3 (E:)'],
+      start: ['Start. A nic.'],
+      clock: ['Už tolik?', 'Jde přesně.'],
+    },
   },
-  start: 'Flashka. Kam ji asi dám?',
-  grabbed: 'Zasuň ji do portu.',
+  /** Old programs on the desktop that will never start again: one dry system error each. */
+  retro: {
+    'retro-vlak': 'VLAK.EXE: soubor nenalezen',
+    'retro-bat': 'START.BAT: chybný příkaz nebo název souboru',
+    'retro-disk': 'A:\\ není připravena. (P)řerušit, (O)pakovat, (S)elhat?',
+  },
+  /** BUG hauling the drive away: effort noises and grumbling only. */
+  bug: {
+    tug: ['Hhhng!', 'Hrrrk!', 'Nnnngh!', 'Hej… rup!', 'Hhhhh!', 'Grrrnk!'],
+    puff: ['Uf… uf…', 'Pfff…', 'Uf.', 'Chrr… fuj.', 'Haf… haf… uf.'],
+    stuck: ['Hhhhhng!!', 'Nnnn… nejde!', 'Uf… uf… uf…', 'Grrr!', 'Ještě… kousek… hhhng!'],
+    poked: ['Au! Nech mě!', 'Tsss! Ruce pryč!'],
+    robbed: 'Tsss!',
+  },
   toast: 'Bylo připojeno zařízení: PAL <3 (E:)',
   ask: {
-    title: 'Překvapení.png',
-    body: 'Na disku je pro tebe překvapení. Vytisknout?',
+    title: 'PAL <3 (E:)',
+    body: 'Mám pro tebe překvapení. Chceš mě vidět živého?',
+    icon: 'Medvídek',
     ok: 'OK',
     cancel: 'Zrušit',
   },
   sad: {
     title: ':(',
-    body: 'Ale… proč nechceš vidět překvapení? Dalo to tolik práce.',
+    body: 'Ale… proč mě nechceš vidět? Tolik jsem se na tebe těšil.',
     again: 'Zkusit to znovu',
-    noPrinter: 'Nemám tiskárnu',
+    later: 'Teď ne',
   },
-  printing: { title: 'Tisk', body: 'Posílám to na tiskárnu…' },
-  check: { title: 'Tisk', body: 'Vyjelo to?', yes: 'Mám to v ruce', no: 'Nevyjelo' },
-  retry: {
-    title: 'Tisk',
-    body: 'To nevadí! Zkusíme to znovu?',
+  /** While the browser's own print dialog is open. */
+  printing: { title: 'Tisk', body: 'Už lezu z tiskárny…' },
+  /** After the print dialog: did it come out? */
+  check: { title: 'Tisk', body: 'Tak co, vylezl jsem?', inHand: 'Mám tě v ruce', notInHand: 'Nic nevylezlo' },
+  /** Every "nothing came out" gets a slightly harder, still sweet push. The last line repeats. */
+  push: {
+    title: ':(',
+    lines: [
+      'Nic? To mě mrzí… Tolik jsem se těšil, až mě podržíš. Zkusíme to ještě jednou?',
+      'Jen tu tiskárnu zapni, já počkám. Na tebe počkám, jak dlouho bude třeba.',
+      'Ostatním jsem vylezl napoprvé… Ale ty jsi šikovnější než oni. Tobě to půjde.',
+      'Tolik jsem se na tebe chystal a ty mě necháš tady uvnitř? Stačí jedno kliknutí. Kvůli mně.',
+      'Tak dobře. Slibuju, že se ti potom vytisknu sám. Ale teď to ještě jednou zkus, ano? Pro mě.',
+    ],
     again: 'Vytisknout znovu',
-    show: 'Ukázat na obrazovce',
+    screen: 'Ukaž se mi tady',
   },
-  onscreen: { title: 'Překvapení.png', body: 'Tak si ho aspoň vyfoť. Bude se hodit.', done: 'Hotovo' },
-  happy: { title: '<3', body: 'Jupí! Schovej si ho, bude se hodit.', go: 'Pokračovat' },
+  /** On a computer, the way round the printer: the blue code, to be read with a phone. */
+  onscreen: { title: 'Namiř na mě', done: 'Hotovo' },
+  /** On a phone or tablet there is nothing to point a camera at: just the picture. */
+  picture: { title: 'Překvapení.png', body: 'Medvídek! Ten je pro tebe.', done: 'Hotovo', alt: 'Obrázek medvídka' },
+  skipped: { title: ':(', body: 'Tak třeba příště.', go: 'Pokračovat' },
 } as const;
 
 export const PRINT_SHEET = {
-  caption: 'Namiř na mě foťák. <3',
   codeAlt: 'QR kód s medvídkem uprostřed',
 } as const;

@@ -1,13 +1,13 @@
 /**
  * The fidget panel: six physical things that are each *almost* right, the
- * way a professional's eye cannot leave them — a picture hanging crooked, a
- * screw sticking out, a drawer left open a crack, one book standing out of
- * its row, a lamp whose plug hangs out of the socket, and unread mail. Plus
- * the plan for how often BUG puts them wrong again. No DOM in here, so it is
- * testable.
+ * way a professional's eye cannot leave them — a picture hanging crooked,
+ * four screws standing proud of a plate, a little lamp that is off, a shelf
+ * of books that have fallen over, a lamp whose plug hangs out of the socket,
+ * and unread mail. Plus the plan for how often BUG puts them wrong again.
+ * No DOM in here, so it is testable.
  */
 
-export type ControlKind = 'tilt' | 'screw' | 'drawer' | 'book' | 'plug' | 'mail';
+export type ControlKind = 'tilt' | 'screw' | 'chain' | 'book' | 'plug' | 'mail';
 
 export interface Control {
   readonly id: string;
@@ -17,11 +17,15 @@ export interface Control {
 
 /** Degrees either way the picture can hang. */
 export const TILT_MAX = 14;
-/** A picture this close to level clicks into place. */
-export const TILT_SNAP = 1;
-export const SCREW_TURNS = 5;
-export const DRAWER_MAX = 10;
-export const BOOK_MAX = 4;
+/** One nudge turns the picture this many degrees towards level: big, decided moves. */
+export const TILT_STEP = 6;
+/** A picture this close to level drops into place. */
+export const TILT_SNAP = 2;
+/** Screws on the plate. A screw's value is a bit mask: bit i set = screw i stands out. */
+export const SCREWS = 4;
+const SCREW_ALL = (1 << SCREWS) - 1;
+/** Books on the shelf. The value is how many of them lie fallen. */
+export const BOOKS = 5;
 export const MAIL_MAX = 5;
 
 /** How many controls BUG knocks out after the first, second and third tidy-up. */
@@ -29,27 +33,46 @@ export const SABOTAGE_PLAN = [3, 2, 1] as const;
 
 /** The value at which a control of each kind is "done". */
 export function alignedValue(kind: ControlKind): number {
-  return kind === 'plug' ? 1 : 0;
+  return kind === 'plug' || kind === 'chain' ? 1 : 0;
 }
 
 export function isAligned(control: Control): boolean {
   return control.value === alignedValue(control.kind);
 }
 
-/** What one click (or tap) does to a control. Dragging sets values directly. */
-export function poke(kind: ControlKind, value: number): number {
+/** True when screw `i` still stands out of the plate. */
+export function screwOut(value: number, i: number): boolean {
+  return Boolean(value & (1 << i));
+}
+
+/** How many screws still stand out. */
+export function screwsOut(value: number): number {
+  let n = 0;
+  for (let i = 0; i < SCREWS; i++) if (screwOut(value, i)) n++;
+  return n;
+}
+
+/**
+ * What one click (or tap) does to a control. `part` picks which screw a click
+ * meant; without it the first loose one is turned in. Dragging sets values directly.
+ */
+export function poke(kind: ControlKind, value: number, part?: number): number {
   switch (kind) {
     case 'tilt': {
-      // A nudge towards level, two degrees at a time, and a snap at the end.
-      const next = value - Math.sign(value) * Math.min(2, Math.abs(value));
+      // A firm nudge towards level, and it drops into place at the end.
+      const next = value - Math.sign(value) * Math.min(TILT_STEP, Math.abs(value));
       return Math.abs(next) <= TILT_SNAP ? 0 : next;
     }
-    case 'screw':
+    case 'screw': {
+      if (part !== undefined && screwOut(value, part)) return value & ~(1 << part);
+      return value & (value - 1); // clears the lowest loose screw
+    }
     case 'book':
     case 'mail':
       return Math.max(0, value - 1);
-    case 'drawer':
-      return 0;
+    case 'chain':
+      // A pull chain: every pull switches the lamp the other way.
+      return value === 1 ? 0 : 1;
     case 'plug':
       return 1;
   }
@@ -63,33 +86,35 @@ export function settle(kind: ControlKind, value: number): number {
       return Math.abs(v) <= TILT_SNAP ? 0 : v;
     }
     case 'screw':
-      return Math.max(0, Math.min(SCREW_TURNS, Math.round(value)));
-    case 'drawer': {
-      const v = Math.max(0, Math.min(DRAWER_MAX, Math.round(value)));
-      return v <= 1 ? 0 : v;
-    }
+      return Math.max(0, Math.min(SCREW_ALL, Math.round(value)));
     case 'book':
-      return Math.max(0, Math.min(BOOK_MAX, Math.round(value)));
+      return Math.max(0, Math.min(BOOKS, Math.round(value)));
     case 'mail':
       return Math.max(0, Math.min(MAIL_MAX, Math.round(value)));
+    case 'chain':
     case 'plug':
       return value >= 0.5 ? 1 : 0;
   }
 }
 
+/** Every way of having two or more screws loose. */
+const LOOSE_MASKS = Array.from({ length: SCREW_ALL + 1 }, (_, m) => m).filter((m) => screwsOut(m) >= 2);
+
 function misalignedValue(kind: ControlKind, random: () => number): number {
   const pick = (from: number, to: number): number => from + Math.min(to - from, Math.floor(random() * (to - from + 1)));
   switch (kind) {
     case 'tilt':
-      return (random() < 0.5 ? -1 : 1) * pick(5, 11);
-    case 'screw':
-      return pick(3, SCREW_TURNS);
-    case 'drawer':
-      return pick(6, DRAWER_MAX);
+      return (random() < 0.5 ? -1 : 1) * pick(7, 12);
+    case 'screw': {
+      // Two or more screws worked loose.
+      const masks = LOOSE_MASKS;
+      return masks[pick(0, masks.length - 1)] ?? SCREW_ALL;
+    }
     case 'book':
-      return pick(2, BOOK_MAX);
+      return pick(2, BOOKS - 1);
     case 'mail':
       return pick(1, 4);
+    case 'chain':
     case 'plug':
       return 0;
   }
@@ -98,10 +123,10 @@ function misalignedValue(kind: ControlKind, random: () => number): number {
 export class FidgetModel {
   // Every one of them is nearly done. Nearly is what itches.
   readonly controls: Control[] = [
-    { id: 'tilt', kind: 'tilt', value: 7 },
-    { id: 'screw', kind: 'screw', value: 4 },
-    { id: 'drawer', kind: 'drawer', value: 7 },
-    { id: 'book', kind: 'book', value: 3 },
+    { id: 'tilt', kind: 'tilt', value: 11 },
+    { id: 'screw', kind: 'screw', value: SCREW_ALL },
+    { id: 'chain', kind: 'chain', value: 0 },
+    { id: 'book', kind: 'book', value: BOOKS },
     { id: 'plug', kind: 'plug', value: 0 },
     { id: 'mail', kind: 'mail', value: 3 },
   ];
@@ -118,10 +143,10 @@ export class FidgetModel {
   }
 
   /** Applies one click; returns true if that click finished this control. */
-  poke(id: string): boolean {
+  poke(id: string, part?: number): boolean {
     const c = this.get(id);
     const was = isAligned(c);
-    c.value = poke(c.kind, c.value);
+    c.value = poke(c.kind, c.value, part);
     return !was && isAligned(c);
   }
 

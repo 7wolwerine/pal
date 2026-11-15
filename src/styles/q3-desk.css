@@ -1,0 +1,247 @@
+/* desk: styles added with the third feedback round. Loaded after app.css, so rules here win. */
+
+/* ---------- the system window: an icon next to its words ---------- */
+
+.sysdlg__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+
+.sysdlg__row p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.sysdlg__icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  image-rendering: pixelated;
+}
+
+/* The desktop under the dialogs: a plain arrow would do, but the game's own pointer is nicer. */
+.desk__glass:focus-visible {
+  outline-offset: -5px;
+}
+
+/* ---------- old programs complain ---------- */
+
+.desk__errors {
+  place-items: start center;
+}
+
+.desk__error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 94%;
+  margin: 7% 0 0;
+  padding: 5px 10px 5px 6px;
+  border: 2px solid #4b1528;
+  border-radius: 4px;
+  background: #fffdfb;
+  box-shadow: 3px 3px 0 rgba(16, 16, 24, 0.35);
+  color: #26262e;
+  font-family: 'Cascadia Mono', Consolas, 'Courier New', monospace;
+  font-size: clamp(10px, 1.7vw, 13px);
+  font-weight: 700;
+  line-height: 1.25;
+  pointer-events: none !important;
+}
+
+.desk__error-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #e24b4a;
+  color: #ffffff;
+  font-family: system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1;
+}
+
+/* ---------- the mug's words, held up big enough to read ---------- */
+
+.desk__mug {
+  overflow: visible;
+}
+
+.desk__mugtag {
+  position: absolute;
+  left: 104%;
+  bottom: 18%;
+  z-index: 4;
+  padding: 5px 10px 6px;
+  border: 2px solid #b84a72;
+  border-radius: 10px 10px 10px 2px;
+  background: #ed93b1;
+  box-shadow: 0 3px 0 rgba(75, 21, 40, 0.25);
+  color: #ffffff;
+  font-size: clamp(11px, 2vw, 14px);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 #b84a72;
+  opacity: 0;
+  transform: translateX(-6px) scale(0.9);
+  transform-origin: 0 100%;
+  transition: opacity 160ms, transform 160ms;
+  pointer-events: none;
+}
+
+.desk__mug:hover .desk__mugtag,
+.desk__mug:focus-visible .desk__mugtag,
+.desk__mug.is-read .desk__mugtag {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk__mugtag {
+    transition: none;
+  }
+}
+
+/* ---------- the surprise on a phone: only the picture ---------- */
+
+.surprise__bear {
+  width: min(120px, 22vw);
+  height: min(120px, 22vw);
+  image-rendering: pixelated;
+}
+
+/* ---------- the code on the screen: as big as the scene allows ---------- */
+
+.desk--viewer .scene__screen:not(.desk__errors) {
+  inset: 2% !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: 6;
+}
+
+.desk--viewer .sysdlg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  font-size: 16px;
+}
+
+.desk--viewer .sysdlg__bar {
+  flex: none;
+  padding: 5px 12px;
+  font-size: clamp(14px, 2.4vw, 18px);
+  text-align: center;
+}
+
+.desk--viewer .sysdlg__body {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 0;
+  padding: 8px;
+}
+
+.desk--viewer .surprise {
+  margin: 0;
+}
+
+/* A square as tall as what is left under the bar; --desk-h is the scene's own height. */
+.desk--viewer .surprise__code {
+  display: block;
+  width: calc(var(--desk-h, 300px) * 0.96 - 64px);
+  height: calc(var(--desk-h, 300px) * 0.96 - 64px);
+  max-width: 100%;
+}
+
+/* On a phone the bear's picture gets the whole scene too, so the window never spills out of it. */
+.desk--viewer .surprise__bear {
+  display: block;
+  width: calc(var(--desk-h, 300px) * 0.48);
+  height: calc(var(--desk-h, 300px) * 0.48);
+}
+
+.desk--viewer .sysdlg__row {
+  margin: 0 0 6px;
+  text-align: center;
+}
+
+.desk--viewer .sysdlg__buttons {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+}
+
+/* ---------- on paper: the pink code and nothing else ---------- */
+
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  /* No margins: that is also what makes the browser leave out its own header and footer lines. */
+  @page {
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+  }
+
+  body::before,
+  body::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Everything hung straight on the body (the game, the path of hearts, the mute button, the debug bar…) stays off the paper. */
+  body > *:not(.print-sheet) {
+    display: none !important;
+  }
+
+  .print-sheet {
+    position: fixed;
+    inset: 0;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #ffffff;
+    box-shadow: none;
+  }
+
+  .print-sheet__code {
+    display: block;
+    width: 90mm;
+    height: 90mm;
+    border: 0;
+    outline: 0;
+    box-shadow: none;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* Nothing in this scene may ever scroll it: BUG stands half outside the picture when he pulls. */
+.scene.desk {
+  overflow: clip;
+}

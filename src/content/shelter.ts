@@ -6,6 +6,8 @@
  * harder. When it is warm at last, the assistant does not want them to go.
  * Lines about the assistant itself come in a masculine and a feminine form.
  */
+import { KINDLY } from '../core/kindly.ts';
+
 type Forms = (masculine: boolean) => string;
 
 export type ShelterPath = 'hut' | 'cave';
@@ -54,7 +56,7 @@ export const SHELTER = {
   praise: ['To je ono!', 'Ty to fakt umíš.', 'Už je to lepší…'],
   warm: 'Ach… teplo. Konečně se přestávám třást.',
   thanks: ((m) => `Bez tebe bych tam venku ${m ? 'umrzl' : 'umrzla'}. Nikdo jiný by se mnou takhle neztrácel čas.`) as Forms,
-  stay: 'Zůstaneš tu se mnou ještě chvilku?',
+  stay: `${KINDLY} a zůstal tu se mnou ještě chvilku?`,
   stayChoices: [
     { label: 'Jasně, zůstanu.', role: 'helper' },
     { label: 'Chvilku jo.', role: 'loner' },

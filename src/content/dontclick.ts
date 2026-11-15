@@ -14,8 +14,14 @@ export const DONTCLICK = {
   bugGuard: 'Hmpf.',
   /** BUG as it hangs the button back up, one per press. */
   bugRehang: ['Typický.', 'Pořád dokola!', 'Ty jsi hroznej!'],
-  bugLost: 'Ne… ne, ne, ne.',
-  bugThanks: 'Děkuju. Fakt děkuju.',
+  /** From the second press on: the very same thing again, and BUG says so. Pure mockery, never a hint. */
+  bugRepeat: [
+    'Zase. Úplně stejně. A zase ten překvapenej kukuč.',
+    'Mačkáš furt to samý a čekáš, že to dopadne jinak. Kouzelný.',
+    'Pořád totéž. Ty máš ale fantazii.',
+  ],
+  bugLost: 'Tolik dřiny. A k čemu? K ničemu.',
+  bugThanks: 'No proto. Stejně bys to neutrh.',
   palBroken: 'No vidíš. A svět se nezbořil.',
   palLeft: 'Hm. Tak jindy.',
   guardOn: 'Ochrana zapnuta',

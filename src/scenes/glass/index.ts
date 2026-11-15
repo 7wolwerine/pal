@@ -4,17 +4,36 @@ import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
-import { GLASS_RECT, SPLASH_MS, STAGE_H, STAGE_W, paintGlassScene } from './art.ts';
+import { HERO_WIDTH, HERO_HEIGHT } from '../../pixel/hero.ts';
+import {
+  GLASS_RECT,
+  HERO_FEET_Y,
+  HERO_HOME_X,
+  HERO_MIRROR_X,
+  MIRROR_RECT,
+  SPLASH_MS,
+  STAGE_H,
+  STAGE_W,
+  paintGlassScene,
+  type HeroState,
+} from './art.ts';
 import { BOUNCE_AT, SETTLE_MS } from './model.ts';
 
 const SCENE = 'glass';
 /** If the player does not touch the glass, it slides off by itself. */
 const SLIDE_AFTER_MS = 7000;
+/** Picture pixels per ms: a tired walk. */
+const WALK_SPEED = 0.03;
 
 /**
  * A toast, and a glass that falls the wrong way: it bounces like rubber and
  * the water shatters. Right before the reveal, the first sign that the game's
  * world was staged all along.
+ *
+ * The player's character from the garden stands there too, worn out. A
+ * mirror on the wall glints now and then; click it and he walks over, looks
+ * at his tired face and tells himself he is still himself. It is optional
+ * and never holds up the glass.
  */
 export const glass: GameScene = {
   id: SCENE,
@@ -32,8 +51,59 @@ export const glass: GameScene = {
     let now = 0;
     let fallAt: number | undefined;
 
+    // The character: standing, then walking to the mirror and looking in.
+    let heroX = HERO_HOME_X;
+    let heroPose: HeroState['pose'] = 'stand';
+    let heroFacing: HeroState['facing'] = 0;
+    let walk: { from: number; to: number; at: number } | undefined;
+    let mirrorBusy = false;
+    let mirrorDone = false;
+    // His own bubble, so it never takes PAL's line (or its waiting tap) away.
+    const thoughts = new Speech(stage.el, STAGE_W, STAGE_H);
+    const heroHead = (): { x: number; y: number } => ({ x: heroX + HERO_WIDTH / 2, y: HERO_FEET_Y - HERO_HEIGHT - 1 });
+
+    stage.hotspot(MIRROR_RECT, GLASS.mirror, () => {
+      if (mirrorBusy || !alive) return;
+      void lookInMirror();
+    });
+
+    async function lookInMirror(): Promise<void> {
+      mirrorBusy = true;
+      const distance = Math.abs(heroX - HERO_MIRROR_X);
+      if (distance > 0.5) {
+        heroPose = 'walk';
+        heroFacing = HERO_MIRROR_X < heroX ? -1 : 1;
+        walk = { from: heroX, to: HERO_MIRROR_X, at: now };
+        await sleep(motion ? distance / WALK_SPEED : 0);
+        if (!alive) return;
+        walk = undefined;
+        heroX = HERO_MIRROR_X;
+      }
+      // He turns to the mirror and looks at himself for a moment.
+      heroPose = 'side';
+      heroFacing = -1;
+      await sleep(motion ? 900 : 100);
+      if (!alive) return;
+      if (!mirrorDone) ctx.witness.record({ scene: SCENE, kind: 'mirror', data: { glassFallen: fallAt !== undefined } });
+      mirrorDone = true;
+      await thoughts.say(GLASS.mirrorLine, heroHead, { who: 'hero', ms: 2600 });
+      if (!alive) return;
+      thoughts.hide();
+      heroPose = 'stand';
+      heroFacing = 0;
+      mirrorBusy = false;
+    }
+
     const spot = stage.hotspot(GLASS_RECT, GLASS.label, () => fall(true));
-    const slideTimer = window.setTimeout(() => fall(false), SLIDE_AFTER_MS);
+    // While he is busy at the mirror the glass waits, so neither moment steps on the other.
+    let slideTimer = 0;
+    const slideLater = (ms: number): void => {
+      slideTimer = window.setTimeout(() => {
+        if (mirrorBusy) slideLater(1500);
+        else fall(false);
+      }, ms);
+    };
+    slideLater(SLIDE_AFTER_MS);
 
     function fall(touched: boolean): void {
       if (fallAt !== undefined) return;
@@ -71,13 +141,18 @@ export const glass: GameScene = {
 
     stage.run((g, t) => {
       now = t;
-      paintGlassScene(g, t, fallAt, motion);
+      if (walk) {
+        const u = Math.min(1, (t - walk.at) * WALK_SPEED / Math.max(1, Math.abs(walk.to - walk.from)));
+        heroX = walk.from + (walk.to - walk.from) * u;
+      }
+      paintGlassScene(g, t, fallAt, motion, { x: heroX, pose: heroPose, facing: heroFacing });
     });
 
     return () => {
       alive = false;
       window.clearTimeout(slideTimer);
       speech.stop();
+      thoughts.stop();
       stage.stop();
       ctx.scenery.replaceChildren();
     };

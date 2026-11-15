@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FlowerModel, KNOCKS_TO_BREAK } from '../src/scenes/flower/model.ts';
-import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows } from '../src/scenes/flower/sprites.ts';
+import { FlowerModel, KNOCKS_TO_BREAK, PESTS_MS, PEST_COUNT, PEST_PATH, chewAt, pestArrives, pestPose } from '../src/scenes/flower/model.ts';
+import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows, chewedRows } from '../src/scenes/flower/sprites.ts';
 
 describe('FlowerModel', () => {
   it('cracks the glass a little with each knock, then shatters it', () => {
@@ -31,7 +31,7 @@ describe('FlowerModel', () => {
 
 describe('flower sprites', () => {
   it('use only colours from the palette', () => {
-    for (const row of [...DRIED_ROWS, ...bloomRows()]) {
+    for (const row of [...DRIED_ROWS, ...bloomRows(), ...chewedRows(0.5), ...chewedRows(1)]) {
       for (const ch of row) if (ch !== '.') expect(FLOWER_PALETTE[ch]).toBeDefined();
     }
   });
@@ -49,5 +49,50 @@ describe('flower sprites', () => {
     let y = bloom.length - 1;
     while (bloom[y]?.[c] === 'g') y--;
     expect(['f', 'F', 'm']).toContain(bloom[y]?.[c]);
+  });
+});
+
+describe('once the glass is gone', () => {
+  it('lets the crawlers in one after another, along the sill', () => {
+    const start = PEST_PATH[0] ?? [0, 0];
+    expect(pestPose(0, 0)).toMatchObject({ x: start[0], y: start[1], visible: true, settled: false });
+    expect(pestPose(1, 0).visible).toBe(false);
+    for (let i = 1; i < PEST_COUNT; i++) expect(pestArrives(i)).toBeGreaterThan(pestArrives(i - 1));
+    expect(PESTS_MS).toBe(pestArrives(PEST_COUNT - 1));
+  });
+
+  it('walks them without jumps and settles every one of them on the bloom', () => {
+    for (let i = 0; i < PEST_COUNT; i++) {
+      let prev = pestPose(i, 0);
+      for (let t = 10; t <= PESTS_MS + 200; t += 10) {
+        const p = pestPose(i, t);
+        if (prev.visible && p.visible) expect(Math.hypot(p.x - prev.x, p.y - prev.y)).toBeLessThan(1.5);
+        prev = p;
+      }
+      expect(prev.settled).toBe(true);
+      expect(prev.y).toBeLessThan(55);
+    }
+  });
+
+  it('eats the bloom bit by bit, and only ever more', () => {
+    expect(chewAt(0)).toBe(0);
+    let prev = 0;
+    for (let t = 0; t < PESTS_MS + 8000; t += 100) {
+      const chew = chewAt(t);
+      expect(chew).toBeGreaterThanOrEqual(prev);
+      expect(chew).toBeLessThanOrEqual(1);
+      prev = chew;
+    }
+    expect(prev).toBe(1);
+  });
+
+  it('leaves a bitten flower that is still a flower, with a frown', () => {
+    const whole = bloomRows().join('');
+    const eaten = chewedRows(1).join('');
+    const petals = (s: string): number => [...s].filter((ch) => 'pPq'.includes(ch)).length;
+    expect(petals(eaten)).toBeLessThan(petals(whole));
+    expect(petals(eaten)).toBeGreaterThan(petals(whole) * 0.4);
+    expect(chewedRows(1)).toHaveLength(bloomRows().length);
+    expect(chewedRows(0)).toEqual(bloomRows());
   });
 });

@@ -46,6 +46,52 @@ export const DRIED_ROWS: readonly string[] = [
 export const BLOOM_SIZE = 21;
 const STEM_H = 11;
 
+function speckle(x: number, y: number, salt: number): number {
+  const s = Math.sin(x * 12.9898 + y * 78.233 + salt * 37.719) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+/**
+ * The bloom once something has got at it: `chew` from 0 (whole) to 1. Petals
+ * lose bites and turn brown at the edges, the leaves wither, and the little
+ * face goes from a smile to a worried frown.
+ */
+export function chewedRows(chew: number): string[] {
+  const rows = bloomRows();
+  if (chew <= 0) return rows;
+  const c = (BLOOM_SIZE - 1) / 2;
+  const grid = rows.map((row) => row.split(''));
+  grid.forEach((row, y) => {
+    row.forEach((ch, x) => {
+      if (ch === 'p' || ch === 'P' || ch === 'q') {
+        // Bites come from the edge inwards: outer petal pixels go first.
+        const r = Math.hypot(x - c, y - c) / 10;
+        const n = speckle(x, y, 1);
+        if (n < chew * (0.05 + r * 0.4)) row[x] = '.';
+        else if (speckle(x, y, 2) < chew * 0.12 * r) row[x] = 'h';
+      } else if (ch === 'G' && speckle(x, y, 3) < chew * 0.9) row[x] = 'h';
+    });
+  });
+  if (chew >= 0.3) {
+    const put = (x: number, y: number, ch: string): void => {
+      const row = grid[y];
+      if (row && x >= 0 && x < row.length) row[x] = ch;
+    };
+    // The smile turns over, the brows tilt up in the middle, the blush goes.
+    put(c - 1, c + 2, 'f');
+    put(c + 1, c + 2, 'f');
+    put(c, c + 3, 'f');
+    put(c - 1, c + 3, 'm');
+    put(c, c + 2, 'm');
+    put(c + 1, c + 3, 'm');
+    put(c - 2, c - 3, 'k');
+    put(c + 2, c - 3, 'k');
+    put(c - 3, c + 1, 'f');
+    put(c + 3, c + 1, 'f');
+  }
+  return grid.map((row) => row.join(''));
+}
+
 /**
  * The flower in bloom: a ring of five petals around a pretty little face,
  * on a green stem with two leaves. 21 x 32.

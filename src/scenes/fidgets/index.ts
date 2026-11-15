@@ -1,8 +1,9 @@
 import { audio } from '../../audio/engine.ts';
 import { FIDGETS } from '../../content/fidgets.ts';
 import type { Scene } from '../../core/director.ts';
+import { kindlyAsked, kindlyObeyed } from '../../core/kindly.ts';
 import { gendered, lean, type GameContext } from '../../game.ts';
-import { h, sleep } from '../../ui/dom.ts';
+import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { contract, quiz, sequence } from './lock.ts';
 import { tidy } from './tidy.ts';
 
@@ -22,6 +23,37 @@ export const fidgets: Scene<GameContext> = {
     const { signal } = abort;
     const { pal, profile, stage, witness } = ctx;
 
+    // Between the steps the stage empties while PAL talks. So that PAL's window does not
+    // shrink and grow again every time, the stage keeps the tallest height it has had.
+    let held = 0;
+    const clear = (): void => {
+      held = Math.max(held, stage.offsetHeight);
+      stage.style.minHeight = `${held}px`;
+      stage.classList.add('stage--held');
+      stage.replaceChildren();
+    };
+
+    // When a step needs more room than the last (the quiz on a phone), the stage grows
+    // smoothly instead of snapping the window taller.
+    let lastHeight = 0;
+    let growing: Animation | undefined;
+    const smooth = new ResizeObserver(() => {
+      const now = stage.offsetHeight;
+      if (!growing && lastHeight > 0 && now > lastHeight + 4 && !prefersReducedMotion()) {
+        stage.style.overflow = 'hidden';
+        growing = stage.animate([{ height: `${lastHeight}px` }, { height: `${now}px` }], { duration: 360, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' });
+        const settle = (): void => {
+          growing = undefined;
+          stage.style.overflow = '';
+          lastHeight = stage.offsetHeight;
+        };
+        growing.finished.then(settle, settle);
+        return;
+      }
+      if (!growing) lastHeight = now;
+    });
+    smooth.observe(stage);
+
     async function run(): Promise<void> {
       await pal.say(FIDGETS.remark);
       if (signal.aborted) return;
@@ -31,7 +63,7 @@ export const fidgets: Scene<GameContext> = {
       if (signal.aborted) return;
 
       // Something clicks open. PAL is as surprised as anyone.
-      stage.replaceChildren();
+      clear();
       audio.latch();
       pal.exclaim();
       await sleep(700);
@@ -41,7 +73,7 @@ export const fidgets: Scene<GameContext> = {
       const food = await quiz(ctx);
       if (signal.aborted) return;
 
-      stage.replaceChildren();
+      clear();
       if (food) {
         await pal.say(FIDGETS.foodPraise(food));
         if (signal.aborted) return;
@@ -53,14 +85,16 @@ export const fidgets: Scene<GameContext> = {
       await sequence(ctx);
       if (signal.aborted) return;
 
-      stage.replaceChildren();
+      clear();
       audio.latch();
       await pal.say(FIDGETS.contractIntro);
+      kindlyAsked(witness, SCENE);
       if (signal.aborted) return;
       await contract(ctx);
       if (signal.aborted) return;
+      kindlyObeyed(witness, SCENE);
 
-      stage.replaceChildren();
+      clear();
       audio.latch();
       // Out of the safe, PAL finally becomes who the player made them.
       if (profile.assistantLook) pal.setAvatar(profile.assistantLook);
@@ -91,6 +125,9 @@ export const fidgets: Scene<GameContext> = {
           },
         }),
       );
+      // PAL's long thanks needs the room now: the stage lets go of its height.
+      stage.style.minHeight = '';
+      stage.classList.remove('stage--held');
       stage.replaceChildren(h('div', { class: 'row row--wrap' }, ...choices));
       choices[0]?.focus();
     }
@@ -98,7 +135,12 @@ export const fidgets: Scene<GameContext> = {
     void run();
     return () => {
       abort.abort();
+      smooth.disconnect();
+      growing?.cancel();
+      stage.style.overflow = '';
       stage.replaceChildren();
+      stage.style.minHeight = '';
+      stage.classList.remove('stage--held');
     };
   },
 };

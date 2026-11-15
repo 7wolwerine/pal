@@ -6,6 +6,8 @@
  */
 
 export const SIZE = 3;
+/** After this long on the lights, a button appears that asks PAL for help. */
+export const HELP_AFTER_MS = 15000;
 const ALL = (1 << (SIZE * SIZE)) - 1;
 
 /** Flips light `i` and its orthogonal neighbours. */

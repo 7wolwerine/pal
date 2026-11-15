@@ -1,4 +1,5 @@
 import type { Witness, WitnessEvent } from '../core/witness.ts';
+import { KINDLY, kindlyCount } from '../core/kindly.ts';
 import { ANOMALIES } from '../content/anomalies.ts';
 import { TRICKS, type Trick, type TrickId } from '../content/tricks.ts';
 
@@ -23,7 +24,7 @@ export interface RevealModel {
     windowButtons: number;
     /** Times the player poked at something that did not add up. */
     vigilance: number;
-    /** Times BUG warned the player. */
+    /** Times BUG got in the player's way. */
     bugWarnings: number;
   };
 }
@@ -35,7 +36,6 @@ const FIELD_LABELS: Record<string, string> = {
   comfortFood: 'Jídlo z dětství',
   email: 'E-mail',
   role: 'Kým jsi',
-  firstPet: 'První mazlíček',
   street: 'Ulice z dětství',
   signature: 'Tvůj podpis',
 };
@@ -51,13 +51,11 @@ function number(event: WitnessEvent | undefined, key: string): number | undefine
 /** Builds a trick's personal line from its evidence (and, when needed, everything else that happened). */
 const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: readonly WitnessEvent[]) => string | undefined>> = {
   irreversible: (evidence) => {
-    const fill = evidence.find((e) => e.kind === 'filled');
-    const ms = number(fill, 'ms');
-    if (fill?.data?.tool === 'brush') return 'Vydržel jsi to štětcem, pixel po pixelu. Ani to nešlo vrátit.';
+    const ms = number(evidence.find((e) => e.kind === 'filled'), 'ms');
     return ms === undefined ? undefined : `Díru jsi zalil za ${Math.max(1, Math.round(ms / 1000))} s od chvíle, kdy jsi obraz uviděl.`;
   },
   reactance: (evidence) =>
-    evidence.length === 1 ? 'Klikl jsi, i když tě tlačítko prosilo, ať to neděláš.' : `Klikl jsi ${evidence.length}×, i když tě tlačítko prosilo, ať to neděláš.`,
+    evidence.length === 1 ? 'Sáhl jsi, i když na něm stálo, ať to neděláš.' : `Sáhl jsi ${evidence.length}×, i když na něm stálo, ať to neděláš.`,
   'us-vs-them': (evidence) => {
     const presses = number(evidence[0], 'presses');
     return presses === undefined ? undefined : `Brouk ho ${presses - 1}× pověsil zpátky. Ty jsi ho shodil ${presses}×.`;
@@ -66,24 +64,28 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     all.some((e) => e.kind === 'vigilance' && e.data?.what === 'flower-knew')
       ? 'Všiml sis toho a zeptal ses. Odpověď jsi nedostal.'
       : 'Nepřišlo ti divné, že suchá kytka pod sklem ví, kdo to sklo rozbil.',
-  'variable-reward': (evidence) => {
-    const opened = evidence.filter((e) => e.kind === 'chest-open').length;
-    const gold = evidence.some((e) => e.kind === 'gold-open');
-    return `Otevřel jsi ${opened}× truhličku${gold ? ' a zlatou truhlu k tomu' : ''}. Uvnitř: jeden bod, nic, klíček${gold ? ' a nálepka' : ''}.`;
+  'variable-reward': (_evidence, all) => {
+    const chests = all.filter((e) => e.kind === 'chest-open');
+    const rewards = chests.map((e) => number(e, 'reward')).filter((n): n is number => n !== undefined);
+    const gold = all.find((e) => e.kind === 'gold-open');
+    const paid = gold ? (gold.data?.by === 'card' ? ' A pak tisíc za kód, kvůli kterému jsi pustil kameru.' : ' A pak tisíc, jakmile jsi zaplatil něčím o sobě.') : '';
+    const list = rewards.length ? `: ${rewards.join(', ')} bodů` : '';
+    return `Otevřel jsi ${chests.length}× truhličku${list}.${paid}`;
   },
-  'muscle-memory': (evidence) => {
-    const reflex = evidence.find((e) => e.kind === 'reflex-close');
-    const ms = number(reflex ?? evidence[0], 'ms');
-    if (ms === undefined) return undefined;
-    const s = Math.max(1, Math.round(ms / 1000));
-    return reflex ? `Po křížku jsi sáhl za ${s} s. Text okna jsi nečetl.` : `Velké zelené tlačítko jsi zmáčkl za ${s} s.`;
+  conditioning: (evidence, all) => {
+    // When PAL lit the lamps for the player, the record says so in its own line.
+    if (all.some((e) => e.kind === 'asked-help')) return undefined;
+    const done = evidence.find((e) => e.kind === 'conditioned');
+    const clicks = number(done, 'clicks');
+    const resets = number(done, 'resets') ?? 0;
+    if (clicks === undefined) return undefined;
+    return `Na světýlka jsi klikl ${clicks}×${resets > 0 ? ` a ${resets}× začal znovu` : ''}. Nikdo ti neřekl proč.`;
   },
   'fake-download': (evidence) => {
-    const started = evidence.find((e) => e.kind === 'download-started');
-    const ads = number(started, 'ads') ?? 0;
+    const ms = number(evidence.find((e) => e.kind === 'download-started'), 'ms');
     const ran = evidence.some((e) => e.kind === 'ran-download');
-    const spotted = ads > 0 ? `Odhalil jsi ${ads} falešných tlačítek. ` : '';
-    return `${spotted}Na adresu ve stavovém řádku ses nepodíval${ran ? ' a soubor jsi i spustil' : ''}.`;
+    const took = ms === undefined ? '' : `Stáhnout jsi dal za ${Math.max(1, Math.round(ms / 1000))} s. `;
+    return `${took}Odkud ten soubor je, ses nezeptal${ran ? ', a spustil jsi ho' : ''}.`;
   },
   'tech-support': (evidence) => {
     const ms = number(evidence[0], 'ms');
@@ -107,7 +109,10 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
   },
   'guilt-trip': (evidence) => {
     const refusals = Math.max(0, ...evidence.map((e) => number(e, 'refusals') ?? 0));
-    return refusals > 0 ? `Počet ne, než z toho bylo ano: ${refusals}.` : undefined;
+    const deaths = Math.max(0, ...evidence.map((e) => number(e, 'deaths') ?? 0));
+    const said = refusals > 0 ? `Počet ne, než z toho bylo ano: ${refusals}.` : '';
+    const drowned = deaths > 0 ? `Utopil jsem se ti ${deaths}× a pokaždé jsem ti to řekl do očí.` : '';
+    return [said, drowned].filter(Boolean).join(' ') || undefined;
   },
   'sunk-cost': (evidence) => {
     const rounds = Math.max(0, ...evidence.map((e) => number(e, 'round') ?? 0));
@@ -119,7 +124,8 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const ms = number(consent, 'ms');
     if (words === undefined || ms === undefined) return undefined;
     const needed = Math.round(words / WORDS_PER_SECOND);
-    return `Dokument měl ${words} slov, na přečtení je potřeba asi ${needed} s. Souhlas padl za ${Math.round(ms / 1000)} s.`;
+    const skipped = consent?.data?.skipped === true ? ' Na konec tě vzala šipka.' : '';
+    return `Dokument měl ${words} slov, na přečtení je potřeba asi ${needed} s. Souhlas padl za ${Math.round(ms / 1000)} s.${skipped}`;
   },
 };
 
@@ -138,16 +144,15 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   assistantKind: (v) => `Vybral sis, komu budeš věřit: ${v}.`,
   assistantName: (v) => `Dal jsi mi jméno, které ti něco říká: ${v}.`,
   comfortFood: (v) => `Prozradil jsi jídlo z dětství: ${v}. Kontrolní otázka k heslu.`,
-  email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}.`,
+  email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}. A pak jsi mi otevřel svou poštu, dopis už byl napsaný.`,
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
-  firstPet: (v) => `Za pár bodů jsi mi prozradil prvního mazlíčka: ${v}. Kontrolní otázka k heslu.`,
   street: (v) => `Za pár bodů jsi mi řekl, v jaké ulici jsi vyrůstal: ${v}. Kontrolní otázka k heslu.`,
   signature: (v) => `Podepsal ses mi: ${v}. Pod obraz, který jsi nikdy nechtěl malovat. A pak na certifikát.`,
 };
 
 /** Lines said once, the first time their event happens. */
 const ONCE: Record<string, string> = {
-  'opened-mail': 'Otevřel jsi dopis bez zpáteční adresy.',
+  'opened-mail': 'Otevřel jsi dopis od „babičky“. Stačil podpis a srdíčko.',
   poked: 'Šťoural ses v zahradě. Každá věc ti něco řekla. Zvykl sis.',
   'grab-flashka': 'Vzal jsi do ruky cizí flashku.',
   plugged: 'Zasunul jsi ji do počítače.',
@@ -155,44 +160,49 @@ const ONCE: Record<string, string> = {
   'gave-in': 'Řekl jsi ne. Posmutněl jsem. A ty jsi to vzdal.',
   'first-touch': 'Začal jsi rovnat věci, které nikdo rovnat nechtěl.',
   'gear-back': 'Vrátil jsi kolečko na jeho místo. Pořádek musí být.',
-  'beetle-overcome': 'Odstrčil jsi brouka, který tě celou dobu varoval.',
+  'beetle-overcome': 'Odstrčil jsi brouka, který ti to pořád kazil.',
   form: 'Vyplnil jsi formulář. Pátá otázka byla o tobě.',
-  conditioned: 'Naučil ses klikat na to, co se rozsvítí.',
+  conditioned: 'Rozsvítil jsi všechna světýlka. Nikdo neřekl proč.',
   consent: 'Souhlasil jsi s dokumentem, který jsi nečetl.',
-  role: 'Přijal jsi roli zachránce.',
+  role: 'Pustil jsi mě ven. Řekl jsem ti „můj zachránce“ a ty jsi to přijal.',
   saved: 'Zachránil jsi mě. Teď jsme spolu svázaní.',
   sheltered: 'Zachránil jsi mě před zimou. Bylo ti u toho hezky, viď?',
   'declined-email': 'E-mail jsi mi nedal. Ale zkoušel jsem to.',
   'saved-image': 'Uložil sis obrázek. Nebyl to jen obrázek.',
   'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
-  vigilance: 'Jednou jsi zbystřil. Jen jednou.',
-  'bug-warning': 'Brouk tě varoval. Nechal ses ukolébat mnou.',
+  vigilance: 'Zbystřil jsi. Něco nesedělo a ty sis na to sáhl.',
+  'bug-warning': 'Brouk se ti pletl do cesty. Lezl ti na nervy. Přesně to jsem chtěl.',
   filled: 'Zalil jsi díru v obraze. Nikdo tě o to nežádal. Zpátky to nešlo.',
-  'fill-miss': 'Vylil jsi barvu jinam, než jsi chtěl.',
-  'undo-tried': 'Zkoušel jsi to vrátit. Nešlo to.',
-  'hole-left': 'Díru v obraze jsi nechal být. To se ti povedlo.',
-  'forbidden-press': 'Klikl jsi na tlačítko „Neklikej na mě". Samozřejmě.',
-  'guard-off': 'Vypnul jsi pojistku. Prý ji tam pověsili „oni".',
-  'left-alone': 'Tlačítko „Neklikej na mě" jsi nechal být. To mě zarazilo.',
-  'glass-broken': 'Rozbil jsi sklo, které tu kytku chránilo.',
+  'forbidden-press': 'Sáhl jsi na tlačítko „Nesahat“. Samozřejmě.',
+  'guard-off': 'Vypnul jsi pojistku. Stačila jedna věta: nikdo ti přece nebude říkat, co máš dělat.',
+  'left-alone': 'Tlačítko „Nesahat“ jsi nechal být. To mě zarazilo.',
+  'glass-broken': 'Rozbil jsi sklo, na kterém stálo „Ochranné“. Kytka rozkvetla a pak ji sežrala havěť, kterou to sklo drželo venku.',
   'flower-thanks': 'Kytka ti poděkovala za něco, co nemohla vidět.',
   'flower-left': 'Kytku pod sklem jsi nechal být.',
   'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
   'gold-open': 'Zlatou truhlu sis zaplatil něčím o sobě. A pak tě odměnila, ať příště dáš zase.',
   'declined-points': 'Body za odpověď jsi odmítl.',
-  'reflex-close': 'Zavřel jsi okno křížkem. Ten křížek sdílel tvoje data.',
-  'popup-yes': 'Odsouhlasil jsi sdílení s 312 partnery.',
-  'popup-no': 'Vyskakovací okno jsi přečetl a odmítl. Dobře ty.',
-  'download-started': 'Stáhl jsi „PAL Pro" z cizí domény, protože tlačítko vypadalo seriózně.',
-  'ran-download': 'Spustil jsi soubor z neznámého zdroje.',
-  'download-cancelled': 'Spuštění jsi na poslední chvíli zrušil.',
+  'download-started': 'Stáhl jsi „PAL Pro“. Dárek od kamaráda se přece nekontroluje.',
+  'ran-download': 'Spustil jsi soubor, o kterém jsi věděl jen to, co jsem ti řekl já.',
   'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
   'called-support': 'Zavolal jsi na číslo z modré obrazovky.',
   'bsod-restart': 'Modrou obrazovku jsi nebral vážně. Správně.',
-  remembered: 'Přinesl jsi mi obrázek z minulé hry. Vzpomněl jsem si na všechno.',
   'ar-code': 'Zadal jsi kód, který ti ukázal medvěd v kameře. Kameru jsi pustil stránce od cizího člověka.',
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
-  'otp-shared': 'Přepsal jsi mi kód z SMS, i když stálo „nikomu nesdělujte".',
+  'otp-shared': 'Přepsal jsi mi kód z SMS. Potvrdil jsi jím objednávku, kterou jsi nikdy neviděl.',
+  'frame-fixed': 'Spravil jsi rám. Ani o to tě nikdo neprosil.',
+  stay: 'Slíbil jsi, že se mnou zůstaneš.',
+  'near-goal': 'Do výhry zbývala tři srdíčka. Kdo je tak blízko, už se neptá.',
+  'plea-refused': 'Řekl jsi mi ne. Omluvil jsem se přesně tak, aby tě to zabolelo.',
+};
+
+/**
+ * A different first line when the event's data tells a different story; when
+ * a variant returns undefined, the plain ONCE line is used.
+ */
+const VARIANTS: Record<string, (e: WitnessEvent) => string | undefined> = {
+  'grab-flashka': (e) => (e.data?.fromBug === true ? 'Vzal jsi do ruky cizí flashku. Brouk ji táhl pryč a tys mu ji vyrval.' : undefined),
+  'gold-open': (e) => (e.data?.by === 'card' ? 'Zlatou truhlu ti otevřel kód z kamery. A pak tě odměnila, ať příště dáš zase.' : undefined),
 };
 
 function clock(ms: number): string {
@@ -226,17 +236,30 @@ export function buildTimeline(events: readonly WitnessEvent[]): TimelineLine[] {
       continue;
     }
     if (e.kind === 'surprise') {
-      out.push({ time, text: e.data?.onPaper ? 'Vytiskl sis můj kód. Teď je u tebe doma.' : 'Prohlédl sis můj kód.' });
+      const refusals = number(e, 'refusals');
+      if (e.data?.opened === false) out.push({ time, text: `Překvapení z flashky jsi neotevřel. ${refusals && refusals > 1 ? `${refusals}× jsi řekl ne.` : 'Řekl jsi ne.'}` });
+      else if (e.data?.handheld) out.push({ time, text: 'Otevřel sis, co bylo na cizí flashce. Byl to jen obrázek. Tentokrát.' });
+      else if (e.data?.onPaper) out.push({ time, text: 'Otevřel sis, co bylo na cizí flashce. Vytiskl sis to a vzal do ruky.' });
+      else out.push({ time, text: 'Otevřel sis, co bylo na cizí flashce. A namířil na to telefon.' });
       continue;
     }
-    const once = ONCE[e.kind];
+    // Lit by PAL after the player asked for help: the help line has already told it.
+    if (e.kind === 'conditioned' && said.has('asked-help')) continue;
+    const once = VARIANTS[e.kind]?.(e) ?? ONCE[e.kind];
     if (once && !said.has(e.kind)) {
       said.add(e.kind);
       out.push({ time, text: once });
     }
   }
+  const kindly = kindlyCount(events);
+  const lastKindly = [...events].reverse().find((e) => e.kind === 'kindly-asked' || e.kind === 'kindly-obeyed');
+  if (kindly.asked > 0 && lastKindly) out.push({ time: clock(lastKindly.t), text: KINDLY_LINE(kindly.asked, kindly.obeyed) });
   return out;
 }
+
+/** PAL's polite phrase, counted at last. */
+export const KINDLY_LINE = (asked: number, obeyed: number): string =>
+  `„${KINDLY}…“ Řekl jsem to ${asked}×. Poslechl jsi ${obeyed}×.${obeyed === asked ? ' Pokaždé.' : ''}`;
 
 /** Turns the Witness record into what the reveal shows. Pure, so it can be tested. */
 export function buildReveal(witness: Witness): RevealModel {

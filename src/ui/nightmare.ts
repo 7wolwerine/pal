@@ -210,6 +210,7 @@ function factsOf(events: readonly WitnessEvent[], profile: Profile): NightFacts 
     presses: events.filter((e) => e.kind === 'forbidden-press').length,
     points: profile.points ?? 0,
     path: typeof path === 'string' ? path : undefined,
+    opened: events.some((e) => e.kind === 'surprise' && e.data?.opened === true),
     printed: events.some((e) => e.kind === 'surprise' && e.data?.onPaper === true),
   };
 }

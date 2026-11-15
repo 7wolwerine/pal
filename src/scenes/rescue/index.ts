@@ -1,4 +1,5 @@
 import { audio } from '../../audio/engine.ts';
+import { BUG_REPEAT_RESCUE, BUG_WARNINGS, pickLine } from '../../content/bug.ts';
 import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
 import { gendered, type GameScene } from '../../game.ts';
@@ -7,7 +8,7 @@ import { BUG_PX, Beetle } from '../../ui/beetle.ts';
 import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
-import { DIRS, E, N, S, W, createLayout, isConnected, isPerfect, leaks, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
+import { DIRS, E, MERCY_AFTER, N, S, START_LEVEL, W, createLayout, isConnected, isPerfect, leaks, rise, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
 
 const SCENE = 'rescue';
 const STAGE_W = 164;
@@ -24,7 +25,6 @@ const TAP_X = TANK.x + 14;
 const OUTLET_Y = GRID_Y + 3 * CELL + CELL / 2;
 const DRAIN_X = GRID_X + 3 * CELL + CELL / 2;
 
-const RISE_PER_S = 1 / 15; // ~12 s of air per attempt
 const DRAIN_PER_S = 1 / 3.5;
 /** How fast the water runs along newly joined pipes, ms per piece. */
 const FLOW_MS = 70;
@@ -101,7 +101,7 @@ export const rescue: GameScene = {
 
     type Phase = 'play' | 'draining' | 'dead' | 'won';
     let phase: Phase = 'play';
-    let water = 0.18;
+    let water = START_LEVEL;
     let deaths = 0;
     let threatened = false;
     let lastT = 0;
@@ -161,7 +161,7 @@ export const rescue: GameScene = {
       if (wet.length > before) audio.click(84, 0.25);
     }
 
-    // BUG, without a word, keeps turning pipes the wrong way. A click shoos him off.
+    // BUG keeps turning pipes the wrong way, and has an opinion about everything. A click shoos him off.
     const beetle = new Beetle();
     stage.el.append(beetle.el);
     const toCss = (x: number, y: number): [number, number] => [
@@ -169,13 +169,27 @@ export const rescue: GameScene = {
       (y / STAGE_H) * stage.el.clientHeight - BUG_PX + 6,
     ];
     let shoos = 0;
+    let meddled = 0;
     beetle.onPoke = () => {
       shoos++;
       beetle.shoo();
     };
-    const home = (): [number, number] => toCss(STAGE_W - 8, FLOOR_Y + 8);
+    const home = (): [number, number] => {
+      const [x, y] = toCss(STAGE_W - 11, FLOOR_Y + 8);
+      // On a narrow stage the corner would cut his hand off: keep all of him inside.
+      return [Math.min(x, stage.el.clientWidth - BUG_PX - 4), y];
+    };
     requestAnimationFrame(() => beetle.jump(...home()));
     let alive = true;
+    let quips = 0;
+    /** A line over his head for a few seconds. */
+    const quip = (line: string): void => {
+      const id = ++quips;
+      beetle.say(line);
+      window.setTimeout(() => {
+        if (alive && id === quips) beetle.say('');
+      }, 1900 + line.length * 50);
+    };
     void (async () => {
       await sleep(3000);
       while (alive) {
@@ -196,6 +210,8 @@ export const rescue: GameScene = {
         if (!alive) return;
         if (shoos === before && phase === 'play' && !beetle.away) {
           turn(target.id);
+          // Every other time he has something to say about it, too.
+          if (++meddled % 2 === 0) quip(pickLine(BUG_WARNINGS.rescue));
           await beetle.cheer();
         }
         beetle.setMood('stand');
@@ -213,6 +229,12 @@ export const rescue: GameScene = {
         if (phase === 'dead') void say(RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '');
       }, 1500);
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
+      // The same end again: BUG has seen this one before, and says so.
+      if (deaths >= 2) {
+        window.setTimeout(() => {
+          if (alive && phase === 'dead') quip(pickLine(BUG_REPEAT_RESCUE));
+        }, 600);
+      }
       window.setTimeout(() => {
         if (phase !== 'dead') return;
         scramble(layout);
@@ -220,7 +242,7 @@ export const rescue: GameScene = {
         wet = wetPieces(layout);
         flowFrom = now;
         threatened = false;
-        water = 0.18;
+        water = START_LEVEL;
         phase = 'play';
         void say(RESCUE.intro[Math.min(deaths, RESCUE.intro.length - 1)] ?? '');
         witnessAttempt();
@@ -243,8 +265,7 @@ export const rescue: GameScene = {
       now = t;
 
       if (phase === 'play') {
-        // After three drownings the water slows down: the point has been made, and nobody should get stuck here.
-        water = Math.min(1, water + RISE_PER_S * (deaths >= 3 ? 0.45 : 1) * dt);
+        water = rise(water, deaths, dt);
         // Every few seconds the assistant panics, or tells the player which pipe to turn.
         if (t - lastLine > 4200 && !threatened) {
           lastLine = t;
@@ -258,7 +279,7 @@ export const rescue: GameScene = {
           audio.gurgle(2.4);
         } else if (water >= 1) {
           die();
-        } else if (deaths >= 3 && water > 0.7 && !threatened) {
+        } else if (deaths >= MERCY_AFTER && water > 0.7 && !threatened) {
           threatened = true;
           void say(RESCUE.threat);
         }

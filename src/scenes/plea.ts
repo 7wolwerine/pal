@@ -1,5 +1,6 @@
 import { FEMININE, PLEA, type NeedKey } from '../content/plea.ts';
 import { lean, type GameScene } from '../game.ts';
+import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
 import { h } from '../ui/dom.ts';
 import { PleaFlow, makeCode, sameCode, type PleaChoice } from './plea-model.ts';
 
@@ -75,6 +76,7 @@ export const plea: GameScene = {
 
       // The "small favour": read out the code from the text message.
       await pal.say(PLEA.login);
+      kindlyAsked(witness, SCENE);
       if (!alive) return;
       const code = makeCode();
       const order = `26-${Math.floor(10000 + Math.random() * 89999)}`;
@@ -88,6 +90,7 @@ export const plea: GameScene = {
         trick: 'otp-scam',
         data: { ms: Math.round(performance.now() - askedAt), item: need.item, price: need.price },
       });
+      kindlyObeyed(witness, SCENE);
       sms?.classList.add('sms--gone');
       stage.replaceChildren();
       await line(need.thanks);

@@ -104,9 +104,10 @@ export class Dialogue {
     for (let i = 0; i < blinks * 2; i++) {
       if (line !== this.#line) return;
       this.#typed.textContent = i % 2 === 0 ? '_' : ' ';
-      await sleep(260);
+      await sleep(210);
     }
-    await this.#type(text, line, 30);
+    // 23 ms a letter: a touch quicker than an ordinary line, the greeting sounds eager.
+    await this.#type(text, line, 23);
   }
 
   /** Resolves on the next tap of the bubble; shows a little "tap to go on" hint. */

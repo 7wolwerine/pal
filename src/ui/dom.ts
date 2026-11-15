@@ -65,3 +65,8 @@ export function sleep(ms: number): Promise<void> {
 export function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+/** A phone or a tablet: the finger is the pointer, and there is no second screen to aim a camera at. */
+export function isHandheld(): boolean {
+  return navigator.maxTouchPoints > 0 && window.matchMedia('(pointer: coarse)').matches;
+}

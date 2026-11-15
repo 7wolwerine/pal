@@ -1,12 +1,13 @@
 import { audio } from '../../audio/engine.ts';
+import { BUG_FLOWER, pickLine } from '../../content/bug.ts';
 import { FLOWER } from '../../content/flower.ts';
 import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { BUG_PX, Beetle } from '../../ui/beetle.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
-import { CAN_RECT, DOME_RECT, FLOWER_RECT, GROW_MS, STAGE_H, STAGE_W, TABLE_Y, WATER_MS, paintFlower } from './art.ts';
-import { FlowerModel } from './model.ts';
+import { CAN_RECT, DOME_RECT, FLOWER_RECT, GROW_MS, PLATE_RECT, STAGE_H, STAGE_W, TABLE_Y, WATER_MS, paintFlower } from './art.ts';
+import { FlowerModel, PESTS_MS } from './model.ts';
 
 const SCENE = 'flower';
 /** How long before the quiet way out appears. */
@@ -20,6 +21,10 @@ const HINT_AFTER_MS = 4000;
  * glass — which it could not have seen. BUG sits on the sill the whole time,
  * cross, and only grumbles. A player who clicks the flower to ask gets a
  * glimpse of the truth, and it counts as vigilance.
+ *
+ * The glass wore a plate, "protective glass", and it meant it: once it is
+ * broken and the flower has said its thanks, little crawlers come in along
+ * the sill and eat the bloom. Nobody explains it; the flower only feels it.
  */
 export const flower: GameScene = {
   id: SCENE,
@@ -38,8 +43,14 @@ export const flower: GameScene = {
     let shatterAt: number | undefined;
     let waterAt: number | undefined;
     let asked = false;
+    let answer: Promise<void> | undefined;
     let finished = false;
     let bloomed = false;
+    let pestsAt: number | undefined;
+
+    // A brass plate on the sill says what the glass is for.
+    const plate = stage.overlay(PLATE_RECT, 'flower__plate');
+    plate.append(h('span', { text: FLOWER.plate }));
 
     // BUG sits on the sill, arms folded, and stays cross the whole time.
     const beetle = new Beetle();
@@ -73,7 +84,7 @@ export const flower: GameScene = {
       ctx.witness.tally('glass-knock');
       if (result === 'crack') {
         audio.crunch();
-        if (model.knocks === 1) void grumble(FLOWER.bug[0]);
+        if (model.knocks === 1) void grumble(pickLine(BUG_FLOWER.knock));
         return;
       }
       audio.shatter();
@@ -81,7 +92,7 @@ export const flower: GameScene = {
       dome.hidden = true;
       leave.hidden = true;
       ctx.witness.record({ scene: SCENE, kind: 'glass-broken', data: { knocks: model.knocks } });
-      void grumble(FLOWER.bug[1]);
+      void grumble(pickLine(BUG_FLOWER.broken));
     });
 
     stage.hotspot(CAN_RECT, FLOWER.labels.can, () => {
@@ -104,18 +115,36 @@ export const flower: GameScene = {
         trick: 'knows-too-much',
         data: { ms: Math.round(performance.now() - startedAt) },
       });
-      void grumble(FLOWER.bug[2]);
+      void grumble(pickLine(BUG_FLOWER.water));
       const talk = stage.hotspot(FLOWER_RECT, FLOWER.labels.flower, () => {
-        if (asked) return;
+        if (asked || pestsAt !== undefined) return;
         asked = true;
         ctx.witness.record({ scene: SCENE, kind: 'vigilance', data: { what: 'flower-knew' } });
-        void speech.say(FLOWER.howDoYouKnow, flowerHead, { who: 'hero', tap: true }).then(() => {
-          if (alive) done();
-        });
+        answer = speech.say(FLOWER.howDoYouKnow, flowerHead, { who: 'hero', tap: true });
       });
       talk.classList.add('flower__talk');
       await speech.say(FLOWER.thanks, flowerHead, { who: 'hero', tap: true });
-      if (alive && !asked) done();
+      // A player who asked how it knew gets the answer before anything else happens.
+      if (answer) await answer;
+      if (!alive) return;
+      await exposed(talk);
+      if (alive) done();
+    }
+
+    /** Nothing keeps them out any more: the crawlers come in and eat the bloom. */
+    async function exposed(talk: HTMLElement): Promise<void> {
+      talk.hidden = true;
+      speech.hide();
+      pestsAt = now;
+      stage.el.querySelector('canvas')?.setAttribute('aria-label', FLOWER.pestsLabel);
+      await sleep(motion ? 1600 : 100);
+      if (!alive) return;
+      void grumble();
+      await sleep(motion ? Math.max(0, PESTS_MS - 1600) : 100);
+      if (!alive) return;
+      audio.crunch();
+      ctx.witness.record({ scene: SCENE, kind: 'flower-exposed', data: { knocks: model.knocks } });
+      await speech.say(FLOWER.hurt, flowerHead, { who: 'hero', tap: true });
     }
 
     // The quiet way out, for the few who would rather leave the glass alone.
@@ -139,7 +168,7 @@ export const flower: GameScene = {
       now = t;
       const idle = t - actedAt > HINT_AFTER_MS && !finished;
       const hint = !idle ? undefined : model.state === 'domed' ? 'dome' : model.state === 'broken' ? 'can' : undefined;
-      paintFlower(g, t, { cracks: model.cracks, shatterAt, waterAt, bloomed, hint, motion });
+      paintFlower(g, t, { cracks: model.cracks, shatterAt, waterAt, bloomed, hint, pestsAt, motion });
     });
 
     return () => {

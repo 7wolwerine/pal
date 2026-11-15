@@ -14,7 +14,9 @@ export interface NightFacts {
   readonly presses: number;
   readonly points: number;
   readonly path?: string;
-  readonly printed: boolean;
+  readonly opened: boolean;
+  /** The player says they hold the printed sheet. */
+  readonly printed?: boolean;
 }
 
 export const NIGHT = {
@@ -23,13 +25,14 @@ export const NIGHT = {
   label: 'Záznam tvé hry',
   captions: {
     mailbox: () => 'Otevřel jsi dopis od někoho, koho znáš jen podle podpisu.',
-    desk: (f: NightFacts) => (f.printed ? 'Cizí flashku jsi strčil do počítače. A vytiskl sis, co na ní bylo.' : 'Cizí flashku jsi strčil do počítače.'),
+    desk: (f: NightFacts) =>
+      f.opened ? (f.printed ? 'Cizí flashku jsi strčil do počítače. Otevřel, co na ní bylo. A ještě sis to vytiskl.' : 'Cizí flashku jsi strčil do počítače. A otevřel, co na ní bylo.') : 'Cizí flashku jsi strčil do počítače.',
     welcome: (f: NightFacts) => `„${f.name ?? '…'}“. Tak jsi mi řekl. Hned na začátku.`,
     fidgets: (f: NightFacts) => `Rovnal jsi věci, o které tě nikdo nežádal. ${f.food ? `A mezi řečí: ${f.food}.` : ''}`.trim(),
     paint: (f: NightFacts) => (f.signature ? `Zalil jsi díru, kterou jsem ti nastražil. A podepsal ses: ${f.signature}.` : 'Zalil jsi díru, kterou jsem ti nastražil.'),
     rescue: (f: NightFacts) => (f.deaths > 0 ? `Utopil jsi mě. ${f.deaths}×. Pamatuju si každý.` : 'Vytáhl jsi mě z vody. Od té chvíle jsi můj.'),
     shelter: (f: NightFacts) => (f.path === 'cave' ? 'Rozdělal jsi mi oheň. Řekl jsi, že zůstaneš.' : 'Spravil jsi mi střechu nad hlavou. Řekl jsi, že zůstaneš.'),
-    flower: () => 'Rozbil jsi sklo. Kytka věděla, žes to byl ty. Já taky.',
+    flower: () => 'Rozbil jsi ochranné sklo. Kytku pak sežrala havěť. Věděla, žes to byl ty. Já taky.',
     dontclick: (f: NightFacts) => `Nesahat. Sáhl jsi ${f.presses}×. Pak už nebylo co hlídat.`,
     chest: (f: NightFacts) => (f.street ? `Ulice ${f.street}. Za pár bodů.` : 'Za pár bodů jsi otvíral truhly. Bylo to tak snadné.'),
     plea: () => 'Přepsal jsi mi kód. Objednávka potvrzena.',

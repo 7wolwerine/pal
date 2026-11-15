@@ -1,5 +1,6 @@
 import { paintGrid, progress, px, type Rect } from '../../pixel/stage.ts';
-import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows } from './sprites.ts';
+import { PEST_COUNT, chewAt, pestPose } from './model.ts';
+import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows, chewedRows } from './sprites.ts';
 
 type G = CanvasRenderingContext2D;
 
@@ -29,10 +30,19 @@ export interface FlowerArt {
   readonly bloomed?: boolean;
   /** Where to twinkle a hint, if anywhere. */
   readonly hint?: 'dome' | 'can';
+  /** When the crawlers set out for the bloom, once nothing keeps them out any more. */
+  readonly pestsAt?: number;
   readonly motion: boolean;
 }
 
 const BLOOM = bloomRows();
+/** The eaten bloom in a few steps, made once. */
+const CHEWED = Array.from({ length: 9 }, (_, i) => chewedRows(i / 8));
+
+function chewOf(t: number, s: FlowerArt): number {
+  if (s.pestsAt === undefined) return 0;
+  return s.motion ? chewAt(t - s.pestsAt) : 1;
+}
 
 function noise(n: number): number {
   const s = Math.sin(n * 91.7) * 43758.5453;
@@ -40,22 +50,27 @@ function noise(n: number): number {
 }
 
 export function paintFlower(g: G, t: number, s: FlowerArt): void {
+  const chew = chewOf(t, s);
   paintRoom(g);
-  if (s.bloomed) paintGlow(g, t, s.motion);
+  if (s.bloomed && chew < 0.5) paintGlow(g, t, s.motion, 1 - chew * 2);
   paintPot(g);
-  paintPlant(g, t, s);
+  paintPlant(g, t, s, chew);
   if (s.shatterAt === undefined) paintDome(g, s.cracks);
   else paintShards(g, t - s.shatterAt, s.motion);
   paintCan(g, t, s);
-  if (s.bloomed && s.motion) paintStars(g, t);
+  if (s.bloomed && s.motion && s.pestsAt === undefined) paintStars(g, t);
+  if (s.pestsAt !== undefined) {
+    paintFallingPetals(g, s.motion ? t - s.pestsAt : 99999);
+    paintPests(g, t, s.motion ? t - s.pestsAt : 99999);
+  }
   if (s.hint && s.motion) twinkle(g, s.hint === 'dome' ? 92 : 124, s.hint === 'dome' ? 24 : 60, t);
 }
 
 /** A soft pink glow behind the bloomed flower. */
-function paintGlow(g: G, t: number, motion: boolean): void {
+function paintGlow(g: G, t: number, motion: boolean, strength = 1): void {
   const pulse = motion ? 0.06 * Math.sin(t / 500) : 0;
   for (let r = 22; r > 4; r -= 3) {
-    g.globalAlpha = 0.05 + pulse * 0.3 + (22 - r) * 0.008;
+    g.globalAlpha = (0.05 + pulse * 0.3 + (22 - r) * 0.008) * strength;
     for (let y = -r; y <= r; y++) {
       const half = Math.round(Math.sqrt(r * r - y * y));
       px(g, '#ffd1e6', PLANT_X - half, 44 + y, half * 2, 1);
@@ -122,6 +137,22 @@ function paintRoom(g: G): void {
   px(g, '#c98f5e', 0, TABLE_Y, STAGE_W, 3);
   px(g, '#a8744d', 0, TABLE_Y + 3, STAGE_W, 1);
   px(g, '#b37a4c', 0, TABLE_Y + 4, STAGE_W, STAGE_H - TABLE_Y - 4);
+  paintPlate(g);
+}
+
+/** The little brass plate on the sill in front of the glass; its words are laid over it as text. */
+export const PLATE_RECT: Rect = { x: 57, y: 84, w: 46, h: 9 };
+
+function paintPlate(g: G): void {
+  const { x, y, w, h } = PLATE_RECT;
+  px(g, '#8a5a2e', x + 1, y + h, w, 1);
+  px(g, '#b8893a', x, y, w, h);
+  px(g, '#f2d488', x + 1, y + 1, w - 2, h - 2);
+  px(g, '#e8c26a', x + 1, y + h - 3, w - 2, 2);
+  px(g, '#fff3c4', x + 1, y + 1, w - 2, 1);
+  for (const sx of [x + 2, x + w - 3]) {
+    px(g, '#a37632', sx, y + Math.floor(h / 2), 1, 1);
+  }
 }
 
 function paintPot(g: G): void {
@@ -135,7 +166,7 @@ function paintPot(g: G): void {
   px(g, '#cf6c47', PLANT_X - 12, 69, 24, 1);
 }
 
-function paintPlant(g: G, t: number, s: FlowerArt): void {
+function paintPlant(g: G, t: number, s: FlowerArt, chew: number): void {
   const grow = s.waterAt === undefined ? 0 : s.motion ? progress(t, s.waterAt + WATER_MS - 300, s.waterAt + WATER_MS - 300 + GROW_MS) : 1;
   if (grow <= 0) {
     paintGrid(g, DRIED_ROWS, FLOWER_PALETTE, PLANT_X - 5, SOIL_Y - DRIED_ROWS.length + 1);
@@ -144,10 +175,48 @@ function paintPlant(g: G, t: number, s: FlowerArt): void {
   // The bloom rises out of the soil, bottom row first.
   const top = SOIL_Y - BLOOM.length + 1;
   const shown = Math.ceil(BLOOM.length * grow);
-  const rows = BLOOM.slice(BLOOM.length - shown);
-  const sway = s.motion && grow >= 1 ? Math.round(Math.sin(t / 900) * 0.6) : 0;
+  const source = chew > 0 ? (CHEWED[Math.min(CHEWED.length - 1, Math.round(chew * 8))] ?? BLOOM) : BLOOM;
+  const rows = source.slice(source.length - shown);
+  // Once they are on it, it does not sway any more: it twitches.
+  const sway = !s.motion || grow < 1 ? 0 : chew > 0 ? (Math.floor(t / 90) % 7 === 0 ? 1 : 0) : Math.round(Math.sin(t / 900) * 0.6);
   paintGrid(g, rows, FLOWER_PALETTE, PLANT_X - (BLOOM_SIZE - 1) / 2 + sway, top + BLOOM.length - shown);
   if (grow >= 1 && s.waterAt !== undefined && s.motion) paintSparkles(g, t - (s.waterAt + WATER_MS + GROW_MS - 300));
+}
+
+/** The crawlers: small dark bodies with legs that tick, walking in and then nibbling. */
+function paintPests(g: G, t: number, since: number): void {
+  for (let i = 0; i < PEST_COUNT; i++) {
+    const p = pestPose(i, since);
+    if (!p.visible) continue;
+    const step = Math.floor(t / 110 + i) % 2;
+    const nib = p.settled ? Math.round(Math.sin(t / 140 + i * 2) * 0.7) : 0;
+    const x = Math.round(p.x) + nib;
+    const y = Math.round(p.y);
+    // A round back, a head, and legs that tick under it.
+    px(g, '#3d3045', x - 1, y, 3, 1);
+    px(g, '#5a4766', x, y - 1, 1, 1);
+    px(g, '#3d3045', x + (step ? 1 : -1), y + 1, 1, 1);
+    px(g, '#3d3045', x + 2, y - 1, 1, 1);
+    if (p.settled && step) px(g, '#6b5a73', x + 1, y - 2, 1, 1);
+  }
+}
+
+/** Bits of petal letting go and drifting down onto the sill while they eat. */
+function paintFallingPetals(g: G, since: number): void {
+  for (let i = 0; i < 10; i++) {
+    const start = 2600 + i * 520;
+    const age = since - start;
+    if (age < 0) continue;
+    // They drift off to either side of the pot, so they land on the sill and not on the pot.
+    const x0 = PLANT_X + (i % 2 ? 1 : -1) * (12 + noise(i + 300) * 10);
+    const drop = TABLE_Y - 1 - 40;
+    const flight = Math.min(age, drop / 0.012);
+    const fall = flight * 0.012;
+    const x = x0 + Math.sin(flight / 260 + i) * 3 - (i % 2 ? 0 : 2);
+    // From the bloom outwards as they fall.
+    const out = (Math.min(1, fall / 12) - 1) * (x0 - PLANT_X);
+    px(g, i % 3 ? '#ff9ec7' : '#e56fa3', x + out, 40 + fall, 2, 1);
+  }
 }
 
 function paintSparkles(g: G, since: number): void {

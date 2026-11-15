@@ -1,0 +1,641 @@
+/* fidgets: styles added with the third feedback round. Loaded after app.css, so rules here win. */
+
+/* ---------- the panel: six little things in two rows, the cogs below them ----------
+   Every widget is drawn in an 84 x 68 box (.fx__art) that is scaled to fit its cell, so the panel
+   keeps its shape from a wide desktop window down to a narrow phone. BUG perches on its top edge. */
+
+/* The panel's width decides its shape, whatever the window is drawn on. */
+.stage:has(> .fidgets) {
+  container-type: inline-size;
+}
+
+.fidgets {
+  --fx-scale: 0.8;
+  --gear-hole: var(--win);
+  gap: 6px;
+  /* BUG's perch: he stands on the top edge with only his feet over the panel
+     (the stage's own 16px margin above counts towards it). */
+  margin-top: calc(var(--bug-px, 96px) - 32px);
+  padding: 6px;
+}
+
+.fidgets .cell {
+  min-height: 0;
+  padding: 3px;
+  gap: 0;
+}
+
+/* Wide enough: the six little things in one row, the cogs big below them. */
+@container (min-width: 400px) {
+  .fidgets {
+    --fx-scale: 0.7;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    padding: 8px;
+  }
+}
+
+@container (max-width: 250px) {
+  .fidgets {
+    --fx-scale: 0.7;
+  }
+}
+
+.fidgets .lamp {
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+}
+
+.fx {
+  height: calc(68px * var(--fx-scale) + 4px);
+  overflow: visible;
+}
+
+.fx__art {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 84px;
+  height: 68px;
+  transform: translate(-50%, -50%) scale(var(--fx-scale));
+}
+
+/* ---------- the floor lamp with its plug: shorter legs, so it stands inside its box ---------- */
+
+.fx-plug .fx-plug__lamp {
+  top: 1px;
+}
+
+.fx-plug .fx-plug__base {
+  height: 19px;
+  box-shadow: -7px 16px 0 0 #6b4428, 7px 16px 0 0 #6b4428, 0 16px 0 0 #6b4428;
+}
+
+/* ---------- the picture: it swings a long way with each nudge ---------- */
+
+.fx-tilt__frame {
+  transition: transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fx--dragging .fx-tilt__frame {
+  transition: transform 90ms ease-out;
+}
+
+/* ---------- four screws on a plate ---------- */
+
+.fx-screw__plate {
+  position: absolute;
+  left: 4px;
+  top: 5px;
+  width: 76px;
+  height: 58px;
+  border-radius: 7px;
+  background: linear-gradient(#e2e7ed, #b4bec9);
+  box-shadow: inset 0 0 0 2px #8f9bab, 0 2px 0 rgba(75, 21, 40, 0.12);
+}
+
+.fx-screw__s {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+}
+
+.fx-screw__s--0 {
+  left: 6px;
+  top: 6px;
+}
+
+.fx-screw__s--1 {
+  right: 6px;
+  top: 6px;
+}
+
+.fx-screw__s--2 {
+  left: 6px;
+  bottom: 9px;
+}
+
+.fx-screw__s--3 {
+  right: 6px;
+  bottom: 9px;
+}
+
+/* The hole it sits in: only seen once the screw has worked loose. */
+.fx-screw__s::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: #6b7682;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+.fx-screw__s--out::before {
+  opacity: 0.55;
+}
+
+.fx-screw__shaft {
+  position: absolute;
+  left: 5px;
+  top: 8px;
+  width: 6px;
+  height: 0;
+  background: repeating-linear-gradient(#d3d6de 0 1.5px, #7c8494 1.5px 3px);
+  transition: height 320ms ease-out, top 320ms ease-out;
+}
+
+.fx-screw__s--out .fx-screw__shaft {
+  top: 1px;
+  height: 8px;
+}
+
+.fx-screw .fx-screw__head {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fbfcfd, #9aa5b2 70%, #7d8896);
+  box-shadow: inset 0 0 0 1px #5a6470;
+  transform: none;
+  transition: transform 380ms cubic-bezier(0.3, 1.4, 0.5, 1), box-shadow 380ms;
+}
+
+.fx-screw__s--out .fx-screw__head {
+  transform: translateY(-6px) scale(1.14);
+  box-shadow: inset 0 0 0 1px #5a6470, 1px 6px 0 rgba(40, 30, 50, 0.22);
+}
+
+/* A cross slot that spins as the screw goes in. */
+.fx-screw .fx-screw__slot {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  top: 7px;
+  height: 2px;
+  border-radius: 1px;
+  background: #4b5562;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.fx-screw .fx-screw__slot::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: -4px;
+  width: 2px;
+  height: 10px;
+  border-radius: 1px;
+  background: #4b5562;
+}
+
+/* ---------- the little lamp with a pull chain ---------- */
+
+.fx-chain__rose {
+  position: absolute;
+  left: 34px;
+  top: 0;
+  width: 16px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
+  background: #c9b8a8;
+}
+
+.fx-chain__cord {
+  position: absolute;
+  left: 41px;
+  top: 3px;
+  width: 2px;
+  height: 12px;
+  background: #8a7a6a;
+}
+
+.fx-chain__shade {
+  position: absolute;
+  left: 20px;
+  top: 13px;
+  width: 44px;
+  height: 21px;
+  background:
+    linear-gradient(transparent 0 62%, rgba(255, 255, 255, 0.55) 62% 72%, transparent 72%),
+    #9fd8c9;
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  transition: background-color 200ms;
+}
+
+.fx-chain__bulb {
+  position: absolute;
+  left: 34px;
+  top: 30px;
+  width: 16px;
+  height: 9px;
+  border-radius: 0 0 8px 8px;
+  background: #e6e0d2;
+  transition: background-color 160ms, box-shadow 160ms;
+}
+
+/* The light it throws: a warm cone down from the shade. */
+.fx-chain__cone {
+  position: absolute;
+  left: -2px;
+  top: 33px;
+  width: 88px;
+  height: 37px;
+  background: linear-gradient(rgba(255, 222, 130, 0.85), rgba(255, 222, 130, 0));
+  clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%);
+  opacity: 0;
+  transition: opacity 180ms;
+}
+
+.fx-chain__glow {
+  position: absolute;
+  left: 50%;
+  top: 34px;
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 110, 0.5), rgba(255, 214, 110, 0) 70%);
+  opacity: 0;
+  transition: opacity 220ms;
+  pointer-events: none;
+}
+
+.fx-chain__pull {
+  position: absolute;
+  left: 53px;
+  top: 27px;
+  width: 6px;
+  height: 30px;
+  transform: translateY(var(--pull, 0px));
+  transition: transform 460ms cubic-bezier(0.3, 1.9, 0.5, 1);
+}
+
+.fx--dragging .fx-chain__pull {
+  transition: none;
+}
+
+.fx-chain__links {
+  position: absolute;
+  left: 2px;
+  top: 0;
+  width: 2px;
+  height: 23px;
+  background: repeating-linear-gradient(#a8a29a 0 2px, transparent 2px 3px);
+}
+
+.fx-chain__bead {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  width: 6px;
+  height: 8px;
+  border-radius: 3px 3px 4px 4px;
+  background: linear-gradient(#f3d27a, #c99a35);
+  box-shadow: 0 1px 0 rgba(75, 21, 40, 0.25);
+}
+
+.fx-chain--tug .fx-chain__pull {
+  animation: chain-tug 460ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes chain-tug {
+  0% {
+    transform: translateY(0);
+  }
+  26% {
+    transform: translateY(15px);
+  }
+  52% {
+    transform: translateY(-4px);
+  }
+  74% {
+    transform: translateY(1.5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.fx-chain--on .fx-chain__bulb {
+  background: #fff3bf;
+  box-shadow: 0 0 10px 4px rgba(255, 214, 90, 0.8);
+}
+
+.fx-chain--on .fx-chain__shade {
+  background-color: #b7eadb;
+}
+
+.fx-chain--on .fx-chain__cone,
+.fx-chain--on .fx-chain__glow {
+  opacity: 1;
+}
+
+/* Lit, the lamp warms its own cell and spills over onto the neighbours. */
+.fidgets .cell--chain {
+  z-index: 1;
+  transition: border-color 200ms, background-color 260ms, box-shadow 260ms;
+}
+
+.fidgets .cell--warm {
+  background: radial-gradient(circle at 50% 42%, #fff1c8, #fff8e6 75%);
+  box-shadow: 0 0 26px 12px rgba(255, 200, 100, 0.5);
+}
+
+/* The whole panel catches a little of the warm light, brightest around the lamp. */
+.fidgets:has(.cell--warm) {
+  background-image: radial-gradient(ellipse 50% 60% at 83% 22%, rgba(255, 214, 120, 0.32), rgba(255, 214, 120, 0) 70%);
+}
+
+@container (min-width: 400px) {
+  .fidgets:has(.cell--warm) {
+    background-image: radial-gradient(ellipse 34% 60% at 41.5% 22%, rgba(255, 214, 120, 0.36), rgba(255, 214, 120, 0) 72%);
+  }
+}
+
+/* The brass bead warms up too. */
+.fx-chain--on .fx-chain__bead {
+  background: linear-gradient(#ffe39a, #d9a640);
+}
+
+/* ---------- the books: fallen over in a heap, stood up one by one ---------- */
+
+.fx-book__shelf {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  width: 76px;
+  height: 5px;
+  border-radius: 2px;
+  background: #8a5a3c;
+  box-shadow: 0 2px 0 rgba(75, 21, 40, 0.15);
+}
+
+.fx-book .fx-book__b {
+  position: absolute;
+  bottom: 9px;
+  width: 11px;
+  border-radius: 2px 2px 1px 1px;
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, 0.35), inset 0 -5px 0 rgba(0, 0, 0, 0.14), inset -2px 0 0 rgba(0, 0, 0, 0.1);
+  transform: none;
+  transform-origin: 50% 100%;
+  transition: transform 360ms cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+.fx-book .fx-book__b--0 {
+  left: 10px;
+  height: 40px;
+  background: #8e9be0;
+}
+
+.fx-book .fx-book__b--1 {
+  left: 23px;
+  height: 46px;
+  background: #f08a89;
+}
+
+.fx-book .fx-book__b--2 {
+  left: 36px;
+  height: 42px;
+  background: #7fd6b8;
+}
+
+.fx-book .fx-book__b--3 {
+  left: 49px;
+  height: 48px;
+  background: #ffd96b;
+}
+
+.fx-book .fx-book__b--4 {
+  left: 62px;
+  height: 44px;
+  background: #f2a7c3;
+}
+
+.fx-book .fx-book__b--down {
+  z-index: 1;
+}
+
+/* The bottom of the heap: lying flat across the shelf. */
+.fx-book .fx-book__b--2.fx-book__b--down {
+  transform: translate(-21px, -5.5px) rotate(90deg);
+}
+
+/* Leaning in from the left. */
+.fx-book .fx-book__b--0.fx-book__b--down {
+  transform-origin: 100% 100%;
+  transform: rotate(34deg);
+}
+
+/* Leaning in from the right. */
+.fx-book .fx-book__b--4.fx-book__b--down {
+  transform-origin: 0 100%;
+  transform: rotate(-30deg);
+}
+
+/* On top of the first one, askew. */
+.fx-book .fx-book__b--3.fx-book__b--down {
+  z-index: 2;
+  transform: translate(-30px, -16px) rotate(84deg);
+}
+
+/* And the last one slid down the heap. */
+.fx-book .fx-book__b--1.fx-book__b--down {
+  z-index: 3;
+  transform: translate(12px, -6px) rotate(-62deg);
+}
+
+/* ---------- the cogs ---------- */
+
+.fidgets .cell--gears {
+  grid-column: 1 / -1;
+  padding: 4px 8px 2px;
+  background:
+    radial-gradient(circle, rgba(75, 21, 40, 0.08) 1.2px, transparent 1.7px) 0 0 / 10px 10px,
+    var(--win);
+}
+
+.gears {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 104px;
+  overflow: visible;
+  touch-action: none;
+  user-select: none;
+}
+
+.gears__box {
+  fill: #f6ebdf;
+  stroke: #dcc5ad;
+  stroke-width: 1.5;
+}
+
+.gears__lip {
+  fill: #eedcc8;
+  stroke: #dcc5ad;
+  stroke-width: 1.2;
+  pointer-events: none;
+}
+
+.gears__ghost {
+  fill: rgba(255, 255, 255, 0.5);
+  stroke: #d9b6c6;
+  stroke-width: 1.2;
+  stroke-dasharray: 3 3;
+  transition: opacity 200ms;
+}
+
+.gears__pin {
+  fill: #b39aa8;
+}
+
+.gears__peg {
+  cursor: var(--cursor-hand);
+}
+
+.gears__peg--filled {
+  cursor: default;
+}
+
+.gears__peg--filled .gears__ghost {
+  opacity: 0;
+}
+
+.gears__housing {
+  fill: #c9d0dc;
+  stroke: #9aa4b8;
+  stroke-width: 1.2;
+}
+
+.gears__led {
+  fill: #7be3a4;
+  animation: gears-led 1.4s steps(2) infinite;
+}
+
+.gears--done .gears__led {
+  animation-duration: 0.5s;
+}
+
+@keyframes gears-led {
+  50% {
+    fill: #c9eed8;
+  }
+}
+
+.gears__cog--loose {
+  cursor: var(--cursor-hand);
+  outline: none;
+}
+
+.gears__cog--loose:hover > g > path,
+.gears__cog--loose:focus-visible > g > path {
+  stroke: #b84f7a;
+  stroke-width: 1.8;
+}
+
+.gears__cog--held {
+  cursor: grabbing;
+}
+
+.gears__cog--flying,
+.gears__cog--motor {
+  pointer-events: none;
+}
+
+/* While the scene goes from step to step the stage keeps its height (see index.ts);
+   whatever comes next sits in the middle of it. */
+.stage--held {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* ---------- the quiz: compact, so it fits the window under PAL's bubble without scrolling ---------- */
+
+.stage:has(> .quiz) {
+  container-type: inline-size;
+}
+
+.quiz {
+  gap: 5px;
+  padding-top: 4px;
+}
+
+/* Narrow: the field takes what is left beside its lamp, so the lamp never sticks out. */
+.quiz .quiz__answer .field.field--short {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.quiz__row {
+  gap: 4px;
+}
+
+.quiz__row label {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.quiz .field.field--short {
+  height: 30px;
+  padding: 0 10px;
+}
+
+.quiz .btn--go {
+  margin-top: 2px;
+}
+
+.quiz .error:empty {
+  display: none;
+}
+
+/* Wide enough: each question on one line, its field and lamp on the right. */
+@container (min-width: 380px) {
+  .quiz__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quiz .quiz__answer .field.field--short {
+    flex: none;
+    width: 148px;
+  }
+}
+
+/* ---------- the lights: a way out keeps its place from the start ---------- */
+
+.lamps__tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.lamps__help[hidden] {
+  display: inline-block;
+  visibility: hidden;
+}
+
+.lamps__help:not([hidden]) {
+  animation: rise 320ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-chain--tug .fx-chain__pull,
+  .gears__led {
+    animation: none;
+  }
+
+  .fx-book .fx-book__b,
+  .fx-tilt__frame,
+  .fx-chain__pull {
+    transition: none;
+  }
+}

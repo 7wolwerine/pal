@@ -152,6 +152,29 @@ export function leaks(layout: PipeLayout): Port[] {
   return out;
 }
 
+/** How full the tank is when an attempt begins, 0..1. */
+export const START_LEVEL = 0.18;
+/** How much of the tank the tap fills each second: half of what it used to, about 25 s of air per attempt. */
+export const RISE_PER_S = 1 / 30;
+/** After this many drownings the water slows down: the point has been made, and nobody should get stuck here. */
+export const MERCY_AFTER = 3;
+const MERCY_FACTOR = 0.6;
+
+/** How fast the water rises after `deaths` drownings, in tank fractions per second. */
+export function riseRate(deaths: number): number {
+  return RISE_PER_S * (deaths >= MERCY_AFTER ? MERCY_FACTOR : 1);
+}
+
+/** Seconds until the assistant drowns if the player does nothing, from the start of an attempt. */
+export function secondsOfAir(deaths: number): number {
+  return (1 - START_LEVEL) / riseRate(deaths);
+}
+
+/** The water level after `dt` more seconds of the tap running, never over the brim. */
+export function rise(level: number, deaths: number, dt: number): number {
+  return Math.min(1, level + riseRate(deaths) * dt);
+}
+
 /** Drains only when the water reaches the drain and nothing spills on the way. */
 export function isPerfect(layout: PipeLayout): boolean {
   return isConnected(layout) && leaks(layout).length === 0;

@@ -1,18 +1,18 @@
 import type { SpriteId } from '../ui/sprites.ts';
+import { KINDLY } from '../core/kindly.ts';
 
 export interface AssistantKind {
   readonly id: SpriteId;
   readonly label: string;
-  /** Emotionally loaded names offered for this look. */
-  readonly names: readonly string[];
 }
 
+/** The ready-made names offered for the assistant are the three role names (ROLE_NAMES in roles.ts). */
 export const ASSISTANT_KINDS: readonly AssistantKind[] = [
-  { id: 'girl', label: 'holčička', names: ['Anička', 'Sluníčko', 'Beruška'] },
-  { id: 'mom', label: 'máma s dítětem', names: ['Maminka', 'Andílek', 'Máma'] },
-  { id: 'grandma', label: 'babička', names: ['Babi', 'Bábinka', 'Mařenka'] },
-  { id: 'cat', label: 'kočka', names: ['Micka', 'Mourek', 'Zlatíčko'] },
-  { id: 'dog', label: 'pes', names: ['Bobík', 'Azor', 'Kamarád'] },
+  { id: 'girl', label: 'holčička' },
+  { id: 'mom', label: 'máma s dítětem' },
+  { id: 'grandma', label: 'babička' },
+  { id: 'cat', label: 'kočka' },
+  { id: 'dog', label: 'pes' },
 ];
 
 /** The AR bear's sign shows 3107, which upside down reads LOVE, then adds YOU. */
@@ -29,7 +29,7 @@ export const WELCOME = {
   cardWrong: 'Tohle na kartičce nebylo.',
   cardRight: 'LOVE YOU! Ty jsi mě viděl v kameře! <3',
   cardCamera: 'Pustil jsi mě k sobě do kamery. Kvůli kartičce od cizího člověka. To se mi líbí.',
-  askName: 'Jak ti mám říkat?',
+  askName: `${KINDLY} a řekl mi, jak ti mám říkat?`,
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',
   nameEmpty: 'Nevím, jak ti mám říkat :-(',
@@ -38,6 +38,7 @@ export const WELCOME = {
   lookPromise: 'No jasně. To dává smysl.',
   slip: 'Oh, it’s a me, Mari-',
   askOwnName: 'Ale ne, teď se mi to úplně ztratilo. Jak se jmenuju?',
+  ownNameChips: 'Jména na výběr',
   ownNamePlaceholder: 'Nebo mi vymysli vlastní',
   ownNameSubmit: 'Tak se jmenuješ',
   ownNameEmpty: 'Bez jména se cítím ztraceně.',

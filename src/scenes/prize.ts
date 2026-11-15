@@ -1,7 +1,8 @@
 import { ASSISTANT_KINDS } from '../content/welcome.ts';
-import { PRIZE, hiddenPayload } from '../content/prize.ts';
+import { PRIZE, gameAddress, hiddenPayload, prizeMailto } from '../content/prize.ts';
 import { memoryFrom, memoryLine } from '../core/memory.ts';
 import { hide } from '../core/stego.ts';
+import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
 import { strongestRole, type GameScene } from '../game.ts';
 import { TRICKS } from '../content/tricks.ts';
 import { rankOf, scoreOf } from '../core/score.ts';
@@ -16,9 +17,10 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
  * The "you won!" screen right before the reveal: an absurd score, confetti,
- * a lovely certificate, and the offer to e-mail it. Nothing is ever sent —
- * the send is theatre — and the saved picture carries a hidden, harmless
- * payload in its pixels.
+ * a lovely certificate, and the offer to e-mail it. The page itself sends
+ * nothing: it hands a finished letter to the player's own mail program
+ * (a mailto: link, opened by their click), wrapped in a little sending
+ * theatre. The saved picture carries a hidden, harmless payload in its pixels.
  */
 export const prize: GameScene = {
   id: SCENE,
@@ -52,6 +54,7 @@ export const prize: GameScene = {
       await pal.tapToContinue();
       if (!alive) return;
       await pal.say(PRIZE.askEmail);
+      kindlyAsked(witness, SCENE);
       if (!alive) return;
       askEmail();
       void bugWarns(ctx, ctx.window.el, 'prize', { side: 'right', mood: 'angry' }).then(() => {
@@ -95,7 +98,16 @@ export const prize: GameScene = {
         email = value;
         profile.email = value;
         witness.disclose(SCENE, 'real-email', 'email', value);
-        void fakeSend(send);
+        kindlyObeyed(witness, SCENE);
+        const href = prizeMailto(value, {
+          name: facts.name,
+          title: facts.title,
+          score: facts.score,
+          rank: facts.rank,
+          date: facts.date,
+          url: gameAddress(location),
+        });
+        void sendMail(send, href);
       });
       decline.addEventListener('click', () => {
         witness.record({ scene: SCENE, kind: 'declined-email', data: {} });
@@ -106,14 +118,34 @@ export const prize: GameScene = {
       input.focus();
     }
 
-    // Theatre: it looks like it sends. It does not; nothing leaves the page.
-    async function fakeSend(button: HTMLButtonElement): Promise<void> {
+    // The player's own mail program opens with the letter written, still inside
+    // their click (a later open can be refused once the click's activation has
+    // lapsed); the little sending theatre plays around it in the game.
+    async function sendMail(button: HTMLButtonElement, href: string): Promise<void> {
       button.disabled = true;
       button.textContent = PRIZE.sending;
-      await sleep(1300);
+      openMail(href);
+      await sleep(prefersReducedMotion() ? 100 : 900);
       if (!alive) return;
-      status.textContent = PRIZE.sent;
+      const again = h('a', { class: 'prize__again', text: PRIZE.mailAgain, attrs: { href } });
+      again.addEventListener('click', (event) => {
+        event.preventDefault();
+        openMail(href);
+      });
+      status.replaceChildren(PRIZE.sent, ' ', again);
       offerSave();
+      void pal.say(PRIZE.mailWaiting);
+    }
+
+    /**
+     * Hands the letter to the mail program. A mailto: link never unloads the
+     * page, and a throwaway anchor (not `location`) keeps the game where it is.
+     */
+    function openMail(href: string): void {
+      const a = h('a', { attrs: { href, hidden: '' } });
+      document.body.append(a);
+      a.click();
+      a.remove();
     }
 
     function offerSave(): void {

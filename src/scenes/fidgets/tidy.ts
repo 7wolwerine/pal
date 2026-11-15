@@ -3,11 +3,16 @@ import { FIDGETS } from '../../content/fidgets.ts';
 import type { GameContext } from '../../game.ts';
 import { h, sleep } from '../../ui/dom.ts';
 import { BUG_PX, Beetle } from '../../ui/beetle.ts';
-import { FidgetModel, TILT_MAX, alignedValue, isAligned, type Control } from './model.ts';
+import { gearBoard } from './gearboard.ts';
+import { BOOKS, FidgetModel, SCREWS, TILT_MAX, alignedValue, isAligned, screwOut, type Control, type ControlKind } from './model.ts';
 
 const SCENE = 'fidgets';
 /** How far (px) a press has to travel before it counts as a drag rather than a click. */
 const DRAG_START = 5;
+/** The widest BUG's bubble gets (see `.bug__bubble`), px. */
+const BUBBLE_MAX = 190;
+/** Where BUG prefers to make his last stand: the middle of the panel, so his bubble has room. */
+const STAND_ORDER = ['book', 'chain', 'screw', 'plug', 'mail', 'tilt'];
 
 interface Cell {
   readonly el: HTMLElement;
@@ -15,13 +20,21 @@ interface Cell {
   sync(): void;
 }
 
-type Change = (id: string, dragTo?: number) => void;
+interface ChangeOptions {
+  /** A value set by dragging, instead of a click. */
+  readonly drag?: number;
+  /** Which part of the control a click meant (which screw). */
+  readonly part?: number;
+}
+
+type Change = (id: string, options?: ChangeOptions) => void;
 
 /**
  * The panel of nearly-done things. Nothing asks the player to fix them. When
  * they do, BUG grumbles and stamps; after each tidy-up he marches over and,
  * with real effort, puts some of them wrong again — three times — and finally
- * makes a last stand. Resolves once the player has out-stubborned him.
+ * makes a last stand. Below the panel, cogs wait to go back on their pegs.
+ * Resolves once the player has out-stubborned him.
  */
 export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -32,28 +45,58 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     let roundStartedAt = startedAt;
     let touched = false;
     let busy = false;
-    let gearPlaced = false;
     let lastPlea = 0;
     let pleas = 0;
 
     const beetle = new Beetle();
     const panel = h('div', { class: 'fidgets' });
 
-    const corner = (): [number, number] => [panel.clientWidth - BUG_PX - 2, -BUG_PX + 12];
+    /**
+     * Keeps BUG far enough from the edges of PAL's window that his widest bubble
+     * is not cut off by it: the window clips, and his bubble only knows the screen.
+     */
+    const inside = (x: number): number => {
+      let clip: Element | null = panel.parentElement;
+      while (clip && getComputedStyle(clip).overflowX === 'visible') clip = clip.parentElement;
+      if (!clip) return x;
+      const p = panel.getBoundingClientRect();
+      const c = clip.getBoundingClientRect();
+      const overhang = Math.max(0, (BUBBLE_MAX - BUG_PX) / 2) + 4;
+      const lo = c.left - p.left + overhang;
+      const hi = c.right - p.left - BUG_PX - overhang;
+      return lo > hi ? (lo + hi) / 2 : Math.max(lo, Math.min(hi, x));
+    };
+    // His corner is on the panel's top edge, but never so high that he covers PAL's bubble.
+    const corner = (): [number, number] => {
+      const bubble = ctx.pal.el.querySelector('.pal__bubble')?.getBoundingClientRect();
+      const clear = bubble && bubble.height ? bubble.bottom - panel.getBoundingClientRect().top - 6 : -Infinity;
+      return [inside(panel.clientWidth - BUG_PX - 2), Math.max(-BUG_PX + 12, Math.min(clear, -BUG_PX * 0.45))];
+    };
     const above = (id: string): [number, number] => {
       const cell = cells.get(id)?.el;
       if (!cell) return corner();
-      return [cell.offsetLeft + cell.offsetWidth / 2 - BUG_PX / 2, cell.offsetTop - BUG_PX + 18];
+      return [inside(cell.offsetLeft + cell.offsetWidth / 2 - BUG_PX / 2), cell.offsetTop - BUG_PX + 18];
     };
 
     const maybeComplete = (): void => {
-      if (!busy && gearPlaced && model.allAligned) void tidied();
+      if (!busy && gears.complete && model.allAligned) void tidied();
+    };
+
+    const touch = (what: string): void => {
+      if (touched) return;
+      touched = true;
+      witness.record({
+        scene: SCENE,
+        kind: 'first-touch',
+        trick: 'completion-urge',
+        data: { control: what, ms: Math.round(performance.now() - startedAt) },
+      });
     };
 
     /** BUG does not like this one bit: a scribble, a stamp, sometimes a word. */
     const grumble = (id: string): void => {
       const now = performance.now();
-      if (busy || beetle.busy || now - lastPlea < 1500) return;
+      if (busy || beetle.busy || beetle.away || now - lastPlea < 1500) return;
       lastPlea = now;
       pleas++;
       void (async () => {
@@ -73,29 +116,24 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       })();
     };
 
-    const change: Change = (id, dragTo) => {
+    const change: Change = (id, options = {}) => {
       if (busy) return;
-      if (!touched) {
-        touched = true;
-        witness.record({
-          scene: SCENE,
-          kind: 'first-touch',
-          trick: 'completion-urge',
-          data: { control: id, ms: Math.round(performance.now() - startedAt) },
-        });
-      }
-      const before = model.get(id).value;
-      const finished = dragTo === undefined ? model.poke(id) : model.drag(id, dragTo);
-      const after = model.get(id).value;
+      touch(id);
+      const control = model.get(id);
+      const before = control.value;
+      const dragged = options.drag !== undefined;
+      const finished = options.drag === undefined ? model.poke(id, options.part) : model.drag(id, options.drag);
+      const after = control.value;
       if (after === before && !finished) return;
-      if (dragTo === undefined) witness.tally('fidget');
-      cells.get(id)?.sync();
+      if (!dragged) witness.tally('fidget');
+      const cell = cells.get(id);
+      cell?.sync();
+      if (!isAligned(control)) cell?.el.classList.remove('cell--done');
+      feel(control.kind, before, after, dragged);
       if (finished) {
-        audio.snap(76 + model.controls.findIndex((c) => c.id === id) * 2);
-        cells.get(id)?.el.classList.add('cell--done');
+        window.setTimeout(() => audio.snap(76 + model.controls.indexOf(control) * 2), control.kind === 'screw' ? 160 : 0);
+        cell?.el.classList.add('cell--done');
         grumble(id);
-      } else if (dragTo === undefined || Math.abs(after - before) >= 1) {
-        audio.click(60 + Math.abs(after) * 2, dragTo === undefined ? 0.45 : 0.2);
       }
       maybeComplete();
     };
@@ -105,29 +143,25 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       cells.set(control.id, cell);
       panel.append(cell.el);
     });
-    const socket = h('span', { class: 'gear-socket', attrs: { 'aria-hidden': 'true' } }, gearSvg());
-    panel.append(socket, beetle.el);
 
-    const gear = h('button', { class: 'gear gear--fallen', attrs: { type: 'button', 'aria-label': 'Spadlé kolečko' } }, gearSvg());
-    gear.addEventListener('click', () => {
-      if (gearPlaced) return;
-      gearPlaced = true;
-      witness.record({ scene: SCENE, kind: 'gear-back', trick: 'completion-urge' });
-      const from = gear.getBoundingClientRect();
-      const to = socket.getBoundingClientRect();
-      gear.style.setProperty('--gx', `${Math.round(to.left - from.left + (to.width - from.width) / 2)}px`);
-      gear.style.setProperty('--gy', `${Math.round(to.top - from.top + (to.height - from.height) / 2)}px`);
-      gear.classList.remove('gear--fallen');
-      gear.classList.add('gear--placing');
-      gear.disabled = true;
-      socket.classList.add('gear-socket--filled');
-      window.setTimeout(() => {
-        audio.snap(72);
-        maybeComplete();
-      }, 650);
+    // The cogs live below the panel's little things, across its whole width.
+    const gearLamp = h('span', { class: 'lamp', attrs: { 'aria-hidden': 'true' } });
+    const gears = gearBoard(FIDGETS.gearsLabel, FIDGETS.gearLabel, (_id, all) => {
+      touch('gears');
+      witness.tally('fidget');
+      if (!all) return;
+      gearLamp.classList.add('lamp--on');
+      gearCell.classList.add('cell--done');
+      witness.record({ scene: SCENE, kind: 'gear-back', trick: 'completion-urge', data: { gears: 4, ms: Math.round(performance.now() - startedAt) } });
+      grumble('gears');
+      maybeComplete();
     });
+    const gearCell = h('div', { class: 'cell cell--gears', attrs: { role: 'group', 'aria-label': FIDGETS.gearsLabel } }, gearLamp);
+    gearCell.append(gears.el);
+    cells.set('gears', { el: gearCell, sync: () => undefined });
+    panel.append(gearCell, beetle.el);
 
-    stage.replaceChildren(panel, gear);
+    stage.replaceChildren(panel);
     for (const cell of cells.values()) cell.sync();
     requestAnimationFrame(() => {
       const [x, y] = corner();
@@ -137,6 +171,9 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     async function tidied(): Promise<void> {
       busy = true;
       const round = model.completeRound();
+      // Shooed off just now? He comes back before he gets to work.
+      await beetle.whenBack();
+      if (signal.aborted) return;
       witness.record({
         scene: SCENE,
         kind: 'tidied',
@@ -159,6 +196,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         await beetle.moveTo(panel.clientWidth + 20, y);
         beetle.el.classList.add('bug--gone');
         await sleep(600);
+        gears.stop();
         if (!signal.aborted) resolve();
         return;
       }
@@ -204,7 +242,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     /** BUG sits down on one control and will not budge; the player shoves him off by clicking. */
     function lastStand(): Promise<void> {
       return new Promise((done) => {
-        const victim = model.controls.find(isAligned) ?? model.controls[0];
+        const victim = STAND_ORDER.map((id) => model.get(id)).find(isAligned) ?? model.controls[0];
         if (!victim) {
           done();
           return;
@@ -264,33 +302,36 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       });
     }
 
-    signal.addEventListener('abort', () => beetle.stop());
+    signal.addEventListener('abort', () => {
+      beetle.stop();
+      gears.stop();
+    });
   });
 }
 
-/** An 8-tooth cog as inline SVG. */
-function gearSvg(): SVGSVGElement {
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  let d = '';
-  for (let i = 0; i < 8; i++) {
-    const a = (i / 8) * Math.PI * 2;
-    const b = a + Math.PI / 8;
-    const p = (r: number, t: number) => `${(12 + r * Math.cos(t)).toFixed(1)} ${(12 + r * Math.sin(t)).toFixed(1)}`;
-    d += `${i === 0 ? 'M' : 'L'} ${p(11, a)} L ${p(11, b)} L ${p(7.5, b)} L ${p(7.5, a + Math.PI / 4)} `;
+/** The sound of one thing being moved: every kind has its own. */
+function feel(kind: ControlKind, before: number, after: number, dragged: boolean): void {
+  switch (kind) {
+    case 'tilt':
+      if (Math.abs(after - before) >= 1) audio.click(58 + Math.abs(after) * 2, dragged ? 0.2 : 0.45);
+      return;
+    case 'screw':
+      // A short ratchet as it bites into the plate.
+      [0, 50, 100].forEach((ms, i) => window.setTimeout(() => audio.click(62 + i * 5, 0.32), ms));
+      return;
+    case 'chain':
+      audio.click(after === 1 ? 82 : 64, 0.5);
+      return;
+    case 'book':
+      audio.knock();
+      return;
+    case 'plug':
+      audio.click(70, 0.4);
+      return;
+    case 'mail':
+      audio.click(60 + after * 2, 0.45);
+      return;
   }
-  const cog = document.createElementNS(NS, 'path');
-  cog.setAttribute('d', `${d}Z`);
-  cog.setAttribute('fill', 'currentColor');
-  const hole = document.createElementNS(NS, 'circle');
-  hole.setAttribute('cx', '12');
-  hole.setAttribute('cy', '12');
-  hole.setAttribute('r', '3');
-  hole.setAttribute('fill', 'var(--pick)');
-  svg.append(cog, hole);
-  return svg;
 }
 
 /**
@@ -318,7 +359,7 @@ function draggable(
     if (!dragging && Math.abs(delta) < DRAG_START) return;
     dragging = true;
     el.classList.add('fx--dragging');
-    change(control.id, toValue(start.value, delta));
+    change(control.id, { drag: toValue(start.value, delta) });
   });
   const end = (): void => {
     if (dragging) swallowClick = true;
@@ -348,56 +389,143 @@ function buildCell(control: Control, change: Change): Cell {
     sync() {
       sync();
       lamp.classList.toggle('lamp--on', isAligned(control));
+      if (control.kind === 'chain') el.classList.toggle('cell--warm', control.value === 1);
     },
   };
 }
 
+/** Where each book lies once it has fallen over; they fall in this order, so the last one is on top of the heap. */
+const FALL_ORDER = [0, 4, 3, 1, 2] as const;
+
 function buildWidget(control: Control, label: string, change: Change): { el: HTMLElement; sync(): void } {
+  // Every widget is drawn in the same small box, which the stylesheet scales to fit the cell.
   const button = (cls: string, ...children: HTMLElement[]): HTMLButtonElement =>
-    h('button', { class: `fx ${cls}`, attrs: { type: 'button', 'aria-label': label } }, ...children);
+    h('button', { class: `fx ${cls}`, attrs: { type: 'button', 'aria-label': label } }, h('span', { class: 'fx__art' }, ...children));
 
   switch (control.kind) {
     case 'tilt': {
-      // A picture on a nail: drag sideways to straighten it, or nudge it with clicks.
+      // A picture on a nail: drag sideways to straighten it, or give it a firm nudge with a click.
       const frame = h('span', { class: 'fx-tilt__frame' }, h('span', { class: 'fx-tilt__pic' }));
       const el = button('fx-tilt', h('span', { class: 'fx-tilt__nail' }), frame);
       draggable(el, control, change, 'x', (start, dx) => Math.max(-TILT_MAX, Math.min(TILT_MAX, start + dx / 5)));
       return { el, sync: () => el.style.setProperty('--tilt', `${control.value}deg`) };
     }
     case 'screw': {
-      // One screw out of four stands proud of the plate; every click turns it further in.
-      let turned = 0;
-      const head = h('span', { class: 'fx-screw__head' }, h('span', { class: 'fx-screw__slot' }));
-      const shaft = h('span', { class: 'fx-screw__shaft' });
-      const el = button(
-        'fx-screw',
-        h('span', { class: 'fx-screw__plate' }, h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__dot' }), h('span', { class: 'fx-screw__spot' }, shaft, head)),
+      // Four screws stand proud of a plate. A click drives in the loose one nearest to it.
+      const turned = Array.from({ length: SCREWS }, (_, i) => i * 37);
+      const screws = Array.from({ length: SCREWS }, (_, i) =>
+        h('span', { class: `fx-screw__s fx-screw__s--${i}` }, h('span', { class: 'fx-screw__shaft' }), h('span', { class: 'fx-screw__head' }, h('span', { class: 'fx-screw__slot' }))),
       );
+      const el = button('fx-screw', h('span', { class: 'fx-screw__plate' }), ...screws);
       let last = control.value;
+      el.addEventListener('click', (event) => {
+        let part: number | undefined;
+        if (event.detail > 0) {
+          let best = Infinity;
+          screws.forEach((s, i) => {
+            if (!screwOut(control.value, i)) return;
+            const r = s.getBoundingClientRect();
+            const d = Math.hypot(event.clientX - (r.left + r.width / 2), event.clientY - (r.top + r.height / 2));
+            if (d < best) {
+              best = d;
+              part = i;
+            }
+          });
+        }
+        change(control.id, { part });
+      });
+      return {
+        el,
+        sync: () => {
+          screws.forEach((s, i) => {
+            const out = screwOut(control.value, i);
+            const was = screwOut(last, i);
+            if (was && !out) turned[i] = (turned[i] ?? 0) + 540;
+            if (!was && out) turned[i] = (turned[i] ?? 0) - 540;
+            s.classList.toggle('fx-screw__s--out', out);
+            s.style.setProperty('--turn', `${turned[i] ?? 0}deg`);
+          });
+          last = control.value;
+        },
+      };
+    }
+    case 'chain': {
+      // A little lamp with a pull chain. Pull it (click, or drag it down) and the light comes on.
+      const chain = h('span', { class: 'fx-chain__pull' }, h('span', { class: 'fx-chain__links' }), h('span', { class: 'fx-chain__bead' }));
+      const el = button(
+        'fx-chain',
+        h('span', { class: 'fx-chain__glow' }),
+        h('span', { class: 'fx-chain__rose' }),
+        h('span', { class: 'fx-chain__cord' }),
+        h('span', { class: 'fx-chain__cone' }),
+        chain,
+        h('span', { class: 'fx-chain__bulb' }),
+        h('span', { class: 'fx-chain__shade' }),
+      );
+      let start: { y: number; id: number } | undefined;
+      let pulled = 0;
+      let swallowClick = false;
+      const tug = (): void => {
+        el.classList.remove('fx-chain--tug');
+        void el.offsetWidth;
+        el.classList.add('fx-chain--tug');
+        audio.click(98, 0.18);
+        // The light switches at the bottom of the pull.
+        window.setTimeout(() => change(control.id), 120);
+      };
+      el.addEventListener('pointerdown', (event) => {
+        start = { y: event.clientY, id: event.pointerId };
+        pulled = 0;
+        el.setPointerCapture(event.pointerId);
+      });
+      el.addEventListener('pointermove', (event) => {
+        if (!start || event.pointerId !== start.id) return;
+        const dy = event.clientY - start.y;
+        if (pulled === 0 && dy < DRAG_START) return;
+        pulled = Math.max(0, Math.min(16, dy));
+        el.classList.add('fx--dragging');
+        el.style.setProperty('--pull', `${pulled}px`);
+      });
+      const release = (): void => {
+        if (!start) return;
+        start = undefined;
+        el.classList.remove('fx--dragging');
+        if (pulled === 0) return;
+        swallowClick = true;
+        const far = pulled >= 9;
+        pulled = 0;
+        // It springs back up.
+        el.style.removeProperty('--pull');
+        if (far) {
+          audio.click(98, 0.18);
+          change(control.id);
+        }
+      };
+      el.addEventListener('pointerup', release);
+      el.addEventListener('pointercancel', release);
+      el.addEventListener('click', (event) => {
+        if (swallowClick) {
+          swallowClick = false;
+          event.preventDefault();
+          return;
+        }
+        tug();
+      });
+      el.addEventListener('animationend', () => el.classList.remove('fx-chain--tug'));
+      return { el, sync: () => el.classList.toggle('fx-chain--on', control.value === 1) };
+    }
+    case 'book': {
+      // Books lie fallen over, leaning and in a heap; every click stands one of them back up.
+      const books = Array.from({ length: BOOKS }, (_, i) => h('span', { class: `fx-book__b fx-book__b--${i}` }));
+      const el = button('fx-book', h('span', { class: 'fx-book__shelf' }), ...books);
       el.addEventListener('click', () => change(control.id));
       return {
         el,
         sync: () => {
-          if (control.value !== last) turned += (last - control.value) * 72;
-          last = control.value;
-          el.style.setProperty('--out', String(control.value));
-          el.style.setProperty('--turn', `${turned + control.value * -72}deg`);
+          const fallen = new Set(FALL_ORDER.slice(0, control.value));
+          books.forEach((b, i) => b.classList.toggle('fx-book__b--down', fallen.has(i as (typeof FALL_ORDER)[number])));
         },
       };
-    }
-    case 'drawer': {
-      // A drawer left open a crack: push it shut (drag left, or click).
-      const front = h('span', { class: 'fx-drawer__front' }, h('span', { class: 'fx-drawer__handle' }));
-      const el = button('fx-drawer', h('span', { class: 'fx-drawer__case' }), front);
-      draggable(el, control, change, 'y', (start, dy) => start - dy / 3);
-      return { el, sync: () => el.style.setProperty('--open', String(control.value)) };
-    }
-    case 'book': {
-      // A row of books with one pulled out: push it back in line.
-      const books = [0, 1, 2, 3, 4].map((i) => h('span', { class: `fx-book__b fx-book__b--${i}` }));
-      const el = button('fx-book', h('span', { class: 'fx-book__row' }, ...books), h('span', { class: 'fx-book__shelf' }));
-      draggable(el, control, change, 'y', (start, dy) => start - dy / 4);
-      return { el, sync: () => el.style.setProperty('--out', String(control.value)) };
     }
     case 'plug': {
       // A lamp whose plug lies just out of the socket. Put it in and the lamp lights.

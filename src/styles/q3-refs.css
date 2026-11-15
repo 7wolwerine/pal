@@ -1,0 +1,190 @@
+/* refs: styles added with the third feedback round. Loaded after app.css, so rules here win. */
+
+/* ---------- treasure: the chests after the red-and-gold reference ---------- */
+
+.chest__art {
+  width: 64px;
+  height: 60px;
+  image-rendering: pixelated;
+}
+
+.chest--gold .chest__art {
+  width: 128px;
+  height: 120px;
+}
+
+.chest--gold .chest__lock {
+  top: 56px;
+}
+
+.chest--gold.chest--opened .chest__art {
+  filter: drop-shadow(0 0 10px rgba(255, 214, 102, 0.85)) drop-shadow(0 -6px 14px rgba(255, 190, 80, 0.55));
+}
+
+.chest--gold:disabled {
+  cursor: var(--cursor);
+}
+
+.points__level {
+  padding: 2px 8px;
+  border: 2px solid #8a5c1c;
+  border-radius: 4px;
+  background: #3a2414;
+  color: #ffe9a0;
+  font: 700 13px/1.2 Georgia, 'Times New Roman', serif;
+  animation: pop 300ms ease-out both;
+}
+
+.points__level[hidden] {
+  display: none;
+}
+
+.flycoin--star {
+  border-radius: 0;
+  background: #fff1a8;
+  clip-path: polygon(50% 0, 63% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 37% 36%);
+}
+
+/* ---------- the treasure window: a late-nineties game dialog ---------- */
+
+.treasure {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(30, 14, 6, 0.45);
+  animation: treasure-veil 200ms ease-out both;
+}
+
+.treasure__box {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  justify-items: center;
+  width: 288px;
+  height: 348px;
+  padding: 30px 30px 26px;
+  box-sizing: border-box;
+  color: #efe3c4;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  text-align: center;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.45));
+  animation: treasure-in 240ms steps(4, end) both;
+}
+
+.treasure--still,
+.treasure--still .treasure__box {
+  animation: none;
+}
+
+.treasure--out {
+  animation: treasure-veil 180ms ease-in reverse forwards;
+}
+
+.treasure__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.treasure__title {
+  margin: 4px 0 6px;
+  color: #f2d27a;
+  font: 700 17px/1.1 Georgia, 'Times New Roman', Times, serif;
+  letter-spacing: 0.04em;
+  text-shadow: 1px 1px 0 #160b04;
+}
+
+.treasure__text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.38;
+  text-shadow: 1px 1px 0 #160b04;
+}
+
+.treasure__pick {
+  display: grid;
+  grid-template-columns: 72px auto 72px;
+  align-items: end;
+  align-self: end;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.treasure__tile {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #efe3c4;
+  font: inherit;
+  cursor: var(--cursor-hand);
+}
+
+.treasure__tile:focus-visible,
+.treasure__ok:focus-visible {
+  outline: 2px dotted #f2d27a;
+  outline-offset: 3px;
+}
+
+.treasure__art {
+  display: block;
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+}
+
+.treasure__amount {
+  font-size: 13px;
+  text-shadow: 1px 1px 0 #160b04;
+}
+
+.treasure__or {
+  padding-bottom: 26px;
+  font-size: 14px;
+  font-style: italic;
+  text-shadow: 1px 1px 0 #160b04;
+}
+
+.treasure__ok {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: var(--cursor-hand);
+}
+
+.treasure__ok[aria-disabled='true'] {
+  cursor: var(--cursor);
+}
+
+.treasure__ok-art {
+  display: block;
+  width: 90px;
+  height: 42px;
+  image-rendering: pixelated;
+}
+
+.treasure__ok:active:not([aria-disabled='true']) .treasure__ok-art {
+  transform: translateY(1px);
+}
+
+@keyframes treasure-veil {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes treasure-in {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}

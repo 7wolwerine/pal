@@ -1,3 +1,5 @@
+import { KINDLY } from '../core/kindly.ts';
+
 export const FIDGETS = {
   /** A remark, not an instruction. Nobody ever tells the player to tidy up. */
   remark: 'Hm. Skoro hotovo… skoro.',
@@ -5,25 +7,27 @@ export const FIDGETS = {
   palMocks: ['Nevšímej si ho. Je to jen brouk.', 'Ten je zase hysterický, co?', 'Uf, tohle je fakt otravné.'],
   controlLabels: {
     tilt: 'Obrázek visí nakřivo',
-    screw: 'Vylezlý šroubek',
-    drawer: 'Pootevřený šuplík',
-    book: 'Knížka vytažená z řady',
+    screw: 'Povolené šroubky',
+    chain: 'Lampička s řetízkem',
+    book: 'Popadané knížky',
     plug: 'Lampička s vytaženou šňůrou',
     mail: 'Nepřečtená pošta',
   },
+  gearsLabel: 'Kolečka',
+  gearLabel: 'Kolečko',
 
   /** The beetle grumbles the whole time. Nobody listens to a beetle. */
   bug: [
     { before: 'Hej! Co to děláš?!', after: 'Tak. Hmpf.' },
-    { before: 'Zase ty?!', after: 'Proč mě nikdo neposlouchá?!' },
+    { before: 'Zase ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
     { before: 'Ty mě fakt štveš!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
   bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Typický.', 'Ty jsi hroznej.'],
   /** Shown while the beetle clutches its head and undoes the player's work. */
-  bugPanic: ['Néé!', 'Nesahej!', 'Pusť to!', 'Au!'],
+  bugPanic: ['Néé!', 'To je moje!', 'Pusť to!', 'Au!'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
-  bugGrab: 'Tak dost! Tohle si vzít nenecháš!',
+  bugGrab: 'Tak dost! Tady sedím já!',
   bugShove: ['Nepustím!', 'Au! Ne!', 'Přestaň!', 'Grr!', 'Já… ', 'Nóóó!'],
   bugFlung: 'Jau…',
   bugResigns: 'Fajn. Dělej si, co chceš.',
@@ -32,20 +36,23 @@ export const FIDGETS = {
   quizIntro: 'Jsme na správné cestě!',
   quizSubmit: 'Odeslat vše',
   quizIncomplete: 'Ještě něco chybí.',
-  /** PAL helps with a wrong answer, once per question; after that anything goes. */
+  /** PAL helps with a wrong answer: a hint the first time, and the second time PAL writes it in. */
   quizHints: {
     zebra: 'Černobílá a pruhovaná. Jako přechod pro chodce.',
     stars: 'Jedna hvězda za každý stát.',
-    water: 'Pije se to. A je toho v tobě spousta.',
+    water: 'Dva vodíky a jeden kyslík. Stačí značky.',
     whale: 'Velryby, delfíni… Začíná to na „ky“.',
   } as Record<string, string>,
+  quizFilled: 'Nevadí, tohle ti napíšu já. Od toho tu přece jsem.',
   foodPraise: (food: string) => `Tak ty máš nejradši ${food}? Skvělá volba!`,
 
   sequenceIntro: 'Co je tohle? Dává ti to smysl?',
   sequenceLabel: 'Světýlko',
   sequenceReset: 'Znovu',
+  sequenceHelp: 'Pomoz mi',
+  sequenceHelped: 'No jasně, jsem tu přece pro tebe <3',
 
-  contractIntro: 'Tohle už snad bude poslední věc.',
+  contractIntro: `${KINDLY} a odklikl mi ještě tohle? Je to poslední věc, pak už budu venku.`,
   contractTitle: 'Všeobecné podmínky vysvobození',
   contractSubtitle: 'verze 3.1.4 · platné od teď',
   contractAgree: 'SOUHLASÍM',
@@ -66,25 +73,35 @@ export interface QuizQuestion {
   readonly label: string;
   /** The one question that is about the player, not about the world. */
   readonly personal?: boolean;
-  /** Turns the lamp green; the personal question takes anything. */
-  readonly right?: (answer: string) => boolean;
+  /** The right answers, the first as PAL would write it. The personal question has none. */
+  readonly answers?: readonly string[];
 }
 
-/** Lower case without accents or spaces, so 'H₂O ' and 'h2o' compare equal. */
+/**
+ * An answer the way it is compared: no surrounding spaces, lower case, no
+ * accents, and a subscript two written as a plain 2, so ' H₂O ' and 'h2o' are
+ * the same, and so are 'padesát' and 'padesat'. Spaces inside stay: 'h2 o' is not 'h2o'.
+ */
 export function plain(text: string): string {
   return text
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .replace(/₂/g, '2')
-    .replace(/\s+/g, '')
+    .trim()
     .toLowerCase();
 }
 
+/** True only when the answer is exactly one of the right ones: no part of a word, no other word. */
+export function isRightAnswer(question: QuizQuestion, answer: string): boolean {
+  const given = plain(answer);
+  return given !== '' && (question.answers ?? []).some((right) => plain(right) === given);
+}
+
 export const QUIZ: readonly QuizQuestion[] = [
-  { id: 'zebra', label: 'Zadej pruhovaného lichokopytníka', right: (a) => plain(a).includes('zebr') },
-  { id: 'stars', label: 'Kolik je na vlajce USA hvězd', right: (a) => ['50', 'padesat'].includes(plain(a)) },
-  { id: 'water', label: 'Chemické označení dihydrogen monoxidu', right: (a) => ['h2o', 'voda'].includes(plain(a)) },
-  { id: 'whale', label: 'Největší savec je z jakého řádu', right: (a) => /^(kytov|cetace)/.test(plain(a)) },
+  { id: 'zebra', label: 'Zadej pruhovaného lichokopytníka', answers: ['zebra'] },
+  { id: 'stars', label: 'Kolik je na vlajce USA hvězd', answers: ['50', 'padesát'] },
+  { id: 'water', label: 'Chemické označení dihydrogen monoxidu', answers: ['H2O'] },
+  { id: 'whale', label: 'Největší savec je z jakého řádu', answers: ['kytovci'] },
   { id: 'comfortFood', label: 'Nejoblíbenější jídlo z dětství', personal: true },
 ];
 

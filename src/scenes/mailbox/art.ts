@@ -23,6 +23,8 @@ export const TREE_RECT = { x: 132, y: 8, w: 28, h: 30 };
 export const BUSH_RECT = { x: 138, y: 83, w: 20, h: 13 };
 export const POT_RECT = { x: 7, y: 75, w: 14, h: 18 };
 export const CHIMNEY_RECT = { x: 64, y: 0, w: 12, h: 14 };
+/** Where an animal stands when it turns up on the ridge of the roof (its feet). */
+export const ROOF_SPOT = { x: 36, y: 14 };
 export const DOOR_RECT = { x: 42, y: 47, w: 16, h: 26 };
 
 /** The close-up envelope, seen from the back: body, flap and the heart seal on it. */

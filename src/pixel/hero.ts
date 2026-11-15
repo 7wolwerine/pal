@@ -33,6 +33,7 @@ const PAL: Record<string, string> = {
   i: '#ffffff',
   w: '#fff6e0', // the letter / paper
   W: '#e2cfa0',
+  v: '#d6a3a8', // tired shadows under the eyes
 };
 
 const FRONT_HEAD = [
@@ -54,6 +55,14 @@ const FRONT_HEAD = [
 const FRONT_BLINK: Record<number, string> = { 8: '.OHssssssssssHO.', 9: '.OHseesssseesHO.' };
 // Eyes squeezed into two little arcs and a wide open smile.
 const FRONT_JOY: Record<number, string> = { 8: '.OHssessssessHO.', 9: '.OHsesessesesHO.', 11: '..qSssmmmmssSq..' };
+
+// Worn out: heavy lids over the eyes, shadows under them, no blush, a flat little mouth.
+const FRONT_WORN: Record<number, string> = {
+  8: '.OHsSSssssSSsHO.',
+  9: '.OHseesssseesHO.',
+  10: '.qSsvvssssvvsSq.',
+};
+const FRONT_WORN_BLINK: Record<number, string> = { ...FRONT_WORN, 8: '.OHssssssssssHO.', 9: '.OHsSSssssSSsHO.' };
 
 const FRONT_BODY = [
   '...uTttttttTu...',
@@ -105,6 +114,14 @@ const SIDE_HEAD = [
 ];
 const SIDE_BLINK: Record<number, string> = { 8: '.OHhhhqSssssssq.', 9: '.OHhhhqSsssseesq' };
 
+const SIDE_WORN: Record<number, string> = {
+  8: '.OHhhhqSssssSSq.',
+  9: '.OHhhhqSsssseesq',
+  10: '.OHhhhhqssssvvq.',
+  11: '..OHhhhSsssmmsq.',
+};
+const SIDE_WORN_BLINK: Record<number, string> = { ...SIDE_WORN, 9: '.OHhhhqSssssSSsq' };
+
 const SIDE_TORSO = ['.....uTttTu.....', '....uTttttTu....', '....uTtltttu....', '....uTtltttu....', '....uTTTTTTu....', '....nppppppn....', '....nppPPppn....'];
 
 /** Side-view legs for the four steps; the near leg is lighter than the far one. */
@@ -117,7 +134,8 @@ const SIDE_LEGS = {
 export const HERO_WIDTH = 16;
 export const HERO_HEIGHT = 26;
 
-export type HeroPose = 'stand' | 'walk' | 'happy' | 'hold';
+/** 'side' stands still in profile, facing `facing`, arms hanging. */
+export type HeroPose = 'stand' | 'walk' | 'happy' | 'hold' | 'side';
 
 export interface HeroLook {
   readonly pose: HeroPose;
@@ -126,6 +144,8 @@ export interface HeroLook {
   /** Milliseconds, drives the walk cycle, blinking and breathing. */
   readonly t: number;
   readonly motion: boolean;
+  /** Worn out: tired eyes, slumped shoulders, hair a little messed up. Still the same character. */
+  readonly worn?: boolean;
 }
 
 function rows(g: G, grid: readonly string[], x: number, y: number, flip: boolean): void {
@@ -160,20 +180,26 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
   const top = baseY - HERO_HEIGHT;
   const blink = motion && t % 3600 < 130;
 
-  if (pose === 'walk') {
+  const worn = look.worn === true;
+  if (pose === 'walk' || pose === 'side') {
     const flip = look.facing < 0;
-    const step = motion ? Math.floor(t / 125) % 4 : 1;
-    const rise = step % 2 === 1 ? -1 : 0;
+    const still = pose === 'side';
+    const step = motion && !still ? Math.floor(t / (worn ? 160 : 125)) % 4 : 1;
+    // A worn-out walk does not bounce, and the head hangs a pixel lower.
+    const rise = step % 2 === 1 && !worn ? -1 : 0;
+    const sag = worn ? 1 : 0;
     const legs = step === 0 ? SIDE_LEGS.contactA : step === 2 ? SIDE_LEGS.contactB : SIDE_LEGS.pass;
     // Far arm first (behind the body), swinging opposite to the near one.
-    const swing = step === 0 ? 3 : step === 2 ? -3 : 0;
+    const swing = still ? 0 : (step === 0 ? 3 : step === 2 ? -3 : 0) * (worn ? 0.67 : 1);
     const shoulder = (dx: number): number => (flip ? 15 - dx : dx);
     const sx = ix + shoulder(8);
     arm(g, sx, top + 15 + rise, sx + (flip ? swing : -swing), top + 20 + rise);
     rows(g, legs, ix, top + 21, flip);
     rows(g, SIDE_TORSO, ix, top + 14 + rise, flip);
-    rows(g, patch(SIDE_HEAD, blink ? SIDE_BLINK : undefined), ix, top + rise, flip);
-    arm(g, sx, top + 15 + rise, sx + (flip ? -swing : swing), top + 20 + rise);
+    const sideFace = worn ? (blink ? SIDE_WORN_BLINK : SIDE_WORN) : blink ? SIDE_BLINK : undefined;
+    rows(g, patch(SIDE_HEAD, sideFace), ix, top + rise + sag, flip);
+    if (worn) messyHair(g, ix, top + rise + sag, flip);
+    arm(g, sx, top + 15 + rise, sx + (flip ? -swing : swing), top + 20 + rise + sag);
     return;
   }
 
@@ -183,6 +209,12 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
 
   if (pose === 'stand') {
     rows(g, FRONT_BODY, ix, y + 14, false);
+    if (worn) {
+      // Slumped: the head sinks into the shoulders by a pixel.
+      rows(g, patch(FRONT_HEAD, blink ? FRONT_WORN_BLINK : FRONT_WORN), ix, y + 1, false);
+      messyHair(g, ix, y + 1, false);
+      return;
+    }
     rows(g, patch(FRONT_HEAD, blink ? FRONT_BLINK : undefined), ix, y + breathe * 0, false);
     return;
   }
@@ -199,6 +231,22 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
   arm(g, ix + 4, y + 15, ix + 6, y + 19);
   arm(g, ix + 11, y + 15, ix + 9, y + 19);
   rows(g, patch(FRONT_HEAD, blink ? FRONT_BLINK : undefined), ix, y, false);
+}
+
+/** A few strands of hair sticking up out of place. */
+function messyHair(g: G, x: number, top: number, flip: boolean): void {
+  const at = (dx: number): number => x + (flip ? 15 - dx : dx);
+  const dark = PAL.O ?? '';
+  const mid = PAL.H ?? '';
+  // A cowlick on the crown, curling over.
+  px(g, dark, at(8), top - 1, 1, 1);
+  px(g, mid, at(9), top - 1, 1, 1);
+  px(g, dark, at(9), top - 2, 2, 1);
+  // Tufts sticking out at the sides, each one touching the head.
+  px(g, dark, at(4), top, 1, 1);
+  px(g, dark, at(2), top + 1, 1, 1);
+  px(g, dark, at(13), top + 1, 1, 1);
+  px(g, dark, at(14), top + 2, 1, 1);
 }
 
 /** Where the hands are in the 'hold' pose, to put something in them. */
