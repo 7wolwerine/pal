@@ -72,7 +72,7 @@ function band(g: G, c: ChestColours, x: number, y: number, w: number, hgt: numbe
 }
 
 /** Body, corner fittings, feet and the keyhole plate. The body's top edge is y = 15. */
-function paintBody(g: G, c: ChestColours, locked: boolean): void {
+function paintBody(g: G, c: ChestColours, locked: boolean, open = false): void {
   px(g, c.out, 2, 14, 28, 14);
   px(g, c.wood, 3, 15, 26, 11);
   // planks with a highlight on top of each and a little grain
@@ -92,12 +92,13 @@ function paintBody(g: G, c: ChestColours, locked: boolean): void {
   px(g, c.bandD, 7, 26, 18, 1);
   // rivets
   for (const [x, y] of [[4, 17], [4, 21], [27, 17], [27, 21], [3, 26], [28, 26]] as const) px(g, c.bandL, x, y, 1, 1);
-  // keyhole plate, hanging over the lid's rim
-  px(g, c.out, 12, 12, 8, 11);
-  px(g, c.band, 13, 13, 6, 9);
-  px(g, c.bandL, 13, 13, 6, 1);
-  px(g, c.bandL, 13, 13, 1, 9);
-  px(g, c.bandD, 18, 13, 1, 9);
+  // keyhole plate, hanging over the lid's rim while it is shut
+  const top = open ? 15 : 12;
+  px(g, c.out, 12, top, 8, 23 - top);
+  px(g, c.band, 13, top + 1, 6, 21 - top);
+  px(g, c.bandL, 13, top + 1, 6, 1);
+  px(g, c.bandL, 13, top + 1, 1, 21 - top);
+  px(g, c.bandD, 18, top + 1, 1, 21 - top);
   px(g, c.bandD, 13, 21, 6, 1);
   if (locked) {
     px(g, c.out, 15, 15, 2, 3);
@@ -139,28 +140,38 @@ function paintLid(g: G, c: ChestColours, dy: number): void {
 
 /** The lid thrown back: we see its dark inside, framed in gold. */
 function paintOpenLid(g: G, c: ChestColours): void {
-  const rows: Record<number, readonly [number, number]> = { 1: [7, 24], 2: [5, 26] };
+  // thrown back past upright: its hollow inside faces us, red bays between metal arches
+  const rows: Record<number, readonly [number, number]> = { 1: [7, 24], 2: [5, 26], 3: [4, 27] };
   px(g, c.out, 7, 0, 18, 1);
-  for (let y = 1; y <= 10; y++) {
+  for (let y = 1; y <= 9; y++) {
     const [a, b] = rows[y] ?? [3, 28];
     px(g, c.out, a - 1, y, b - a + 3, 1);
-    px(g, y <= 2 ? c.bandM : c.woodD, a, y, b - a + 1, 1);
+    px(g, y <= 2 ? c.woodL : c.wood, a, y, b - a + 1, 1);
   }
-  for (const x of [4, 15, 26]) {
-    px(g, c.band, x, 2, 2, 8);
-    px(g, c.bandL, x, 2, 1, 8);
+  // the hollow of each bay, darker the deeper it goes
+  for (const [x, w] of [[7, 6], [19, 6]] as const) {
+    px(g, c.woodD, x, 3, w, 6);
+    px(g, c.inside, x, 5, w, 4);
   }
-  px(g, c.bandL, 7, 1, 18, 1);
-  // the lid's planks seen from inside
-  for (const y of [5, 8]) px(g, c.inside, 6, y, 8, 1);
-  for (const y of [5, 8]) px(g, c.inside, 18, y, 7, 1);
+  // the arches
+  for (const [x, w] of [[3, 3], [14, 4], [26, 3]] as const) {
+    const y = x === 14 ? 1 : 3;
+    px(g, c.band, x, y, w, 9 - y);
+    px(g, c.bandL, x, y, 1, 9 - y);
+    px(g, c.bandD, x + w - 1, y, 1, 9 - y);
+  }
+  px(g, c.band, 5, 2, 3, 1);
+  px(g, c.band, 24, 2, 3, 1);
+  px(g, c.bandL, 7, 1, 7, 1);
+  px(g, c.bandL, 18, 1, 7, 1);
+  px(g, c.bandD, 3, 9, 26, 1);
 }
 
 /** Coins and gems heaped over the rim, warm light on top. */
 function paintHoard(g: G, rich: boolean, t: number): void {
   const mound: Record<number, readonly [number, number]> = rich
-    ? { 9: [12, 19], 10: [9, 22], 11: [7, 24], 12: [5, 26], 13: [4, 27], 14: [4, 27] }
-    : { 12: [12, 18], 13: [8, 23], 14: [5, 26] };
+    ? { 8: [13, 18], 9: [10, 21], 10: [8, 23], 11: [6, 25], 12: [4, 27], 13: [4, 27] }
+    : { 11: [12, 19], 12: [8, 23], 13: [5, 26] };
   for (const [ys, [a, b]] of Object.entries(mound)) {
     const y = Number(ys);
     px(g, COIN_D, a, y, b - a + 1, 1);
@@ -170,7 +181,7 @@ function paintHoard(g: G, rich: boolean, t: number): void {
     }
   }
   if (!rich) return;
-  const gems: readonly (readonly [number, number])[] = [[11, 11], [19, 10], [7, 13], [23, 12], [15, 9], [16, 12]];
+  const gems: readonly (readonly [number, number])[] = [[11, 10], [19, 9], [7, 12], [23, 11], [15, 8], [16, 11]];
   gems.forEach(([x, y], i) => px(g, GEMS[i % GEMS.length] ?? '#fff', x, y, 2, 1 + (i % 2)));
   // a sparkle that wanders over the hoard
   const s = Math.floor(t / 180) % 6;
@@ -191,12 +202,11 @@ function paintChest(g: G, c: ChestColours, frame: LidFrame, opts: { locked: bool
     px(g, c.inside, 3, 11, 26, 4);
     px(g, '#ffcf6a', 4, 12, 24, 1);
     paintHoard(g, opts.rich, opts.t);
-    paintBody(g, c, false);
+    paintBody(g, c, false, true);
     // the front rim, over the heap
     px(g, c.out, 2, 14, 28, 2);
     px(g, c.band, 3, 14, 26, 1);
     px(g, c.bandL, 3, 14, 26, 1);
-    px(g, c.band, 13, 14, 6, 2);
     return;
   }
   if (frame === 1) {
@@ -237,7 +247,7 @@ function chestCanvas(golden: boolean): ChestArt {
 
 // ---------- the treasure window: an old game's dialog, redrawn in its own pixels ----------
 
-/** Window canvas, 96 x 116 pixels shown three times larger. */
+/** Window canvas, 96 x 116 pixels, shown three times larger (288 x 348 in CSS). */
 const TW = 96;
 const TH = 116;
 const GOLD_L = '#fff0b0';
@@ -316,26 +326,32 @@ function paintTile(g: G, picked: boolean, art: (g: G) => void): void {
   g.restore();
 }
 
-/** A heap of gold coins: stacks behind, loose coins in front. */
+/** One coin lying flat: a little gold oval with a dark rim. */
+function flatCoin(g: G, x: number, y: number): void {
+  px(g, INK, x, y - 1, 5, 5);
+  px(g, INK, x - 1, y, 7, 3);
+  px(g, COIN_D, x, y + 1, 5, 2);
+  px(g, COIN, x, y, 5, 2);
+  px(g, COIN_L, x + 1, y, 3, 1);
+  px(g, COIN_D, x + 1, y + 2, 3, 1);
+}
+
+/** A heap of gold coins: two stacks behind, a mound of loose coins in front. */
 function paintCoins(g: G): void {
-  const stacks: readonly (readonly [number, number])[] = [[2, 4], [6, 7], [10, 9], [14, 6]];
-  for (const [x, n] of stacks) {
-    const top = 15 - n * 2;
-    px(g, INK, x - 1, top, 6, n * 2 + 2);
-    for (let i = 0; i < n * 2; i++) px(g, i % 2 ? COIN_D : COIN, x, top + 1 + i, 4, 1);
-    px(g, COIN_L, x, top + 1, 1, n * 2);
-    px(g, COIN_L, x + 1, top, 2, 1);
+  for (const [x, n] of [[3, 4], [12, 6]] as const) {
+    const top = 12 - n * 2;
+    px(g, INK, x - 1, top - 1, 7, n * 2 + 3);
+    for (let i = 0; i < n * 2; i++) px(g, i % 2 ? COIN_D : COIN, x, top + i, 5, 1);
+    px(g, COIN_L, x, top, 1, n * 2);
+    px(g, COIN_L, x + 1, top - 1, 3, 1);
   }
-  const loose: readonly (readonly [number, number])[] = [[0, 16], [4, 17], [9, 16], [13, 17], [16, 15], [7, 14], [2, 13]];
-  for (const [x, y] of loose) {
-    px(g, INK, x, y - 1, 4, 3);
-    px(g, COIN, x, y, 4, 1);
-    px(g, COIN_L, x + 1, y - 1 + 1, 2, 1);
-    px(g, COIN_D, x + 1, y + 1, 2, 1);
-  }
-  px(g, '#ffffff', 11, 2, 1, 1);
-  px(g, GOLD_L, 10, 3, 3, 1);
-  px(g, '#ffffff', 11, 4, 1, 1);
+  const heap: readonly (readonly [number, number])[] = [
+    [8, 8], [5, 10], [11, 10], [2, 12], [8, 12], [14, 12], [0, 14], [5, 14], [10, 14], [15, 14], [2, 16], [8, 16], [13, 16],
+  ];
+  for (const [x, y] of heap) flatCoin(g, x, y);
+  px(g, '#ffffff', 16, 1, 1, 1);
+  px(g, GOLD_L, 15, 2, 3, 1);
+  px(g, '#ffffff', 16, 3, 1, 1);
 }
 
 const STAR = [
@@ -370,11 +386,26 @@ function paintMedal(g: G): void {
   paintGrid(g, STAR, { o: INK, L: GOLD_L, g: GOLD, D: GOLD_D }, 4, 8);
 }
 
-const CHECK = ['..........oo', '.........oLo', '........oLo.', 'oo.....oLgo.', 'oLo...oLgo..', '.oLo.oLgo...', '..oLoLgo....', '...oLgo.....', '....oo......'];
+const CHECK = [
+  '...........ooo',
+  '..........oLLo',
+  '.........oLgo.',
+  'ooo.....oLgo..',
+  'oLLo...oLgo...',
+  '.oLLo.oLgo....',
+  '..oLLoLgo.....',
+  '...oLLgo......',
+  '....oLo.......',
+  '.....o........',
+];
+
+/** The confirming button, 32 x 16. */
+const OK_W = 32;
+const OK_H = 16;
 
 function paintConfirm(g: G, ready: boolean): void {
-  const w = 30;
-  const hgt = 14;
+  const w = OK_W;
+  const hgt = OK_H;
   px(g, INK, 0, 0, w, hgt);
   ring(g, 0, 0, w, hgt, GOLD_L, GOLD_D);
   ring(g, 1, 1, w - 2, hgt - 2, GOLD, GOLD_M);
@@ -409,7 +440,7 @@ function treasureWindow(motion: boolean): Promise<Pick> {
       tile('gold', paintCoins, GOLD_PRIZE, CHEST.treasure.goldTile(GOLD_PRIZE)),
       tile('xp', paintMedal, XP_PRIZE, CHEST.treasure.xpTile(XP_PRIZE)),
     ] as const;
-    const okArt = h('canvas', { class: 'treasure__ok-art', attrs: { width: '30', height: '14', 'aria-hidden': 'true' } });
+    const okArt = h('canvas', { class: 'treasure__ok-art', attrs: { width: String(OK_W), height: String(OK_H), 'aria-hidden': 'true' } });
     const ok = h('button', { class: 'treasure__ok', attrs: { type: 'button', 'aria-label': CHEST.treasure.confirm, 'aria-disabled': 'true' } }, okArt);
     const drawOk = (): void => {
       const g = okArt.getContext('2d');

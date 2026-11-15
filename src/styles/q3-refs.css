@@ -167,8 +167,8 @@
 
 .treasure__ok-art {
   display: block;
-  width: 90px;
-  height: 42px;
+  width: 96px;
+  height: 48px;
   image-rendering: pixelated;
 }
 
@@ -186,5 +186,92 @@
   from {
     transform: scale(0.6);
     opacity: 0;
+  }
+}
+
+/* ---------- the dark replay: the polite phrase at the end of the tape ---------- */
+
+.night__end {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 6% 4%;
+  pointer-events: none;
+}
+
+.night__end[hidden] {
+  display: none;
+}
+
+/* The player's own painting, shown as it is: never recoloured, never cropped. */
+.night__kindly {
+  display: block;
+  width: min(100%, 680px);
+  height: auto;
+  max-height: 72%;
+  object-fit: contain;
+  user-select: none;
+  animation: kindly-flicker 2600ms linear both;
+}
+
+.night__obeyed {
+  margin: 0;
+  color: #9fe1cb;
+  font: 700 clamp(16px, 3.2vw, 26px) / 1.2 ui-monospace, Consolas, monospace;
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 8px rgba(93, 202, 165, 0.6);
+  animation: kindly-count 600ms steps(3, end) 2400ms both;
+}
+
+@keyframes kindly-flicker {
+  0%,
+  6% {
+    opacity: 0;
+  }
+  7% {
+    opacity: 0.7;
+  }
+  9% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 0;
+  }
+  23% {
+    opacity: 0.9;
+  }
+  26% {
+    opacity: 0.15;
+  }
+  40% {
+    opacity: 0.35;
+  }
+  41% {
+    opacity: 1;
+  }
+  44% {
+    opacity: 0.5;
+  }
+  45%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes kindly-count {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .night__kindly {
+    animation: kindly-count 900ms ease-out both;
+  }
+  .night__obeyed {
+    animation: kindly-count 600ms ease-out 900ms both;
   }
 }

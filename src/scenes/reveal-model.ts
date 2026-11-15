@@ -37,6 +37,8 @@ const FIELD_LABELS: Record<string, string> = {
   email: 'E-mail',
   role: 'Kým jsi',
   street: 'Ulice z dětství',
+  pet: 'První mazlíček',
+  teacher: 'První paní učitelka',
   signature: 'Tvůj podpis',
 };
 
@@ -147,6 +149,8 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}. A pak jsi mi otevřel svou poštu, dopis už byl napsaný.`,
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
   street: (v) => `Za pár bodů jsi mi řekl, v jaké ulici jsi vyrůstal: ${v}. Kontrolní otázka k heslu.`,
+  pet: (v) => `Zaplatil jsi za ně jménem svého prvního mazlíčka: ${v}. Další kontrolní otázka k heslu.`,
+  teacher: (v) => `Zaplatil jsi za ni jménem své první paní učitelky: ${v}. Další kontrolní otázka k heslu.`,
   signature: (v) => `Podepsal ses mi: ${v}. Pod obraz, který jsi nikdy nechtěl malovat. A pak na certifikát.`,
 };
 
@@ -182,6 +186,8 @@ const ONCE: Record<string, string> = {
   'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
   'gold-open': 'Zlatou truhlu sis zaplatil něčím o sobě. A pak tě odměnila, ať příště dáš zase.',
   'declined-points': 'Body za odpověď jsi odmítl.',
+  'gold-choice': 'Ze zlaté truhly sis vybral zlaťáky. Na cenu ses nezeptal.',
+  'declined-treasure': 'Poklad ze zlaté truhly jsi tam nechal. Cena ti byla podezřelá.',
   'download-started': 'Stáhl jsi „PAL Pro“. Dárek od kamaráda se přece nekontroluje.',
   'ran-download': 'Spustil jsi soubor, o kterém jsi věděl jen to, co jsem ti řekl já.',
   'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
@@ -203,6 +209,7 @@ const ONCE: Record<string, string> = {
 const VARIANTS: Record<string, (e: WitnessEvent) => string | undefined> = {
   'grab-flashka': (e) => (e.data?.fromBug === true ? 'Vzal jsi do ruky cizí flashku. Brouk ji táhl pryč a tys mu ji vyrval.' : undefined),
   'gold-open': (e) => (e.data?.by === 'card' ? 'Zlatou truhlu ti otevřel kód z kamery. A pak tě odměnila, ať příště dáš zase.' : undefined),
+  'gold-choice': (e) => (e.data?.pick === 'xp' ? 'Ze zlaté truhly sis vybral zkušenost. Na cenu ses nezeptal.' : undefined),
 };
 
 function clock(ms: number): string {

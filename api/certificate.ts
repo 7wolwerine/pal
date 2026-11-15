@@ -33,6 +33,8 @@ interface Certificate {
   readonly title: string;
   readonly score: string;
   readonly game: string;
+  /** The certificate picture as PNG bytes, if the game sent one. */
+  readonly image?: Buffer;
 }
 
 function clean(value: unknown, max: number): string {
@@ -55,7 +57,18 @@ function parse(body: unknown): Certificate | undefined {
     title: clean(b.title, 80),
     score: clean(b.score, 20),
     game: clean(b.game, 200),
+    image: picture(b.image),
   };
+}
+
+/** A PNG data URL from the game's canvas, up to about 1.5 MB. Anything else is ignored. */
+function picture(value: unknown): Buffer | undefined {
+  if (typeof value !== 'string' || value.length > 2_000_000) return undefined;
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(value);
+  if (!match?.[1]) return undefined;
+  const bytes = Buffer.from(match[1], 'base64');
+  // The PNG signature, so nothing else rides along as an "image".
+  return bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) ? bytes : undefined;
 }
 
 function allowed(key: string, now: number): boolean {
@@ -90,15 +103,18 @@ function letter(c: Certificate): {
     c.game ? `\n${c.game}` : '',
   ].filter((line, i, all) => line !== '' || all[i - 1] !== '');
   const text = lines.join('\n');
-  const html = `<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:3px solid #ed93b1;border-radius:16px;background:#fff6f9;color:#4b1528">
+  const html = `<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body style="margin:0;padding:16px;background:#fbeaf0">
+<div style="font-family:sans-serif;max-width:480px;margin:auto;padding:24px;border:3px solid #ed93b1;border-radius:16px;background:#fff6f9;color:#4b1528">
 <p>Ahoj ${escape(c.name)},</p>
 <p>tady je tvůj certifikát, jak jsem slíbil.</p>
+${c.image ? '<p style="text-align:center;margin:16px 0"><img src="cid:certifikat@pal" alt="Certifikát" width="448" style="max-width:100%;height:auto;border-radius:8px"></p>' : ''}
 ${c.title ? `<p style="font-size:20px;font-weight:700;text-align:center;margin:20px 0">${escape(c.title)}</p>` : ''}
 ${c.score ? `<p style="text-align:center">Výsledek: <b>${escape(c.score)}</b></p>` : ''}
 <p>Bylo mi s tebou moc fajn. Kdykoli se vrať.</p>
 <p>Tvůj PAL &lt;3</p>
 ${c.game ? `<p style="font-size:12px"><a href="${escape(c.game)}">${escape(c.game)}</a></p>` : ''}
-</div>`;
+</div>
+</body></html>`;
   return { subject, text, html };
 }
 
@@ -147,6 +163,8 @@ export async function POST(request: Request): Promise<Response> {
       to: cert.email,
       subject,
       text,
+      textEncoding: 'base64',
+      attachments: cert.image ? [{ filename: 'certifikat-pal.png', content: cert.image, contentType: 'image/png', cid: 'certifikat@pal' }] : [],
       html,
     })
     .then(() => true)

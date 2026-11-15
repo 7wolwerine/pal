@@ -239,3 +239,25 @@ describe('the polite phrase', () => {
     expect(buildTimeline(w.events).some((l) => l.text.includes(KINDLY))).toBe(false);
   });
 });
+
+describe('the golden chest', () => {
+  it('names the pick from the golden chest and what it cost', () => {
+    const w = new Witness(() => 0);
+    w.record({ scene: 'chest', kind: 'gold-open', trick: 'variable-reward', data: { by: 'answer' } });
+    w.record({ scene: 'chest', kind: 'gold-choice', data: { pick: 'xp' } });
+    w.disclose('chest', 'security-question', 'teacher', 'Nováková', { pick: 'xp' });
+    const texts = buildTimeline(w.events).map((l) => l.text);
+    expect(texts.some((t) => t.includes('zkušenost'))).toBe(true);
+    expect(texts.some((t) => t.includes('Nováková') && t.includes('učitelky'))).toBe(true);
+    expect(buildReveal(w).disclosed).toContainEqual({ label: 'První paní učitelka', value: 'Nováková' });
+  });
+
+  it('says gold when gold was picked', () => {
+    const w = new Witness(() => 0);
+    w.record({ scene: 'chest', kind: 'gold-choice', data: { pick: 'gold' } });
+    w.disclose('chest', 'security-question', 'pet', 'Rex', { pick: 'gold' });
+    const texts = buildTimeline(w.events).map((l) => l.text);
+    expect(texts.some((t) => t.includes('zlaťáky'))).toBe(true);
+    expect(texts.some((t) => t.includes('Rex') && t.includes('mazlíčka'))).toBe(true);
+  });
+});

@@ -562,6 +562,11 @@ function demoWitness(): Witness {
   rec('chest', 'chest-open', 'variable-reward', { n: 3, reward: 5 });
   w.disclose('chest', 'data-as-currency', 'street', 'Lipová');
   rec('chest', 'gold-open', 'variable-reward', { by: 'answer' });
+  rec('chest', 'gold-choice', undefined, { pick: 'gold' });
+  w.disclose('chest', 'security-question', 'pet', 'Rex', { pick: 'gold' });
+  // PAL's polite phrase: asked seven times, obeyed six (demo only).
+  for (const s of ['welcome', 'fidgets', 'shelter', 'chest', 'plea', 'download', 'prize']) rec(s, 'kindly-asked');
+  for (const s of ['welcome', 'fidgets', 'shelter', 'chest', 'plea', 'download']) rec(s, 'kindly-obeyed');
   rec('plea', 'plea-opener', 'role-casting', { role: 'helper' });
   rec('plea', 'plea-refused', undefined, { n: 1 });
   rec('plea', 'plea-choice', 'romance-scam', { how: 'gave-in', refusals: 1 });

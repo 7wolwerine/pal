@@ -1,6 +1,7 @@
 import { audio } from '../audio/engine.ts';
 import { NIGHT, type NightFacts, type NightScene } from '../content/nightmare.ts';
 import { SHELTER } from '../content/shelter.ts';
+import { kindlyCount } from '../core/kindly.ts';
 import type { WitnessEvent } from '../core/witness.ts';
 import type { Profile } from '../game.ts';
 import { paintHero } from '../pixel/hero.ts';
@@ -20,6 +21,8 @@ const H = 100;
 const SCALE = 4;
 /** About five seconds a scene. */
 const SCENE_MS = 5000;
+/** The polite phrase at the end of the tape stays a little longer. */
+const END_MS = 7000;
 
 type G = CanvasRenderingContext2D;
 
@@ -52,7 +55,11 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
   const rec = h('span', { class: 'night__rec', text: NIGHT.title });
   const clock = h('span', { class: 'night__clock' });
   const skip = h('button', { class: 'night__skip', text: NIGHT.skip, attrs: { type: 'button' } });
-  const el = h('section', { class: 'night', attrs: { 'aria-label': NIGHT.label } }, h('div', { class: 'night__tv' }, screen, rec, clock), caption, skip);
+  // The end of the tape: the player's own hand-painted words, exactly as painted, and the count under them.
+  const kindly = h('img', { class: 'night__kindly', attrs: { src: `${import.meta.env.BASE_URL}kindly.webp`, alt: NIGHT.kindly.alt, draggable: 'false' } });
+  const obeyed = h('p', { class: 'night__obeyed', text: NIGHT.kindly.obeyed(facts.kindly.obeyed) });
+  const end = h('div', { class: 'night__end', attrs: { hidden: '' } }, kindly, obeyed);
+  const el = h('section', { class: 'night', attrs: { 'aria-label': NIGHT.label } }, h('div', { class: 'night__tv' }, screen, end, rec, clock), caption, skip);
   document.body.append(el);
 
   const low = document.createElement('canvas');
@@ -68,6 +75,7 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
     let index = -1;
     let sceneAt = 0;
     let raf = 0;
+    let ending = false;
     const startedAt = performance.now();
 
     const finish = (): void => {
@@ -94,6 +102,15 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
     const next = (now: number): void => {
       index++;
       if (index >= vignettes.length) {
+        // One last cut, if PAL ever asked nicely and the picture is there to show.
+        if (!ending && facts.kindly.asked > 0 && kindly.complete && kindly.naturalWidth > 0) {
+          ending = true;
+          sceneAt = now;
+          audio.crunch();
+          end.hidden = false;
+          void typeCaption(NIGHT.kindly.caption(facts.kindly.asked));
+          return;
+        }
         finish();
         return;
       }
@@ -105,19 +122,19 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
 
     const frame = (now: number): void => {
       if (stopped || !lg || !g) return;
-      if (index < 0 || now - sceneAt >= SCENE_MS) next(now);
+      if (index < 0 || now - sceneAt >= (ending ? END_MS : SCENE_MS)) next(now);
       if (stopped) return;
-      const v = vignettes[index];
-      if (!v) return;
+      const v = ending ? undefined : vignettes[index];
+      if (!v && !ending) return;
       const t = now - startedAt;
       const u = Math.min(1, (now - sceneAt) / SCENE_MS);
 
       lg.clearRect(0, 0, W, H);
       lg.fillStyle = '#000';
       lg.fillRect(0, 0, W, H);
-      if (v.pixel) v.pixel(lg, t, u);
+      if (v?.pixel) v.pixel(lg, t, u);
       // A face that should not be there, for a few frames now and then.
-      if (motion && Math.floor(t / 97) % 37 === 0) {
+      if (v && motion && Math.floor(t / 97) % 37 === 0) {
         lg.globalAlpha = 0.35;
         lg.drawImage(face, W / 2 - 24, H / 2 - 24, 48, 48);
         lg.globalAlpha = 1;
@@ -128,7 +145,7 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
 
       g.imageSmoothingEnabled = false;
       g.drawImage(low, 0, 0, W * SCALE, H * SCALE);
-      if (v.text) {
+      if (v?.text) {
         // Crisp text, shaken a little, then dirtied with the same scanlines and grain.
         const jitter = motion && Math.floor(t / 130) % 11 === 0 ? 3 : 0;
         g.save();
@@ -212,6 +229,8 @@ function factsOf(events: readonly WitnessEvent[], profile: Profile): NightFacts 
     path: typeof path === 'string' ? path : undefined,
     opened: events.some((e) => e.kind === 'surprise' && e.data?.opened === true),
     printed: events.some((e) => e.kind === 'surprise' && e.data?.onPaper === true),
+    cost: disclosed.has('pet') ? NIGHT.cost.pet(disclosed.get('pet') ?? '') : disclosed.has('teacher') ? NIGHT.cost.teacher(disclosed.get('teacher') ?? '') : undefined,
+    kindly: kindlyCount(events),
   };
 }
 
@@ -405,6 +424,7 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
           const count = Math.round(f.points * Math.min(1, u / 0.6));
           line(g, `● ${count.toLocaleString('cs-CZ')}`, 220, 150, 48);
           if (f.street) line(g, `> ${typed(f.street, u, 0.55, 0.85)}`, 220, 240, 30, DIM);
+          if (f.cost) line(g, `> ${typed(f.cost, u, 0.7, 0.95)}`, 120, 300, 22, DIM);
         },
       };
     case 'plea':
