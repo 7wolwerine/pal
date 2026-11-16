@@ -12,7 +12,9 @@ const DRAG_START = 5;
 /** The widest BUG's bubble gets (see `.bug__bubble`), px. */
 const BUBBLE_MAX = 190;
 /** Where BUG prefers to make his last stand: the middle of the panel, so his bubble has room. */
-const STAND_ORDER = ['book', 'chain', 'screw', 'plug', 'mail', 'tilt'];
+/** Short month names for the calendar's header. */
+const MONTHS = ['LED', 'ÚNO', 'BŘE', 'DUB', 'KVĚ', 'ČVN', 'ČVC', 'SRP', 'ZÁŘ', 'ŘÍJ', 'LIS', 'PRO'];
+const STAND_ORDER = ['book', 'chain', 'screw', 'calendar', 'mail', 'tilt'];
 
 interface Cell {
   readonly el: HTMLElement;
@@ -325,7 +327,7 @@ function feel(kind: ControlKind, before: number, after: number, dragged: boolean
     case 'book':
       audio.knock();
       return;
-    case 'plug':
+    case 'calendar':
       audio.click(70, 0.4);
       return;
     case 'mail':
@@ -527,17 +529,22 @@ function buildWidget(control: Control, label: string, change: Change): { el: HTM
         },
       };
     }
-    case 'plug': {
-      // A lamp whose plug lies just out of the socket. Put it in and the lamp lights.
-      const el = button(
-        'fx-plug',
-        h('span', { class: 'fx-plug__lamp' }, h('span', { class: 'fx-plug__shade' }), h('span', { class: 'fx-plug__bulb' }), h('span', { class: 'fx-plug__base' })),
-        h('span', { class: 'fx-plug__socket' }),
-        h('span', { class: 'fx-plug__cord' }),
-        h('span', { class: 'fx-plug__plug' }),
-      );
-      draggable(el, control, change, 'x', (start, dx) => (dx > 14 ? 1 : start));
-      return { el, sync: () => el.classList.toggle('fx-plug--in', control.value === 1) };
+    case 'calendar': {
+      // A little wall calendar still on yesterday. Tear the old page off (click, or pull it down)
+      // and today shows underneath.
+      const today = new Date();
+      const yesterday = new Date(today.getTime() - 86400000);
+      const page = (d: Date, cls: string): HTMLElement =>
+        h('span', { class: `fx-cal__page ${cls}` }, h('span', { class: 'fx-cal__month', text: MONTHS[d.getMonth()] ?? '' }), h('span', { class: 'fx-cal__day', text: String(d.getDate()) }));
+      const old = page(yesterday, 'fx-cal__page--old');
+      const el = button('fx-cal', h('span', { class: 'fx-cal__nail' }), page(today, 'fx-cal__page--today'), old, h('span', { class: 'fx-cal__rings' }));
+      draggable(el, control, change, 'y', (start, dy) => (dy > 14 ? 1 : start));
+      return {
+        el,
+        sync: () => {
+          el.classList.toggle('fx-cal--torn', control.value === 1);
+        },
+      };
     }
     case 'mail': {
       // A big mail icon with a red badge: every click reads one.

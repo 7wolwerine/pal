@@ -30,6 +30,26 @@
   }
   .veil[hidden] { display: none; }
   body.leaving .hint { display: none; }
+  /* Co medvěd řekne, když se poprvé objeví: bublina nahoře nad kamerou. */
+  .bear-says {
+    position: fixed; left: 50%; top: max(18px, env(safe-area-inset-top)); z-index: 11;
+    max-width: min(86vw, 340px); padding: 10px 16px;
+    border: 2px solid #ed93b1; border-radius: 16px; background: #fff6f9; color: #4b1528;
+    font: 700 16px/1.35 system-ui, sans-serif; text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,.25);
+    transform: translateX(-50%); pointer-events: none;
+    animation: bear-says-in 360ms cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .bear-says::after {
+    content: ''; position: absolute; left: 50%; bottom: -9px; margin-left: -8px;
+    border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 9px solid #ed93b1;
+  }
+  .bear-says[hidden] { display: none; }
+  .bear-says--out { animation: bear-says-out 400ms ease-in forwards; }
+  @keyframes bear-says-in { from { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(.8); } }
+  @keyframes bear-says-out { to { opacity: 0; transform: translateX(-50%) translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) { .bear-says, .bear-says--out { animation: none; } }
+  body.leaving .bear-says { display: none; }
   /* Kód z obrazovky: napřed jedno ťuknutí (iPhone při něm pustí senzor náklonu),
      na konci kartička s kódem místo hry. */
   .gate, .bye {
@@ -54,6 +74,7 @@
 </head>
 <body>
 <div class="veil" id="veil" hidden></div>
+<div class="bear-says" id="bearSays" role="status" hidden>Doufám, že si pamatuješ, co jsem říkal &lt;3</div>
 <div class="hint"><span id="hint">Namiř foťák na značku s medvědem 🐻</span></div>
 <button class="gate" id="gate" type="button" hidden><span>Ťukni a pusť medvěda ven 🐻</span></button>
 <div class="bye" id="bye" hidden><div class="bye__card"><p class="bye__code">3107</p><p class="bye__love">LOVE YOU 💗</p><p class="bye__back">Teď zpátky ke hře na počítači.</p></div></div>
@@ -907,7 +928,19 @@ AFRAME.registerComponent('hint-text', {
   schema: { found: { type: 'string' }, lost: { type: 'string' } },
   init: function () {
     const hint = document.getElementById('hint');
-    this.el.addEventListener('shown', () => { hint.textContent = this.data.found; });
+    const says = document.getElementById('bearSays');
+    let greeted = false;
+    this.el.addEventListener('shown', () => {
+      hint.textContent = this.data.found;
+      // The first time the bear appears, it says its line, then lets the sign speak.
+      if (greeted || !says) return;
+      greeted = true;
+      says.hidden = false;
+      setTimeout(() => {
+        says.classList.add('bear-says--out');
+        setTimeout(() => { says.hidden = true; }, 420);
+      }, 4200);
+    });
   }
 });
 </script>

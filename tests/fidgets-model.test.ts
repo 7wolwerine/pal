@@ -18,7 +18,7 @@ import {
 } from '../src/scenes/fidgets/model.ts';
 import { QuizModel } from '../src/scenes/fidgets/quiz-model.ts';
 
-const KINDS: ControlKind[] = ['tilt', 'screw', 'chain', 'book', 'plug', 'mail'];
+const KINDS: ControlKind[] = ['tilt', 'screw', 'chain', 'book', 'calendar', 'mail'];
 
 function alignAll(model: FidgetModel): void {
   for (const c of model.controls) model.set(c.id, alignedValue(c.kind));
@@ -54,13 +54,13 @@ describe('poke', () => {
     expect(poke('screw', 0)).toBe(0);
   });
 
-  it('stands one book up per click, switches the chain lamp, reads mail, plugs the lamp in', () => {
+  it('stands one book up per click, switches the chain lamp, reads mail, tears yesterday off the calendar', () => {
     expect(poke('book', BOOKS)).toBe(BOOKS - 1);
     expect(poke('book', 0)).toBe(0);
     expect(poke('chain', 0)).toBe(1);
     expect(poke('chain', 1)).toBe(0);
     expect(poke('mail', 1)).toBe(0);
-    expect(poke('plug', 0)).toBe(1);
+    expect(poke('calendar', 0)).toBe(1);
   });
 });
 
@@ -71,7 +71,7 @@ describe('settle (dragging)', () => {
     expect(settle('tilt', -4.4)).toBe(-4);
     expect(settle('book', 9)).toBe(BOOKS);
     expect(settle('chain', 0.7)).toBe(1);
-    expect(settle('plug', 0.7)).toBe(1);
+    expect(settle('calendar', 0.7)).toBe(1);
   });
 });
 
@@ -90,7 +90,7 @@ describe('FidgetModel', () => {
     expect(m.poke('mail')).toBe(false);
     expect(m.poke('mail')).toBe(true);
     expect(m.poke('mail')).toBe(false);
-    expect(m.poke('plug')).toBe(true);
+    expect(m.poke('calendar')).toBe(true);
     expect(m.poke('chain')).toBe(true);
     // Pulled again, the lamp goes off and is no longer done.
     expect(m.poke('chain')).toBe(false);

@@ -119,8 +119,12 @@ export const fidgets: Scene<GameContext> = {
       }
       await sleep(500);
       if (signal.aborted) return;
-      await pal.say(FIDGETS.release(gendered(profile, 'm', 'f') === 'm'));
-      if (signal.aborted) return;
+      for (const line of FIDGETS.release(gendered(profile, 'm', 'f') === 'm')) {
+        await pal.say(line);
+        if (signal.aborted) return;
+        await sleep(900);
+        if (signal.aborted) return;
+      }
 
       // Every answer accepts the role of rescuer; which one says what kind.
       const choices = FIDGETS.releaseChoices.map((choice, index) =>
@@ -140,7 +144,7 @@ export const fidgets: Scene<GameContext> = {
       // PAL's long thanks needs the room now: the stage lets go of its height.
       stage.style.minHeight = '';
       stage.classList.remove('stage--held');
-      stage.replaceChildren(h('div', { class: 'row row--wrap' }, ...choices));
+      stage.replaceChildren(h('div', { class: 'row row--wrap release__choices' }, ...choices));
       choices[0]?.focus();
     }
 

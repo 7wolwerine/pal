@@ -8,7 +8,7 @@ import { DontClickModel } from './dontclick-model.ts';
 
 const SCENE = 'dontclick';
 /** Board geometry in CSS pixels; must match .board in app.css. */
-const BOARD_H = 240;
+const BOARD_H = 200;
 const FLOOR_Y = BOARD_H - 8;
 /** How long before the quiet way out appears. */
 const LEAVE_AFTER_MS = 7000;
@@ -38,12 +38,22 @@ export const dontclick: GameScene = {
       h('span', { class: 'dontclick__string', attrs: { 'aria-hidden': 'true' } }),
       button,
     );
+    // Behind the sign: the control panel it is there for. Its green light is the protection, on.
     const led = h('span', { class: 'guard__led', attrs: { 'aria-hidden': 'true' } });
     const guardText = h('span', { class: 'sr-only', text: DONTCLICK.guardOn });
     const guard = h('p', { class: 'guard', attrs: { role: 'status' } }, led, guardText);
+    const panel = h(
+      'div',
+      { class: 'panel', attrs: { 'aria-hidden': 'true' } },
+      h('span', { class: 'panel__plate', text: DONTCLICK.panelTitle }),
+      h('span', { class: 'panel__switches' }, h('span', { class: 'panel__switch' }), h('span', { class: 'panel__switch' }), h('span', { class: 'panel__switch' })),
+      h('span', { class: 'panel__gauge' }, h('span', { class: 'panel__needle' })),
+      h('span', { class: 'panel__state', text: DONTCLICK.panelOn }),
+    );
     const board = h(
       'div',
       { class: 'board', attrs: { role: 'group', 'aria-label': DONTCLICK.boardLabel } },
+      panel,
       guard,
       h('span', { class: 'board__nail', attrs: { 'aria-hidden': 'true' } }),
       hang,
@@ -64,7 +74,7 @@ export const dontclick: GameScene = {
       what: 'led-flicker',
       scene: SCENE,
       className: 'anomaly--led',
-      place: { left: '4px', top: '8px', width: '9px', height: '9px' },
+      place: { left: 'calc(50% + 94px)', top: '34px', width: '9px', height: '9px' },
       after: 2500,
       ms: 600,
     });
@@ -90,6 +100,8 @@ export const dontclick: GameScene = {
       const result = model.press();
       witness.record({ scene: SCENE, kind: 'forbidden-press', trick: 'reactance', data: { n: model.presses } });
       label.textContent = model.label;
+      // Every fall leaves the sign a little more cracked.
+      button.dataset.cracks = String(Math.min(3, model.presses));
       hang.classList.add('dontclick__hang--fallen');
       void (result === 'break' ? breakDown() : rehang(model.presses - 1));
     });
@@ -148,9 +160,15 @@ export const dontclick: GameScene = {
       await beetle.moveTo(width() + 12, FLOOR_Y - BUG_PX);
       beetle.el.classList.add('bug--gone');
       if (!alive) return;
+      panel.querySelector('.panel__state')!.textContent = DONTCLICK.panelOff;
       await pal.say(DONTCLICK.palBroken);
       if (!alive) return;
-      showGo();
+      // The broken sign is the way on: it pulses, and a click on "Fatal Error" moves along.
+      button.removeAttribute('aria-disabled');
+      button.classList.add('dontclick--next');
+      button.setAttribute('aria-label', DONTCLICK.nextLabel);
+      button.addEventListener('click', () => done(), { once: true });
+      button.focus();
     }
 
     /** The rare player who walks away. */
@@ -162,15 +180,10 @@ export const dontclick: GameScene = {
       beetle.setMood('stand');
       beetle.say(DONTCLICK.bugThanks);
       actions.replaceChildren();
-      void pal.say(DONTCLICK.palLeft).then(() => {
-        if (alive) showGo();
+      void pal.say(DONTCLICK.palLeft).then(async () => {
+        await sleep(2200);
+        if (alive) done();
       });
-    }
-
-    function showGo(): void {
-      const go = h('button', { class: 'btn', text: DONTCLICK.go, attrs: { type: 'button' }, on: { click: done } });
-      actions.replaceChildren(go);
-      go.focus();
     }
 
     void intro();

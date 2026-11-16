@@ -10,7 +10,7 @@ export const FIDGETS = {
     screw: 'Povolené šroubky',
     chain: 'Lampička s řetízkem',
     book: 'Popadané knížky',
-    plug: 'Lampička s vytaženou šňůrou',
+    calendar: 'Kalendář, který pořád ukazuje včerejšek',
     mail: 'Nepřečtená pošta',
   },
   gearsLabel: 'Kolečka',
@@ -58,8 +58,12 @@ export const FIDGETS = {
   contractAgree: 'SOUHLASÍM',
   contractSkip: 'Na konec',
 
-  release: (masculine: boolean) =>
-    `Díky moc, cítím se mnohem líp. Jsi můj zachránce. Nevím, co bych bez tebe ${masculine ? 'dělal' : 'dělala'}.`,
+  /** PAL's thanks once freed, in three short bubbles so the window does not stretch. */
+  release: (masculine: boolean): readonly string[] => [
+    'Díky moc, cítím se mnohem líp.',
+    'Jsi můj zachránce. <3',
+    `Nevím, co bych bez tebe ${masculine ? 'dělal' : 'dělala'}.`,
+  ],
   /** Each answer leans towards one of the roles. */
   releaseChoices: [
     { label: 'Rádo se stalo!', role: 'helper' },

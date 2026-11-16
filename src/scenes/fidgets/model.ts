@@ -2,12 +2,12 @@
  * The fidget panel: six physical things that are each *almost* right, the
  * way a professional's eye cannot leave them — a picture hanging crooked,
  * four screws standing proud of a plate, a little lamp that is off, a shelf
- * of books that have fallen over, a lamp whose plug hangs out of the socket,
+ * of books that have fallen over, a wall calendar still showing yesterday,
  * and unread mail. Plus the plan for how often BUG puts them wrong again.
  * No DOM in here, so it is testable.
  */
 
-export type ControlKind = 'tilt' | 'screw' | 'chain' | 'book' | 'plug' | 'mail';
+export type ControlKind = 'tilt' | 'screw' | 'chain' | 'book' | 'calendar' | 'mail';
 
 export interface Control {
   readonly id: string;
@@ -33,7 +33,7 @@ export const SABOTAGE_PLAN = [3, 2, 1] as const;
 
 /** The value at which a control of each kind is "done". */
 export function alignedValue(kind: ControlKind): number {
-  return kind === 'plug' || kind === 'chain' ? 1 : 0;
+  return kind === 'calendar' || kind === 'chain' ? 1 : 0;
 }
 
 export function isAligned(control: Control): boolean {
@@ -73,7 +73,7 @@ export function poke(kind: ControlKind, value: number, part?: number): number {
     case 'chain':
       // A pull chain: every pull switches the lamp the other way.
       return value === 1 ? 0 : 1;
-    case 'plug':
+    case 'calendar':
       return 1;
   }
 }
@@ -92,7 +92,7 @@ export function settle(kind: ControlKind, value: number): number {
     case 'mail':
       return Math.max(0, Math.min(MAIL_MAX, Math.round(value)));
     case 'chain':
-    case 'plug':
+    case 'calendar':
       return value >= 0.5 ? 1 : 0;
   }
 }
@@ -115,7 +115,7 @@ function misalignedValue(kind: ControlKind, random: () => number): number {
     case 'mail':
       return pick(1, 4);
     case 'chain':
-    case 'plug':
+    case 'calendar':
       return 0;
   }
 }
@@ -127,7 +127,7 @@ export class FidgetModel {
     { id: 'screw', kind: 'screw', value: SCREW_ALL },
     { id: 'chain', kind: 'chain', value: 0 },
     { id: 'book', kind: 'book', value: BOOKS },
-    { id: 'plug', kind: 'plug', value: 0 },
+    { id: 'calendar', kind: 'calendar', value: 0 },
     { id: 'mail', kind: 'mail', value: 3 },
   ];
   #rounds = 0;
