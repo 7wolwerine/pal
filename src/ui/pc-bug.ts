@@ -1,4 +1,4 @@
-import { BUG_RESIDENT, pickLine } from '../content/bug.ts';
+import { BUG_RESIDENT, BUG_SCENE, pickLine } from '../content/bug.ts';
 import { BUG_PX, Beetle } from './beetle.ts';
 import { bugVisiting, onBugVisit } from './bug-cameo.ts';
 import { prefersReducedMotion, sleep } from './dom.ts';
@@ -86,13 +86,10 @@ export function attachPcBug(pc: HTMLElement): PcBug {
   const FEET = Math.round((BUG_PX / 32) * 2);
   const onTopOf = (box: DOMRect, fx: number): [number, number] => [box.left + (box.width - BUG_PX) * fx, box.top - BUG_PX + FEET + 2];
 
-  /** Something in the window the player may want to press or fill in. */
-  const controls = (): HTMLElement[] =>
-    [...pc.querySelectorAll<HTMLElement>('.stage button, .stage input, .stage select, .stage textarea')].filter((el) => {
-      const box = el.getBoundingClientRect();
-      return box.width > 20 && box.height > 12 && !(el as HTMLButtonElement).disabled && el.getAttribute('aria-disabled') !== 'true';
-    });
-
+  /**
+   * Where he may be: on the physical computer only, never inside the screen. Along the
+   * top edge of the monitor's frame (clear of the sticky note at the right), or on the case.
+   */
   function spots(): Spot[] {
     const list: Spot[] = [];
     const perch = (name: string, selector: string, fx: number, face: Spot['face']): void => {
@@ -107,56 +104,11 @@ export function attachPcBug(pc: HTMLElement): PcBug {
       });
     };
     perch('monitor-left', '.pc__monitor', 0.03, 'right');
-    perch('monitor-right', '.pc__monitor', 0.97, 'left');
-    // The case is hidden on narrow screens; then the monitor's corners have to do.
+    perch('monitor-a', '.pc__monitor', 0.3, 'right');
+    perch('monitor-b', '.pc__monitor', 0.55, 'left');
+    perch('monitor-c', '.pc__monitor', 0.78, 'left');
+    // The case is hidden on narrow screens; then the monitor's edge has to do.
     perch('tower', '.pc__tower', 0.5, 'left');
-    list.push({
-      kind: 'bar',
-      name: 'bar',
-      face: 'right',
-      at: () => {
-        const box = rectOf('.win__bar');
-        return box && onTopOf(box, 0.3);
-      },
-    });
-    for (const left of [true, false]) {
-      list.push({
-        kind: 'peek',
-        name: left ? 'peek-left' : 'peek-right',
-        face: left ? 'right' : 'left',
-        at: () => {
-          const box = rectOf('.pc__screen');
-          if (!box) return undefined;
-          // Half of him stays behind the edge of the screen.
-          const x = left ? box.left - BUG_PX * 0.46 : box.right - BUG_PX * 0.54;
-          return [x, box.top + box.height * 0.5 - BUG_PX / 2];
-        },
-      });
-    }
-    const pool = controls();
-    const target = pool[Math.floor(Math.random() * pool.length)];
-    if (target) {
-      list.push({
-        kind: 'press',
-        name: 'press',
-        face: 'right',
-        at: () => {
-          if (!target.isConnected) return undefined;
-          const box = target.getBoundingClientRect();
-          return box.width ? [box.left - BUG_PX * 0.84, box.bottom - BUG_PX + FEET] : undefined;
-        },
-      });
-      list.push({
-        kind: 'block',
-        name: 'block',
-        face: 'left',
-        at: () => {
-          if (!target.isConnected) return undefined;
-          const box = target.getBoundingClientRect();
-          return box.width ? [box.left + box.width / 2 - BUG_PX / 2, box.bottom - BUG_PX + FEET] : undefined;
-        },
-      });
-    }
     return list;
   }
 
@@ -164,11 +116,11 @@ export function attachPcBug(pc: HTMLElement): PcBug {
     a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 
   /** Whether standing at (x, y) would leave him on screen and off PAL's bubble. */
-  function fits(x: number, y: number, kind: SpotKind): boolean {
+  function fits(x: number, y: number, _kind: SpotKind): boolean {
     const body = { left: x, top: y, right: x + BUG_PX, bottom: y + BUG_PX };
     // On screen, with room for most of him.
     if (body.top < -BUG_PX * 0.12 || body.bottom > window.innerHeight + 4) return false;
-    if (kind !== 'peek' && (body.left < -BUG_PX * 0.2 || body.right > window.innerWidth + BUG_PX * 0.2)) return false;
+    if (body.left < 2 || body.right > window.innerWidth - 2) return false;
     // PAL's words are never his to cover, body or bubble (the bubble sits above his head).
     const mine = { left: x - 50, top: y - 54, right: x + BUG_PX + 50, bottom: y + BUG_PX };
     for (const selector of ['.pal__bubble', '.pal__who']) {
@@ -265,6 +217,20 @@ export function attachPcBug(pc: HTMLElement): PcBug {
         beetle.setMood('sit');
         await dwell(spot, 500 + Math.random() * 900);
         if (!ok()) return;
+        const sceneLines = BUG_SCENE[scene];
+        if (sceneLines && Math.random() < 0.5) {
+          const pick = sceneLines[Math.floor(Math.random() * sceneLines.length)];
+          if (pick) {
+            beetle.setMood(pick.mood);
+            quip([pick.line]);
+            if (pick.mood === 'angry' && motion) await beetle.stomp(2);
+            await dwell(spot, 2400 + pick.line.length * 45);
+            if (!ok()) return;
+            beetle.setMood('sit');
+            await dwell(spot, 1800 + Math.random() * 2400);
+            return;
+          }
+        }
         const turn = Math.floor(Math.random() * 8);
         if (turn === 0) {
           quip(BUG_RESIDENT.idle);

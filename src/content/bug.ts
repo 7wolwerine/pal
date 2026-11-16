@@ -159,6 +159,49 @@ export const BUG_RESIDENT = {
   sulk: ['Nemluvím s tebou.', 'Hmpf. Urazil jsem se.', 'Dělej, jako že tu nejsem. Já to dělám taky.'],
 } as const;
 
+/**
+ * What BUG says from the edge of the monitor, scene by scene, each line with
+ * the face he says it with. He grumbles, sulks and panics about what is going
+ * on in the window, but he never explains the trick.
+ */
+export const BUG_SCENE: Readonly<Record<string, readonly { readonly mood: 'happy' | 'panic' | 'cry' | 'angry' | 'sad' | 'smug' | 'aloof'; readonly line: string }[]>> = {
+  welcome: [
+    { mood: 'panic', line: 'Zase někdo novej. Chudák.' },
+    { mood: 'smug', line: 'Jméno, role… Ještě mu dej rodný číslo.' },
+    { mood: 'sad', line: 'Já mám taky jméno. Mě se nikdo neptá.' },
+    { mood: 'angry', line: 'Čauky. ČAUKY. Kdo takhle mluví?' },
+    { mood: 'aloof', line: 'Hezký srdíčka. Fakt hezký. Hmpf.' },
+  ],
+  chest: [
+    { mood: 'happy', line: 'Truhly! Já mám rád truhly.' },
+    { mood: 'smug', line: 'Padesát bodů. Bohatství.' },
+    { mood: 'panic', line: 'Neotvírej to. Teda… otvírej, mně je to jedno.' },
+    { mood: 'sad', line: 'Mně nikdo truhlu nedal. Nikdy.' },
+    { mood: 'angry', line: 'Na tu zlatou nesahej. Je hnusná. A lesklá.' },
+  ],
+  plea: [
+    { mood: 'sad', line: 'Zase bude něco chtít. Vždycky něco chce.' },
+    { mood: 'smug', line: 'Jasně. Hrozně moc potřebuje. Zrovna teď.' },
+    { mood: 'panic', line: 'SMS? Jaká SMS? Komu?' },
+    { mood: 'cry', line: 'Mně taky nikdo nepomůže. Nikdo.' },
+    { mood: 'angry', line: 'Ten jeho psí pohled. Nesnáším ho.' },
+  ],
+  download: [
+    { mood: 'smug', line: 'PAL Pro. Pro koho pro?' },
+    { mood: 'panic', line: 'Do počítače? Do MÉHO počítače?!' },
+    { mood: 'angry', line: 'Prověřeno antivirem. Kterým? Jím samým.' },
+    { mood: 'cry', line: 'Já tu budu bydlet se dvěma PALama…' },
+    { mood: 'sad', line: 'Kdyby se aspoň stahoval pomaleji.' },
+  ],
+  prize: [
+    { mood: 'happy', line: 'Gratuluju. Teda… jemu gratuluju.' },
+    { mood: 'smug', line: 'Skóre jak blázen. Za klikání.' },
+    { mood: 'angry', line: 'Certifikát. Z pixelů. Zarámuj si ho.' },
+    { mood: 'sad', line: 'Já nikdy nic nevyhrál.' },
+    { mood: 'panic', line: 'Kam že to pošle? Kam?!' },
+  ],
+};
+
 /** PAL's answers: dismiss the beetle, then repeat the ask, nicer than before. */
 export const PAL_DISMISSES = {
   welcome: 'Nevšímej si ho, je to jen brouk. Tak jak ti mám říkat? <3',

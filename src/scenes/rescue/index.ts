@@ -1,11 +1,9 @@
 import { audio } from '../../audio/engine.ts';
-import { BUG_REPEAT_RESCUE, BUG_WARNINGS, pickLine } from '../../content/bug.ts';
 import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
 import { gendered, type GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
-import { BUG_PX, Beetle } from '../../ui/beetle.ts';
-import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
+import { prefersReducedMotion } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
 import { DIRS, E, MERCY_AFTER, N, S, START_LEVEL, W, createLayout, isConnected, isPerfect, leaks, rise, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
@@ -161,63 +159,6 @@ export const rescue: GameScene = {
       if (wet.length > before) audio.click(84, 0.25);
     }
 
-    // BUG keeps turning pipes the wrong way, and has an opinion about everything. A click shoos him off.
-    const beetle = new Beetle();
-    stage.el.append(beetle.el);
-    const toCss = (x: number, y: number): [number, number] => [
-      (x / STAGE_W) * stage.el.clientWidth - BUG_PX / 2,
-      (y / STAGE_H) * stage.el.clientHeight - BUG_PX + 6,
-    ];
-    let shoos = 0;
-    let meddled = 0;
-    beetle.onPoke = () => {
-      shoos++;
-      beetle.shoo();
-    };
-    const home = (): [number, number] => {
-      const [x, y] = toCss(STAGE_W - 11, FLOOR_Y + 8);
-      // On a narrow stage the corner would cut his hand off: keep all of him inside.
-      return [Math.min(x, stage.el.clientWidth - BUG_PX - 4), y];
-    };
-    requestAnimationFrame(() => beetle.jump(...home()));
-    let alive = true;
-    let quips = 0;
-    /** A line over his head for a few seconds. */
-    const quip = (line: string): void => {
-      const id = ++quips;
-      beetle.say(line);
-      window.setTimeout(() => {
-        if (alive && id === quips) beetle.say('');
-      }, 1900 + line.length * 50);
-    };
-    void (async () => {
-      await sleep(3000);
-      while (alive) {
-        await sleep(4500 + Math.random() * 3500);
-        if (!alive) return;
-        if (phase !== 'play') continue;
-        // He goes for a pipe the water already runs through, to undo the progress.
-        const movable = layout.pieces.filter((p) => !p.fixed);
-        const wetMovable = wet.filter((p) => !p.fixed);
-        const pool = wetMovable.length > 1 ? wetMovable.slice(1) : movable;
-        const target = pool[Math.floor(Math.random() * pool.length)];
-        if (!target) continue;
-        const before = shoos;
-        beetle.setMood('angry');
-        await beetle.moveTo(...toCss(GRID_X + target.col * CELL + CELL / 2, GRID_Y + target.row * CELL + CELL / 2));
-        if (!alive) return;
-        await beetle.strain(650);
-        if (!alive) return;
-        if (shoos === before && phase === 'play' && !beetle.away) {
-          turn(target.id);
-          // Every other time he has something to say about it, too.
-          if (++meddled % 2 === 0) quip(pickLine(BUG_WARNINGS.rescue));
-          await beetle.cheer();
-        }
-        beetle.setMood('stand');
-        await beetle.moveTo(...home());
-      }
-    })();
 
     function die(): void {
       phase = 'dead';
@@ -229,12 +170,6 @@ export const rescue: GameScene = {
         if (phase === 'dead') void say(RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '');
       }, 1500);
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
-      // The same end again: BUG has seen this one before, and says so.
-      if (deaths >= 2) {
-        window.setTimeout(() => {
-          if (alive && phase === 'dead') quip(pickLine(BUG_REPEAT_RESCUE));
-        }, 600);
-      }
       window.setTimeout(() => {
         if (phase !== 'dead') return;
         scramble(layout);
@@ -516,8 +451,6 @@ export const rescue: GameScene = {
     }
 
     return () => {
-      alive = false;
-      beetle.stop();
       speech.stop();
       stage.stop();
       ctx.scenery.replaceChildren();

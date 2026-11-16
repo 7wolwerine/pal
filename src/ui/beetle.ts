@@ -272,11 +272,16 @@ export class Beetle {
 
   /** Keeps the bubble inside whatever he stands in: slid sideways at an edge, hung under him at the top. */
   #fitBubble(): void {
-    const parent = this.el.offsetParent;
-    if (!parent) return;
-    // Only a parent that clips him fences the bubble in; otherwise the edge of the view does.
-    const clips = getComputedStyle(parent).overflow !== 'visible';
-    const bounds = clips ? parent.getBoundingClientRect() : { left: 0, right: window.innerWidth, top: 0 };
+    if (!this.el.offsetParent) return;
+    // The nearest box above him that clips (the window's scrolling body, say) fences the bubble
+    // in; with none, the edge of the view does.
+    let clipper = this.el.parentElement;
+    while (clipper) {
+      const style = getComputedStyle(clipper);
+      if (style.overflowX !== 'visible' || style.overflowY !== 'visible') break;
+      clipper = clipper.parentElement;
+    }
+    const bounds = clipper && clipper !== document.body && clipper !== document.documentElement ? clipper.getBoundingClientRect() : { left: 0, right: window.innerWidth, top: 0 };
     const me = this.el.getBoundingClientRect();
     const lo = Math.max(bounds.left, 0) + 4;
     const hi = Math.min(bounds.right, window.innerWidth) - 4;

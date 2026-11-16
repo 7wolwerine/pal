@@ -9,15 +9,15 @@
 export const BUG_SIZE = 32;
 
 const C = {
-  k: '#7d5a6e',
-  head: '#c9a3b4',
-  headHi: '#ead0d9',
-  shell: '#f4a091',
-  shellHi: '#ffd0c2',
-  shellLo: '#dc8082',
+  k: '#3b2133',
+  head: '#b4889c',
+  headHi: '#dbb6c4',
+  shell: '#e07f71',
+  shellHi: '#f7b3a3',
+  shellLo: '#bf5f63',
   belly: '#fff3d6',
   bellyLo: '#f4d9a8',
-  limb: '#ad8799',
+  limb: '#8f6b7e',
   white: '#ffffff',
   pupil: '#3b2536',
   mouth: '#d9607a',
@@ -276,16 +276,16 @@ function paint(g: G, pose: Pose): void {
   };
   switch (pose.antennae) {
     case 'up':
-      line(g, C.k, hx - 4, 6, hx - 7, 1, 1);
-      line(g, C.k, hx + 4, 6, hx + 7, 1, 1);
-      tip(hx - 7, 1);
-      tip(hx + 7, 1);
+      line(g, C.k, hx - 4, 6, hx - 7, 2.5, 1);
+      line(g, C.k, hx + 4, 6, hx + 7, 2.5, 1);
+      tip(hx - 7, 2.5);
+      tip(hx + 7, 2.5);
       break;
     case 'bounce':
-      line(g, C.k, hx - 4, 6, hx - 6, 2, 1);
-      line(g, C.k, hx + 4, 6, hx + 8, 2, 1);
-      tip(hx - 6, 2);
-      tip(hx + 8, 2);
+      line(g, C.k, hx - 4, 6, hx - 6, 3, 1);
+      line(g, C.k, hx + 4, 6, hx + 8, 3, 1);
+      tip(hx - 6, 3);
+      tip(hx + 8, 3);
       break;
     case 'droop':
       line(g, C.k, hx - 4, 6, hx - 9, 5, 1);
@@ -297,11 +297,11 @@ function paint(g: G, pose: Pose): void {
       break;
     case 'zig':
       line(g, C.k, hx - 4, 6, hx - 5, 3, 1);
-      line(g, C.k, hx - 5, 3, hx - 8, 2, 1);
+      line(g, C.k, hx - 5, 3, hx - 8, 2.5, 1);
       line(g, C.k, hx + 4, 6, hx + 5, 3, 1);
-      line(g, C.k, hx + 5, 3, hx + 8, 2, 1);
-      tip(hx - 8, 1);
-      tip(hx + 8, 1);
+      line(g, C.k, hx + 5, 3, hx + 8, 2.5, 1);
+      tip(hx - 8, 2.5);
+      tip(hx + 8, 2.5);
       break;
   }
 
