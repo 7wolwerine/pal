@@ -61,6 +61,10 @@ function boot(): void {
     void win.el.offsetWidth;
     win.el.classList.add('win--nope');
   });
+  // The shake is over: drop its class, so it never fights a later animation (minimise, crash).
+  win.el.addEventListener('animationend', (event) => {
+    if (event.target === win.el && win.el.classList.contains('win--nope')) win.el.classList.remove('win--nope');
+  });
   win.setBadges([
     { icon: 'lock', label: '100% bezpečné' },
     { icon: 'shield', label: 'Ověřeno' },

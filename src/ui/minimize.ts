@@ -19,6 +19,8 @@ export const MINIMIZED_LINES: readonly { text: string; mood: 'sad' | 'happy' }[]
  */
 export function minimizeWindow(win: HTMLElement, screen: HTMLElement, profile: Profile): void {
   if (win.classList.contains('win--min')) return;
+  // A leftover shake (from the close button) would override the minimise animation.
+  win.classList.remove('win--nope', 'win--boot');
   win.classList.add('win--min');
 
   const taskbar = screen.querySelector('.pc__taskbar');

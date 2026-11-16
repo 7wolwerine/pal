@@ -39,3 +39,134 @@
 .prize__again:hover {
   color: var(--ok);
 }
+
+/* ---------- speech bubbles, round 4: thinner edges, softer shadows ---------- */
+
+.say {
+  padding: 8px 13px;
+  border-width: 2px;
+  border-radius: 16px;
+  box-shadow:
+    0 2px 0 rgba(75, 21, 40, 0.14),
+    0 6px 16px rgba(75, 21, 40, 0.12);
+}
+
+.say::after {
+  left: calc(var(--tail, 50%) - 7px);
+  bottom: -9px;
+  border-left-width: 7px;
+  border-right-width: 7px;
+  border-top-width: 9px;
+}
+
+.say::before {
+  left: calc(var(--tail, 50%) - 5px);
+  bottom: -6px;
+  border-left-width: 5px;
+  border-right-width: 5px;
+  border-top-width: 7px;
+}
+
+.say--below::after {
+  top: -9px;
+  border-bottom-width: 9px;
+}
+
+.say--below::before {
+  top: -6px;
+  border-bottom-width: 7px;
+}
+
+/* Waiting for a click: no extra line under the text. The tail itself becomes the bouncing
+   "go on" arrow, filled, so the arrow and the tail are always one and the same. */
+.say--tap {
+  padding-bottom: 8px;
+}
+
+.say--tap > span::after {
+  content: none;
+}
+
+.say--tap:not(.say--below)::before {
+  display: none;
+}
+
+.say--tap:not(.say--below)::after {
+  animation: say-nudge 800ms ease-in-out infinite;
+}
+
+/* A bubble hanging under its speaker has its tail on top: the arrow sits after the last word. */
+.say--tap.say--below > span::after {
+  content: '';
+  position: static;
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid currentColor;
+  animation: say-nudge 800ms ease-in-out infinite;
+}
+
+.pal__bubble {
+  border-width: 2px;
+  box-shadow:
+    0 2px 0 var(--line),
+    0 6px 16px rgba(75, 21, 40, 0.1);
+}
+
+.pal__bubble::before {
+  left: -10px;
+  border-top-width: 8px;
+  border-bottom-width: 8px;
+  border-right-width: 9px;
+}
+
+/* PAL's own bubble waiting for a tap: the arrow follows the text, no empty line below it. */
+.pal__bubble--tap {
+  padding-bottom: 12px;
+}
+
+.pal__bubble--tap::after {
+  content: none;
+}
+
+.pal__bubble--tap > span:first-child::after {
+  content: '';
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid var(--btn);
+  animation: say-nudge 800ms ease-in-out infinite;
+}
+
+.bug__bubble {
+  border-width: 2px;
+  box-shadow: 0 4px 12px rgba(75, 21, 40, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say--tap::after,
+  .say--tap > span::after,
+  .pal__bubble--tap > span:first-child::after {
+    animation: none;
+  }
+}
+
+/* More of the same line follows: the same little arrow after the text. */
+.pal__bubble--more {
+  cursor: var(--cursor-hand);
+}
+
+.pal__bubble--more > span:first-child::after {
+  content: '';
+  display: inline-block;
+  margin-left: 8px;
+  vertical-align: middle;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 9px solid var(--btn);
+  animation: say-nudge 800ms ease-in-out infinite;
+}

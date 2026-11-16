@@ -419,8 +419,24 @@ export function createPc(win: HTMLElement): HTMLElement {
 
   /* ---------- size ---------- */
 
+  /**
+   * The height the layout is drawn for. On a phone the on-screen keyboard makes the page
+   * shorter (but not narrower) while a field is being typed in: the computer keeps its size
+   * then, instead of shrinking and jumping under the player's thumb.
+   */
+  let laidW = 0;
+  let laidH = 0;
+  const typing = (): boolean => {
+    const el = document.activeElement;
+    return el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el instanceof HTMLElement && el.isContentEditable);
+  };
+
   function relayout(): void {
-    L = layoutPc(viewW(), window.innerHeight);
+    const w = viewW();
+    const keyboard = typing() && w === laidW && window.innerHeight < laidH;
+    if (!keyboard) laidH = window.innerHeight;
+    laidW = w;
+    L = layoutPc(w, laidH);
     const s = L.s;
     const css = (n: number): string => `${Math.round(n * s * 100) / 100}px`;
     pc.dataset.mode = L.mode;
@@ -502,6 +518,13 @@ export function createPc(win: HTMLElement): HTMLElement {
       relayout();
       wake();
     });
+  });
+  // Once the keyboard is up, bring the field being typed in to the middle of what is left.
+  document.addEventListener('focusin', (event) => {
+    const el = event.target;
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+    if (pc.dataset.mode !== 'compact') return;
+    window.setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350);
   });
   relayout();
   // The frame is put on the page after this returns.

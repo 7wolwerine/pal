@@ -1,3 +1,4 @@
+import { bubbleMax, chunks } from './chunks.ts';
 import { h, prefersReducedMotion, sleep } from './dom.ts';
 import { createPalFace, type PalFace, type PalMood } from './pal-face.ts';
 import { livingSprite, setSpriteMood, type SpriteId, type SpriteMood } from './sprites.ts';
@@ -34,7 +35,9 @@ export class Dialogue {
         class: 'pal__bubble',
         on: {
           click: () => {
-            this.#skip = true;
+            // Between two bubbles of a long line a click moves on; while typing it finishes the line.
+            if (this.#next) this.#next();
+            else this.#skip = true;
           },
         },
       },
@@ -142,17 +145,40 @@ export class Dialogue {
   /** Types a line into the bubble and resolves when it is fully shown. */
   async say(text: string, msPerChar = 26): Promise<void> {
     const line = ++this.#line;
-    this.#skip = false;
+    // A long line comes as a few bubbles, one after another; screen readers get it whole.
+    const parts = chunks(text, bubbleMax());
     this.#spoken.textContent = text;
-    this.#typed.textContent = '';
     this.#light();
-    if (prefersReducedMotion()) {
-      this.#typed.textContent = text;
-      this.#dim(text, line);
-      return;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i] ?? '';
+      this.#skip = false;
+      this.#typed.textContent = '';
+      if (prefersReducedMotion()) this.#typed.textContent = part;
+      else await this.#type(part, line, msPerChar);
+      if (line !== this.#line) return;
+      if (i < parts.length - 1) {
+        this.#bubble.classList.add('pal__bubble--more');
+        await this.#pause(1400 + part.length * 40);
+        this.#bubble.classList.remove('pal__bubble--more');
+        if (line !== this.#line) return;
+      }
     }
-    await this.#type(text, line, msPerChar);
-    this.#dim(text, line);
+    this.#dim(parts.at(-1) ?? text, line);
+  }
+
+  #next: (() => void) | undefined;
+
+  /** Time to read a bubble before the next one of the same line; a click cuts it short. */
+  #pause(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const done = (): void => {
+        window.clearTimeout(timer);
+        if (this.#next === done) this.#next = undefined;
+        resolve();
+      };
+      const timer = window.setTimeout(done, ms);
+      this.#next = done;
+    });
   }
 
   #liveTimer = 0;

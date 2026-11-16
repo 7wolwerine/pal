@@ -4020,9 +4020,11 @@ body {
     gap: 2px;
     padding: 3px 6px;
   }
+  /* The heart outline is in pixels, so the small heart needs its own, scaled to 3/4. */
   .journey__heart {
     width: 9px;
     height: 9px;
+    clip-path: path('M4.5 8.25 L0.75 4.13 A2.25 2.25 0 0 1 4.5 1.5 A2.25 2.25 0 0 1 8.25 4.13 Z');
   }
 }
 

@@ -262,9 +262,10 @@ function clockWidth(text: string, du: number): number {
 
 function layout(w: number, h: number, taskbarShown: boolean, bar?: number): Layout {
   const u = Math.max(1, Math.round(w / 90));
-  const taskbar = taskbarShown ? (bar ?? Math.max(7, Math.round(h * 0.13))) : 0;
+  const taskbar = taskbarShown ? (bar ?? Math.max(9, Math.round(h * 0.13))) : 0;
   const sceneH = h - taskbar;
-  const du = Math.max(1, Math.floor((taskbar - 2) / 5));
+  // The digits leave at least a pixel of the dark box free above and below them.
+  const du = Math.max(1, Math.floor((taskbar - 4) / 5));
   // On a tall screen (the PC frame) the sun and the tree keep the shape they have on the desk's wide one.
   const r = Math.max(3, Math.round(Math.min(w * 0.55, sceneH) * 0.11));
   const trunkX = Math.round(w * 0.8);

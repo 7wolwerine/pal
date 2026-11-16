@@ -394,3 +394,23 @@
     transform: none;
   }
 }
+
+/* ---------- phone: the window starts tall enough that PAL's lines do not keep resizing it ---------- */
+
+:root:not([data-theme='revealed']) .pc[data-mode='compact'] .pc__screen > .win:not(.win--focus):not(.win--min) {
+  min-height: min(64%, 470px);
+}
+
+:root:not([data-theme='revealed']) .pc[data-mode='compact'] .pc__screen > .win > .win__body {
+  flex: 1 1 auto;
+}
+
+/* Room for four lines, so a longer line does not push everything under it down. */
+.pc[data-mode='compact'] .pal__bubble {
+  min-height: calc(4 * 1.35em + 24px);
+}
+
+/* A field a thumb can hit. */
+.pc[data-mode='compact'] .field {
+  min-height: 40px;
+}

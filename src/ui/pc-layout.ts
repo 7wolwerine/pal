@@ -180,7 +180,7 @@ function desktop(gw: number, gh: number, s: number): Desktop {
   const h = gh / zoom;
   const u = Math.max(1, Math.round(w / PAPER_W));
   // A taskbar about as tall as in the desk scene, whatever the pixel size.
-  const bar = Math.max(7, Math.round(30 / (s * zoom)));
+  const bar = Math.max(9, Math.round(30 / (s * zoom)));
   const start = Math.max(9, Math.round(w * 0.12)) + 1;
   return { u: u * zoom, bar: bar * zoom, start: start * zoom, paper: { w, h, bar, zoom } };
 }
