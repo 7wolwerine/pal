@@ -6,12 +6,12 @@
  */
 export const PAINT = {
   sceneLabel:
-    'Malířský stojan zblízka. Na obraze je v obloze bílá díra. Vedle stojí kýblík s modrou a v něm štětec, na liště leží tužka.',
+    'Malířský stojan zblízka. Na obraze je v obloze bílá díra. Vedle na zemi stojí plechovka s modrou a v ní štětec, u nohy stojanu kalamář s psacím brkem.',
   anonymous: 'Anonym',
   labels: {
     bucket: 'Kýblík s modrou a štětcem',
     painting: 'Obraz na stojanu',
-    frame: 'Uvolněná strana rámu',
-    pencil: 'Tužka',
+    frame: 'Rám, který visí nakřivo',
+    quill: 'Psací brk v kalamáři',
   },
 } as const;

@@ -329,7 +329,7 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
             painting.fill(HOLE_CENTRE[0], HOLE_CENTRE[1], SKY);
             filled = true;
           }
-          paintScene(g, t, { painting, held: null, framed: u > 0.55 ? 1 : 0, loose: 0, motion: false });
+          paintScene(g, t, { painting, held: null, framed: u > 0.55 ? 1 : 0, tilt: 0, motion: false });
         },
         text(g, _t, u) {
           if (!f.signature || u < 0.65) return;

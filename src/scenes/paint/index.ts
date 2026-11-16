@@ -4,14 +4,20 @@ import type { GameScene } from '../../game.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
-import { BUCKET_RECT, LOOSE_RECT, PAINTING_RECT, PENCIL_RECT, STAGE_H, STAGE_W, ZOOM, paintScene, type Held } from './art.ts';
+import { BRUSH_HOME, BUCKET_RECT, FRAME_RECT, PAINTING_RECT, QUILL_RECT, STAGE_H, STAGE_W, ZOOM, paintScene, type Held } from './art.ts';
 import { DEAD, HOLE, HOLE_CENTRE, Painting, SKY, paintingRows } from './model.ts';
 
 const SCENE = 'paint';
 /** How long the player may do nothing before a twinkle shows where to click. */
 const HINT_AFTER_MS = 4000;
-/** Knocks it takes to fix the loose side of the frame. */
-const KNOCKS = 3;
+/** Clicks it takes to straighten the crooked frame. */
+const NUDGES = 3;
+/** How crooked the frame lands, in radians (about five degrees). */
+const TILT = 0.09;
+/** The brush's flight on a touch screen: out to the tap, a dab, and back to the tin (ms). */
+const FLY_OUT = 380;
+const DAB = 260;
+const FLY_BACK = 420;
 
 type Step = 'hole' | 'framing' | 'frame' | 'sign' | 'signing' | 'done';
 
@@ -37,9 +43,11 @@ export const paint: GameScene = {
     let held: Held = null;
     let framed = 0;
     let framedAt: number | undefined;
-    let loose = 1;
-    let knocks = 0;
-    let knockedAt: number | undefined;
+    let tilt = TILT;
+    let nudges = 0;
+    /** The brush in the air on a touch screen: where it flies, and when it set off. */
+    let flight: { to: readonly [number, number]; at: number } | undefined;
+    const touch = window.matchMedia('(pointer: coarse)').matches;
     let glitchAt: number | undefined;
     let actedAt = 0;
     let now = 0;
@@ -73,6 +81,23 @@ export const paint: GameScene = {
       acted();
       const hit = nearestHole(...aim(event));
       if (!hit) return;
+      if (touch && motion) {
+        // The brush flies from the tin to the tap, paints, and goes back.
+        if (flight) return;
+        flight = { to: [PAINTING_RECT.x + hit[0] * ZOOM, PAINTING_RECT.y + hit[1] * ZOOM + 1], at: now };
+        window.setTimeout(() => {
+          if (alive) fillAt(hit);
+        }, FLY_OUT);
+        window.setTimeout(() => {
+          flight = undefined;
+        }, FLY_OUT + DAB + FLY_BACK);
+        return;
+      }
+      fillAt(hit);
+    });
+
+    /** One dab of the brush: the whole hole takes the blue, and it cannot be undone. */
+    function fillAt(hit: [number, number]): void {
       const changed = painting.fill(hit[0], hit[1], SKY);
       if (changed.length === 0) return;
       // One pixel in the middle of the new sky never quite takes the paint.
@@ -90,7 +115,7 @@ export const paint: GameScene = {
         data: { tool: 'brush', ms: Math.round(performance.now() - startedAt) },
       });
       void frameIt();
-    });
+    }
 
     /** Which painting pixel the player aimed at; the keyboard aims at the hole. */
     function aim(event: MouseEvent): [number, number] {
@@ -128,38 +153,37 @@ export const paint: GameScene = {
       await sleep(700);
       if (!alive) return;
       step = 'frame';
-      looseSpot.hidden = false;
+      frameSpot.hidden = false;
       acted();
     }
 
-    // The right side of the frame hangs loose: knock it back into place.
-    const looseSpot = stage.hotspot(LOOSE_RECT, PAINT.labels.frame, () => {
+    // The frame lands crooked: a click nudges it straight, like a picture on a wall.
+    const frameSpot = stage.hotspot(FRAME_RECT, PAINT.labels.frame, () => {
       if (step !== 'frame') return;
       acted();
-      knocks++;
-      knockedAt = now;
-      audio.knock();
-      loose = Math.max(0, 1 - knocks / KNOCKS);
-      ctx.witness.tally('frame-knock');
-      if (knocks < KNOCKS) return;
-      looseSpot.hidden = true;
+      nudges++;
+      tilt = TILT * Math.max(0, 1 - nudges / NUDGES);
+      audio.click(66 + nudges * 4, 0.35);
+      ctx.witness.tally('frame-nudge');
+      if (nudges < NUDGES) return;
+      frameSpot.hidden = true;
       audio.snap(76);
-      ctx.witness.record({ scene: SCENE, kind: 'frame-fixed', trick: 'completion-urge', data: { knocks } });
+      ctx.witness.record({ scene: SCENE, kind: 'frame-fixed', trick: 'completion-urge', data: { nudges } });
       step = 'sign';
-      pencilSpot.hidden = false;
+      quillSpot.hidden = false;
     });
-    looseSpot.hidden = true;
+    frameSpot.hidden = true;
 
-    // A finished painting wants a signature.
-    const pencilSpot = stage.hotspot(PENCIL_RECT, PAINT.labels.pencil, () => {
+    // A finished painting wants a signature, and the quill stands ready in its inkwell.
+    const quillSpot = stage.hotspot(QUILL_RECT, PAINT.labels.quill, () => {
       if (step !== 'sign') return;
       acted();
-      held = 'pencil';
+      held = 'quill';
       audio.click(79, 0.35);
-      pencilSpot.hidden = true;
+      quillSpot.hidden = true;
       offerNames();
     });
-    pencilSpot.hidden = true;
+    quillSpot.hidden = true;
 
     /** Three ways to sign, each in its own hand. */
     function offerNames(): void {
@@ -169,7 +193,7 @@ export const paint: GameScene = {
         { text: `${name.charAt(0).toUpperCase()}.`, style: 'serif' },
         { text: PAINT.anonymous, style: 'marker' },
       ];
-      const box = stage.overlay({ x: 70, y: 52, w: 64, h: 30 }, 'paint__names');
+      const box = stage.overlay({ x: 22, y: 48, w: 70, h: 34 }, 'paint__names');
       for (const option of options) {
         const button = h('button', {
           class: `paint__name paint__name--${option.style}`,
@@ -192,7 +216,8 @@ export const paint: GameScene = {
       held = null;
       ctx.witness.disclose(SCENE, 'osint', 'signature', text);
       ctx.profile.signature = { text, style };
-      const signature = stage.overlay({ x: 88, y: 66, w: 44, h: 14 }, `paint__sig paint__name--${style}`);
+      // In the painting's bottom right corner, big enough to read.
+      const signature = stage.overlay({ x: PAINTING_RECT.x + PAINTING_RECT.w - 50, y: PAINTING_RECT.y + PAINTING_RECT.h - 17, w: 46, h: 15 }, `paint__sig paint__name--${style}`);
       signature.textContent = text;
       audio.click(88, 0.2);
       await sleep(motion ? 1500 : 200);
@@ -214,12 +239,24 @@ export const paint: GameScene = {
       if (idle) {
         if (step === 'hole' && held !== 'brush') hint = { x: BUCKET_RECT.x + 13, y: BUCKET_RECT.y + 2 };
         else if (step === 'hole') hint = { x: PAINTING_RECT.x + HOLE_CENTRE[0] * ZOOM + 6, y: PAINTING_RECT.y + HOLE_CENTRE[1] * ZOOM - 4 };
-        else if (step === 'frame') hint = { x: LOOSE_RECT.x + 8, y: 50 };
-        else if (step === 'sign') hint = { x: PENCIL_RECT.x + 12, y: PENCIL_RECT.y };
+        else if (step === 'frame') hint = { x: FRAME_RECT.x + FRAME_RECT.w - 3, y: FRAME_RECT.y + 3 };
+        else if (step === 'sign') hint = { x: QUILL_RECT.x + 16, y: QUILL_RECT.y + 4 };
       }
       if (framedAt !== undefined) framed = Math.min(1, (t - framedAt) / 500);
-      paintScene(g, t, { painting, held, framed, loose, knockedAt, glitchAt, hint, motion });
+      paintScene(g, t, { painting, held, framed, tilt, glitchAt, hint, motion, brushAt: flight && brushPos(t - flight.at, flight.to) });
     });
+
+    /** Where the flying brush's bristles are, `ms` after it left the tin. */
+    function brushPos(ms: number, to: readonly [number, number]): [number, number] {
+      const ease = (u: number): number => u * u * (3 - 2 * u);
+      const lerp = (u: number): [number, number] => [BRUSH_HOME[0] + (to[0] - BRUSH_HOME[0]) * u, BRUSH_HOME[1] + (to[1] - BRUSH_HOME[1]) * u - Math.sin(u * Math.PI) * 14];
+      if (ms < FLY_OUT) return lerp(ease(ms / FLY_OUT));
+      if (ms < FLY_OUT + DAB) {
+        const wiggle = Math.sin(((ms - FLY_OUT) / DAB) * Math.PI * 4) * 2;
+        return [to[0] + wiggle, to[1]];
+      }
+      return lerp(ease(Math.max(0, 1 - (ms - FLY_OUT - DAB) / FLY_BACK)));
+    }
 
     return () => {
       alive = false;
