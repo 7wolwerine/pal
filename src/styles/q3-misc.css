@@ -641,3 +641,35 @@
     animation: none;
   }
 }
+
+/* ---------- the certificate: confetti until the bubble is tapped, then room for the form ---------- */
+
+.confetti__piece {
+  animation-iteration-count: infinite;
+}
+
+.confetti {
+  transition: opacity 700ms ease;
+}
+
+.confetti--out {
+  opacity: 0;
+}
+
+.cert {
+  transition: zoom 300ms ease;
+}
+
+.cert.cert--small {
+  zoom: 0.78;
+}
+
+/* When PAL steps aside the stage needs no gap under a conversation that is not there. */
+.win--focus > .win__body > .stage {
+  margin-top: 0;
+}
+
+.prize__status:empty,
+.prize__actions .error:empty {
+  display: none;
+}

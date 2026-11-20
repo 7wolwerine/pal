@@ -11,6 +11,7 @@ import { PAL_DISMISSES } from '../content/bug.ts';
 import { ROLES } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
+import { stepAside } from '../ui/step-aside.ts';
 
 const SCENE = 'prize';
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -45,7 +46,10 @@ export const prize: GameScene = {
     const scoreValue = card.querySelector<HTMLElement>('.cert__value');
     const actions = h('div', { class: 'prize__actions' });
     const status = h('p', { class: 'prize__status', attrs: { role: 'status' } });
-    stage.replaceChildren(h('div', { class: 'prize' }, confetti(), card, status, actions));
+    const party = confetti();
+    stage.replaceChildren(h('div', { class: 'prize' }, party, card, status, actions));
+    // The certificate and the form need the whole window: PAL speaks from a bubble over it.
+    stepAside(ctx, true);
 
     async function run(): Promise<void> {
       if (scoreValue) void countUp(scoreValue, facts.score);
@@ -53,6 +57,9 @@ export const prize: GameScene = {
       if (!alive) return;
       await pal.tapToContinue();
       if (!alive) return;
+      // The party is over once the bubble is tapped; the certificate makes room for the form.
+      party.classList.add('confetti--out');
+      card.classList.add('cert--small');
       await pal.say(PRIZE.askEmail);
       kindlyAsked(witness, SCENE);
       if (!alive) return;
@@ -217,6 +224,7 @@ export const prize: GameScene = {
     void run();
     return () => {
       alive = false;
+      stepAside(ctx, false);
       stage.replaceChildren();
     };
   },
