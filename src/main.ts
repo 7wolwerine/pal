@@ -26,6 +26,7 @@ import { createJourney } from './ui/journey.ts';
 import { minimizeWindow } from './ui/minimize.ts';
 import { createPc } from './ui/pc.ts';
 import { attachPcBug } from './ui/pc-bug.ts';
+import { keepInView } from './ui/keep-in-view.ts';
 import { createWindow } from './ui/window.ts';
 
 /** The whole game, in order. The reveal stays last; the Director enforces it. */
@@ -76,6 +77,8 @@ function boot(): void {
   pal.setCaged(true);
   const stage = h('div', { class: 'stage' });
   win.body.append(pal.el, stage);
+  // No scrollbar in the window: if a scene does not fit, the window glides to what just appeared.
+  keepInView(win.body, stage);
   const scenery = h('div', { class: 'scenery' });
   const pc = createPc(win.el);
   const pcBug = attachPcBug(pc);

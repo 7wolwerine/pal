@@ -458,6 +458,10 @@ export function createPc(win: HTMLElement): HTMLElement {
     set('--pc-win-left', `${L.win.left}px`);
     set('--pc-win-top', `${L.win.top}px`);
     set('--pc-win-bottom', `${L.win.bottom}px`);
+    set('--pc-win-h', `${L.win.height}px`);
+    // The minimised window's tab: as tall as the painted Start button, the same gap under it.
+    set('--pc-start-h', css((L.paper.bar - 3) * L.paper.zoom));
+    set('--pc-start-gap', css(L.paper.zoom));
     if (L.tower && L.cage) {
       set('--pc-tx', css(L.tower.x));
       set('--pc-ty', css(L.cage.y));

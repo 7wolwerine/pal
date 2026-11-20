@@ -32,7 +32,9 @@ describe('layoutPc', () => {
       const glassW = L.glass.w * L.s;
       // The window fits between its left offset and the right edge of the glass.
       expect(L.win.left + Math.min(WIN_W, glassW - 16) + 8, `${w}x${h}`).toBeLessThanOrEqual(glassW + 0.5);
-      expect(L.win.bottom).toBeGreaterThan(L.bar * L.s);
+      // One fixed height, which may stand over the taskbar but stays on the glass.
+      expect(L.win.height, `${w}x${h}`).toBeGreaterThan(200);
+      expect(L.win.top + L.win.height + L.win.bottom, `${w}x${h}`).toBeLessThanOrEqual(L.glass.h * L.s + 0.5);
       // The glass lies inside the bezel, the bezel inside the picture.
       expect(L.glass.x).toBeGreaterThan(L.bezel.x);
       expect(L.glass.x + L.glass.w).toBeLessThan(L.bezel.x + L.bezel.w);

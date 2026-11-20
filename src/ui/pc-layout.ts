@@ -57,7 +57,11 @@ export interface PcLayout {
   readonly mug?: Spot;
   readonly fan?: Spot;
   /** Where PAL's window stands in the glass, in CSS pixels from the glass's edges. */
-  readonly win: { readonly left: number; readonly top: number; readonly bottom: number };
+  /**
+   * Where PAL's window stands in the glass, in CSS pixels. `height` is fixed for the whole game,
+   * so the window never grows or shrinks with what it shows; it may reach over the taskbar.
+   */
+  readonly win: { readonly left: number; readonly top: number; readonly bottom: number; readonly height: number };
 }
 
 /** Room kept free round the picture: the page's gutter, the path of hearts at the top. */
@@ -138,7 +142,7 @@ function full(s: number, availW: number, availH: number): PcLayout {
     mug: { x: 3, y: deskTop + 2 },
     // Mostly off the left edge, so only a piece of it peeks in.
     fan: { x: -10, y: deskTop - 12 },
-    win: windowPlace(gw, s, paper, true),
+    win: windowPlace(gw, gh, s, paper, true),
   };
 }
 
@@ -161,7 +165,7 @@ function compact(availW: number, availH: number): PcLayout {
     ...paper,
     note: { x: right - 12, y: 1 },
     lamp: { x: right - 6, y: bezel.y + bezel.h - 4 },
-    win: windowPlace(gw, s, paper, false),
+    win: windowPlace(gw, gh, s, paper, false),
   };
 }
 
@@ -190,7 +194,10 @@ function desktop(gw: number, gh: number, s: number): Desktop {
  * downwards, clear of the taskbar, and if there is room clear of the desktop
  * icons on the left (two columns of them) so they can still be clicked.
  */
-function windowPlace(gw: number, s: number, { u, bar }: Desktop, roomy: boolean): PcLayout['win'] {
+/** The tallest PAL's window gets on a big screen; more would only be empty space. */
+const WIN_MAX_H = 540;
+
+function windowPlace(gw: number, gh: number, s: number, { u }: Desktop, roomy: boolean): PcLayout['win'] {
   const glassW = gw * s;
   const winW = Math.min(WIN_W, glassW - 16);
   const free = glassW - winW;
@@ -200,6 +207,8 @@ function windowPlace(gw: number, s: number, { u, bar }: Desktop, roomy: boolean)
   return {
     left: Math.round(Math.max(8, left)),
     top: 8,
-    bottom: Math.round(bar * s + 8),
+    // The window may stand over the taskbar: that is room it needs more than the taskbar does.
+    bottom: 8,
+    height: Math.round(roomy ? Math.min(WIN_MAX_H, gh * s - 16) : gh * s - 16),
   };
 }

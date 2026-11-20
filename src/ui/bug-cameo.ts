@@ -8,7 +8,36 @@ import { prefersReducedMotion, sleep } from './dom.ts';
 export function bugWarns(ctx: GameContext, host: HTMLElement, where: WarningScene, opts: CameoOptions = {}): Promise<void> {
   const line = pickLine(BUG_WARNINGS[where]);
   ctx.witness.record({ scene: where, kind: 'bug-warning', data: { line } });
+  // On the computer he never walks into PAL's window: he walks along the top of the monitor's frame.
+  const pc = host.classList.contains('win') ? host.closest<HTMLElement>('.pc') : null;
+  const monitor = pc?.querySelector<HTMLElement>('.pc__monitor');
+  if (pc && monitor) {
+    const track = (): Track => {
+      const p = pc.getBoundingClientRect();
+      const m = monitor.getBoundingClientRect();
+      const y = m.top - p.top - BUG_PX + Math.round((BUG_PX / 32) * 2) + 2;
+      let from = m.left;
+      let to = m.right;
+      // Keep clear of the path of hearts at the top of the page: walk only the part of the edge beside it.
+      const hearts = document.querySelector<HTMLElement>('.journey');
+      const j = hearts && !hearts.hidden ? hearts.getBoundingClientRect() : undefined;
+      if (j && j.width > 4 && j.bottom > p.top + y - 30) {
+        if (to - (j.right + 8) >= BUG_PX * 2.5) from = Math.max(from, j.right + 8);
+        else to = Math.min(to, j.left - 8);
+      }
+      return { left: from - p.left, width: Math.max(BUG_PX, to - from), y };
+    };
+    return bugCameo(pc, line, { ...opts, track });
+  }
   return bugCameo(host, line, opts);
+}
+
+/** A line he walks along instead of the host's bottom edge, in the host's own pixels. */
+export interface Track {
+  readonly left: number;
+  readonly width: number;
+  /** Where his top edge is while he walks. */
+  readonly y: number;
 }
 
 export interface CameoOptions {
@@ -18,6 +47,8 @@ export interface CameoOptions {
   readonly mood?: BugFrame;
   /** How long he stands there talking, in ms. */
   readonly ms?: number;
+  /** Walk along this line instead of the host's bottom edge. */
+  readonly track?: () => Track;
 }
 
 type VisitListener = (visiting: boolean) => void;
@@ -56,9 +87,11 @@ export async function bugCameo(host: HTMLElement, line: string, opts: CameoOptio
   beetle.el.classList.add('bug--visit');
   beetle.leaveWhenShooed = true;
 
-  const width = (): number => host.clientWidth || 320;
-  const floor = (): number => (host.clientHeight || 240) - BUG_PX - 4;
-  const off = (left: boolean): number => (left ? -BUG_PX - 10 : width() + 10);
+  const base = (): number => opts.track?.().left ?? 0;
+  const width = (): number => opts.track?.().width ?? (host.clientWidth || 320);
+  const floor = (): number => opts.track?.().y ?? (host.clientHeight || 240) - BUG_PX - 4;
+  // Along the monitor he comes and goes at its corners; in a scene, from beyond its sides.
+  const off = (left: boolean): number => (opts.track ? base() + (left ? 0 : width() - BUG_PX) : left ? -BUG_PX - 10 : width() + 10);
   /** Still on stage: not flown off, and the scene he walked into is still there. */
   const here = (): boolean => !beetle.left && beetle.el.isConnected;
   /** Waits, but not a moment longer than he is on stage. */
@@ -76,7 +109,7 @@ export async function bugCameo(host: HTMLElement, line: string, opts: CameoOptio
     const reach = 0.4 + Math.random() * 0.22;
     const stopAt = (): number => {
       const span = Math.max(0, width() - BUG_PX);
-      return span * (fromLeft ? reach : 1 - reach);
+      return base() + span * (fromLeft ? reach : 1 - reach);
     };
     host.append(beetle.el);
     if (motion) {

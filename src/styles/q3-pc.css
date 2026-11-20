@@ -397,9 +397,7 @@
 
 /* ---------- phone: the window starts tall enough that PAL's lines do not keep resizing it ---------- */
 
-:root:not([data-theme='revealed']) .pc[data-mode='compact'] .pc__screen > .win:not(.win--focus):not(.win--min) {
-  min-height: min(64%, 470px);
-}
+
 
 :root:not([data-theme='revealed']) .pc[data-mode='compact'] .pc__screen > .win > .win__body {
   flex: 1 1 auto;
@@ -413,4 +411,51 @@
 /* A field a thumb can hit. */
 .pc[data-mode='compact'] .field {
   min-height: 40px;
+}
+
+/* ---------- one window size for the whole game ---------- */
+
+/* PAL's window keeps the same height in every scene (it may stand over the taskbar), so it never
+   grows or shrinks with a line or a button. What a scene shows sits in the middle of it. */
+:root:not([data-theme='revealed']) .pc__screen > .win:not(.win--min) {
+  height: var(--pc-win-h);
+  max-height: none;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win.win--focus {
+  height: calc(var(--pc-win-h) - 66px);
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  /* Never a scrollbar: if something does not fit, the window glides to what just appeared. */
+  scrollbar-width: none;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__body::-webkit-scrollbar {
+  display: none;
+}
+
+:root:not([data-theme='revealed']) .pc__screen > .win > .win__body > .stage {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* The minimised window's tab matches the painted Start button: same height, same gap underneath. */
+:root:not([data-theme='revealed']) .pc__taskbar {
+  align-items: flex-end;
+  padding-bottom: var(--pc-start-gap);
+}
+
+.pc__tab {
+  height: var(--pc-start-h);
+  max-height: none;
+  margin-left: calc(var(--pc-start-gap) * 2);
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
 }

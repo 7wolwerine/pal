@@ -287,7 +287,8 @@ function layout(w: number, h: number, taskbarShown: boolean, bar?: number): Layo
     crown: { cx: trunkX + Math.floor(trunkW / 2), cy: crownCy, rx: crownRx, ry: crownRy },
     trunk: { x: trunkX, y: crownCy, w: trunkW, h: Math.round(sceneH * 0.87) - crownCy },
     toggle: { x: w - 13 * u, y: sceneH - 8 * u, w: 11 * u, h: 6 * u },
-    start: { x: 1, y: sceneH + 1, w: startW, h: Math.max(1, taskbar - 2) },
+    // A pixel of the dark bar free on every side: under the light top line, at the left and at the bottom.
+    start: { x: 1, y: sceneH + 2, w: startW, h: Math.max(1, taskbar - 3) },
     clock: { x: w - clockW - 1, y: sceneH + 1, w: clockW, h: Math.max(1, taskbar - 2) },
   };
 }
