@@ -43,7 +43,7 @@ export const plea: GameScene = {
       stage.replaceChildren();
       await line(need.line);
       if (!alive) return;
-      await line(PLEA.disarm(fem));
+      await line(PLEA.disarm[needKey]);
       if (!alive) return;
       await pal.say(PLEA.ask);
       if (!alive) return;
@@ -56,7 +56,7 @@ export const plea: GameScene = {
         if (flow.choose(choice) === 'hurt') {
           witness.record({ scene: SCENE, kind: 'plea-refused', data: { n: flow.refusals } });
           stage.replaceChildren();
-          await line(PLEA.hurt(fem)[flow.refusals - 1] ?? '');
+          await line(PLEA.hurt[needKey][flow.refusals - 1] ?? '');
           if (!alive) return;
           await pal.say(PLEA.ask);
         }
