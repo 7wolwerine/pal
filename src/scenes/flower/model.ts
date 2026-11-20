@@ -68,7 +68,7 @@ const SEGMENTS = PEST_PATH.slice(1).map((p, i) => {
 });
 const PATH_LEN = SEGMENTS.reduce((sum, d) => sum + d, 0);
 
-function settleSpot(i: number): readonly [number, number] {
+export function settleSpot(i: number): readonly [number, number] {
   const a = (i / PEST_COUNT) * Math.PI * 2 + 0.4;
   const r = 6 + (i % 3);
   return [HEAD[0] + Math.cos(a) * r, HEAD[1] + Math.sin(a) * r];
@@ -93,8 +93,25 @@ export interface PestPose {
   readonly visible: boolean;
 }
 
+/** Once they are all on it, the flower eats them, one after another (ms after they set out). */
+export const EAT_FROM = PESTS_MS + 700;
+const EAT_GAP_MS = 320;
+
+/** When the flower snaps up crawler `i`. */
+export function eatenAt(i: number): number {
+  return EAT_FROM + i * EAT_GAP_MS;
+}
+
+/** When the last crawler is gone. */
+export const EATEN_MS = eatenAt(PEST_COUNT - 1) + 200;
+
 export function pestPose(i: number, ms: number): PestPose {
   let d = (ms - i * PEST_GAP_MS) * PEST_SPEED;
+  // Snapped up by the flower: gone.
+  if (ms >= eatenAt(i)) {
+    const [sx, sy] = settleSpot(i);
+    return { x: sx, y: sy, settled: true, visible: false };
+  }
   const start = PEST_PATH[0] ?? [0, 0];
   if (d < 0) return { x: start[0], y: start[1], settled: false, visible: false };
   for (let s = 0; s < SEGMENTS.length; s++) {
@@ -117,11 +134,12 @@ export function pestPose(i: number, ms: number): PestPose {
   return { x: sx, y: sy, settled: true, visible: true };
 }
 
-/** How much of the bloom has been eaten, 0..1: a bit more with every crawler that settles, then slowly on. */
+/** How much they nibbled off the bloom before it ate them, 0..CHEW_MAX: a bit with every crawler that settles. */
+export const CHEW_MAX = 0.25;
+
 export function chewAt(ms: number): number {
   if (ms <= 0) return 0;
   let settled = 0;
   for (let i = 0; i < PEST_COUNT; i++) if (ms >= pestArrives(i)) settled++;
-  const after = Math.max(0, ms - PESTS_MS) / 6000;
-  return Math.min(1, (settled / PEST_COUNT) * 0.75 + after * 0.25);
+  return (settled / PEST_COUNT) * CHEW_MAX;
 }

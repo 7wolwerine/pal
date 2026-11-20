@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FlowerModel, KNOCKS_TO_BREAK, PESTS_MS, PEST_COUNT, PEST_PATH, chewAt, pestArrives, pestPose } from '../src/scenes/flower/model.ts';
+import { CHEW_MAX, EATEN_MS, EAT_FROM, FlowerModel, KNOCKS_TO_BREAK, PESTS_MS, PEST_COUNT, PEST_PATH, chewAt, eatenAt, pestArrives, pestPose } from '../src/scenes/flower/model.ts';
 import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows, chewedRows } from '../src/scenes/flower/sprites.ts';
 
 describe('FlowerModel', () => {
@@ -74,16 +74,25 @@ describe('once the glass is gone', () => {
     }
   });
 
-  it('eats the bloom bit by bit, and only ever more', () => {
+  it('nibbles the bloom only a little, and only ever more', () => {
     expect(chewAt(0)).toBe(0);
     let prev = 0;
     for (let t = 0; t < PESTS_MS + 8000; t += 100) {
       const chew = chewAt(t);
       expect(chew).toBeGreaterThanOrEqual(prev);
-      expect(chew).toBeLessThanOrEqual(1);
+      expect(chew).toBeLessThanOrEqual(CHEW_MAX);
       prev = chew;
     }
-    expect(prev).toBe(1);
+    expect(prev).toBe(CHEW_MAX);
+  });
+
+  it('then the flower eats the crawlers, one after another, until none is left', () => {
+    expect(EAT_FROM).toBeGreaterThan(PESTS_MS);
+    for (let i = 0; i < PEST_COUNT; i++) {
+      expect(pestPose(i, eatenAt(i) - 1).visible).toBe(true);
+      expect(pestPose(i, eatenAt(i)).visible).toBe(false);
+    }
+    for (let i = 0; i < PEST_COUNT; i++) expect(pestPose(i, EATEN_MS).visible).toBe(false);
   });
 
   it('leaves a bitten flower that is still a flower, with a frown', () => {

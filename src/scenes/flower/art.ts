@@ -1,5 +1,5 @@
 import { paintGrid, progress, px, type Rect } from '../../pixel/stage.ts';
-import { PEST_COUNT, chewAt, pestPose } from './model.ts';
+import { PEST_COUNT, chewAt, eatenAt, pestPose, settleSpot } from './model.ts';
 import { BLOOM_SIZE, DRIED_ROWS, FLOWER_PALETTE, bloomRows, chewedRows } from './sprites.ts';
 
 type G = CanvasRenderingContext2D;
@@ -187,6 +187,14 @@ function paintPlant(g: G, t: number, s: FlowerArt, chew: number): void {
 function paintPests(g: G, t: number, since: number): void {
   for (let i = 0; i < PEST_COUNT; i++) {
     const p = pestPose(i, since);
+    // Snapped up: a quick white chomp where it sat, then nothing.
+    const gone = since - eatenAt(i);
+    if (!p.visible && gone >= 0 && gone < 180) {
+      const [cx, cy] = settleSpot(i);
+      px(g, '#ffffff', cx - 2, cy, 5, 1);
+      px(g, '#ffffff', cx, cy - 2, 1, 5);
+      px(g, '#e56fa3', cx - 1, cy - 1, 3, 3);
+    }
     if (!p.visible) continue;
     const step = Math.floor(t / 110 + i) % 2;
     const nib = p.settled ? Math.round(Math.sin(t / 140 + i * 2) * 0.7) : 0;
@@ -203,7 +211,7 @@ function paintPests(g: G, t: number, since: number): void {
 
 /** Bits of petal letting go and drifting down onto the sill while they eat. */
 function paintFallingPetals(g: G, since: number): void {
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 3; i++) {
     const start = 2600 + i * 520;
     const age = since - start;
     if (age < 0) continue;
@@ -294,10 +302,10 @@ function paintShards(g: G, since: number, motion: boolean): void {
     g.globalAlpha = 1;
   }
   const time = motion ? since : 5000;
-  for (let i = 0; i < 64; i++) {
+  for (let i = 0; i < 160; i++) {
     const x0 = 60 + noise(i) * 40;
     const y0 = 22 + noise(i + 50) * 50;
-    const vx = (noise(i + 100) - 0.5) * 0.09;
+    const vx = (noise(i + 100) - 0.5) * (i % 5 === 0 ? 0.16 : 0.09);
     const vy = -0.02 - noise(i + 150) * 0.04;
     const gravity = 0.00035;
     let x = x0 + vx * time;
@@ -309,7 +317,15 @@ function paintShards(g: G, since: number, motion: boolean): void {
       y = TABLE_Y - 1;
     }
     const size = 1 + (i % 4 === 0 ? 2 : i % 3 === 0 ? 1 : 0);
-    px(g, i % 3 ? '#cfeeff' : '#ffffff', x, y, size, i % 2 ? 1 : size);
+    const colour = i % 3 ? '#cfeeff' : i % 7 === 0 ? '#9fd8f0' : '#ffffff';
+    if (size >= 3 && i % 2 === 0) {
+      // a little triangle of glass
+      px(g, colour, x, y, 3, 1);
+      px(g, colour, x, y - 1, 2, 1);
+      px(g, colour, x, y - 2, 1, 1);
+    } else {
+      px(g, colour, x, y, size, i % 2 ? 1 : size);
+    }
   }
 }
 

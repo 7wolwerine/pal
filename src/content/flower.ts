@@ -22,8 +22,10 @@ export const FLOWER = {
   left: 'Hm. Tak ať si tam uschne.',
   /** When the crawlers are on it. The flower only feels it; nobody explains anything. */
   hurt: 'Au… Co to po mně leze?',
+  /** After she has eaten them, one by one. */
+  ate: 'Mňam. Bez skla je tu aspoň co jíst.',
   /** For screen readers, as the crawlers come in. */
-  pestsLabel: 'Po parapetu lezou k rozkvetlé kytce drobní brouci a okusují jí okvětní lístky.',
+  pestsLabel: 'Po parapetu lezou k rozkvetlé kytce drobní brouci a okusují jí okvětní lístky. Pak je kytka jednoho po druhém sní.',
   leave: 'Nechat ji být',
   labels: {
     dome: 'Skleněný poklop nad kytkou',

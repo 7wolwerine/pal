@@ -7,7 +7,7 @@ import { BUG_PX, Beetle } from '../../ui/beetle.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { CAN_RECT, DOME_RECT, FLOWER_RECT, GROW_MS, PLATE_RECT, STAGE_H, STAGE_W, TABLE_Y, WATER_MS, paintFlower } from './art.ts';
-import { FlowerModel, PESTS_MS } from './model.ts';
+import { EATEN_MS, FlowerModel, PESTS_MS, eatenAt, PEST_COUNT } from './model.ts';
 
 const SCENE = 'flower';
 /** How long before the quiet way out appears. */
@@ -62,7 +62,16 @@ export const flower: GameScene = {
     };
     requestAnimationFrame(placeBug);
     window.addEventListener('resize', placeBug);
-    beetle.setMood('angry');
+    // Miles away at first: sitting, humming, looking out of the window.
+    beetle.setMood('sit');
+    let roused = false;
+    const daydream = window.setInterval(() => {
+      if (!alive || roused) return;
+      beetle.say(pickLine(BUG_FLOWER.idle));
+      window.setTimeout(() => {
+        if (alive && !roused) beetle.say('');
+      }, 2200);
+    }, 6500);
     let grumbles = 0;
     const grumble = async (line?: string): Promise<void> => {
       if (!alive) return;
@@ -84,10 +93,26 @@ export const flower: GameScene = {
       ctx.witness.tally('glass-knock');
       if (result === 'crack') {
         audio.crunch();
-        if (model.knocks === 1) void grumble(pickLine(BUG_FLOWER.knock));
+        if (model.knocks === 1) {
+          // He cannot believe it.
+          roused = true;
+          beetle.setMood('panic');
+          beetle.say(pickLine(BUG_FLOWER.disbelief));
+          window.setTimeout(() => {
+            if (alive) beetle.say('');
+          }, 2400);
+        } else {
+          // Then he is furious.
+          void grumble(pickLine(BUG_FLOWER.knock));
+        }
         return;
       }
+      roused = true;
+      // The glass gives: a burst, and the shards tinkling down onto the sill after it.
       audio.shatter();
+      window.setTimeout(() => audio.crunch(), 180);
+      window.setTimeout(() => audio.crunch(), 420);
+      window.setTimeout(() => audio.shatter(), 650);
       shatterAt = now;
       dome.hidden = true;
       leave.hidden = true;
@@ -142,9 +167,20 @@ export const flower: GameScene = {
       void grumble();
       await sleep(motion ? Math.max(0, PESTS_MS - 1600) : 100);
       if (!alive) return;
-      audio.crunch();
       ctx.witness.record({ scene: SCENE, kind: 'flower-exposed', data: { knocks: model.knocks } });
-      await speech.say(FLOWER.hurt, flowerHead, { who: 'hero', tap: true });
+      void speech.say(FLOWER.hurt, flowerHead, { who: 'hero' });
+      // Then she eats them, one after another: a snap for each.
+      if (motion) {
+        for (let i = 0; i < PEST_COUNT; i++) {
+          const at = eatenAt(i) - PESTS_MS;
+          window.setTimeout(() => {
+            if (alive) audio.click(58 + (i % 3) * 4, 0.4);
+          }, at);
+        }
+        await sleep(EATEN_MS - PESTS_MS + 300);
+      }
+      if (!alive) return;
+      await speech.say(FLOWER.ate, flowerHead, { who: 'hero', tap: true });
     }
 
     // The quiet way out, for the few who would rather leave the glass alone.
@@ -173,6 +209,7 @@ export const flower: GameScene = {
 
     return () => {
       alive = false;
+      window.clearInterval(daydream);
       window.clearTimeout(leaveTimer);
       window.removeEventListener('resize', placeBug);
       beetle.stop();

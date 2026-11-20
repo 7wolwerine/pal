@@ -101,6 +101,10 @@ export type WarningScene = keyof typeof BUG_WARNINGS;
 
 /** On the sill beside the flower, one pool for each thing the player does there. */
 export const BUG_FLOWER = {
+  /** Before anything happens he is miles away: humming, looking out of the window. */
+  idle: ['Hm hm hmmm…', 'Pěkně tam venku sněží.', 'Kdy bude oběd?'],
+  /** The first crack: he cannot believe it. */
+  disbelief: ['Počkat… cože?!', 'Ty to fakt… klepeš do skla?!', 'To snad ne. To nemyslíš vážně.'],
   knock: ['Tsss.', 'Ťuk, ťuk. Trapas.', 'Klepeš jak datel.', 'Jemnější to neumíš?'],
   broken: ['No výborně. Střepy všude.', 'A kdo to zamete? Já ne.', 'Slon v porcelánu by se styděl.'],
   water: BUG_WARNINGS.flower,

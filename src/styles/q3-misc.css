@@ -444,3 +444,8 @@
     animation: none;
   }
 }
+
+/* The plate's letter-spacing adds a gap after the last letter; even it out so the words sit centred. */
+.flower__plate > span {
+  margin-right: -0.06em;
+}
