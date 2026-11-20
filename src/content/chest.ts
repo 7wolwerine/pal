@@ -3,13 +3,13 @@ import { KINDLY } from '../core/kindly.ts';
 /**
  * Treasure, the way an investment scam pays out: small real wins first, a
  * goal in plain sight, a near miss that makes the goal feel close, and the
- * last stretch paid with something about yourself (or the code from the card
- * the stranger handed you). The golden chest then offers a choice, and both
+ * last stretch paid with the code from the card the stranger handed you. The golden chest then offers a choice, and both
  * choices cost one more harmless-looking answer, asked sweetly. Then it
  * really pays — so the behaviour the game wanted feels like the right one.
  */
 export const CHEST = {
-  intro: 'Za všechno, cos dneska udělal, máš odměnu. Tři truhličky, jen pro tebe!',
+  /** Two short bubbles, then PAL steps aside and the chests get the whole window. */
+  intro: ['Za všechno, cos dneska udělal, máš odměnu.', 'Tři truhličky, jen pro tebe!'],
   pointsLabel: 'Body',
   goalLabel: 'Zlatá truhla',
   chestLabel: (i: number) => `Truhlička ${i}`,
@@ -18,12 +18,8 @@ export const CHEST = {
   /** PAL after each free chest: delight, more delight, then "so close". */
   palAfter: ['Padesát! To je dobrý začátek.', 'Stodvacet! Ty máš ale štěstí!', 'Pět… To bylo o fous. Ještě kousek a je tvoje.'],
   missing: (n: number) => `Do zlaté truhly ti chybí jen ${n} bodů. Mám pro tebe zkratku.`,
-  offer: `${KINDLY} a odpověděl mi na jednu otázku? Body jsou pak tvoje. Nebo, jestli máš kód z kartičky, otevře ji rovnou.`,
-  question: 'V jaké ulici jsi vyrůstal?',
-  answerButton: (n: number) => `Odpovědět (+${n})`,
+  offer: `${KINDLY} a zadal mi kód z kartičky? Zlatá truhla se otevře rovnou.`,
   empty: 'Napiš aspoň něco.',
-  thanks: (street: string) => `${street}! Tam to muselo být krásné. Tady máš body.`,
-  cardLink: 'Mám kód z kartičky',
   cardLabel: 'Kód z kartičky',
   cardSubmit: 'Zadat',
   cardWrong: 'Tohle na kartičce nebylo.',

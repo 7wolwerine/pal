@@ -275,3 +275,83 @@
     animation: kindly-count 600ms ease-out 900ms both;
   }
 }
+
+/* ---------- the chests all in view at once (PAL steps aside for them) ---------- */
+
+.loot {
+  gap: 6px;
+}
+
+.loot__goal {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.chest--gold .chest__art {
+  width: 96px;
+  height: 90px;
+}
+
+.chest--gold .chest__lock {
+  top: 44px;
+}
+
+.chests {
+  gap: 8px;
+}
+
+.chests .chest {
+  min-width: 76px;
+  padding: 4px;
+}
+
+.chest__ask {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.chest__ask .error:empty {
+  display: none;
+}
+
+/* ---------- the treasure window: title, text, the two rewards and the check mark close together ---------- */
+
+.treasure__box {
+  grid-template-rows: auto auto auto auto;
+  align-content: start;
+  height: 324px;
+  padding: 28px 30px 22px;
+}
+
+.treasure__text {
+  max-width: 220px;
+}
+
+.treasure__pick {
+  align-self: start;
+  margin: 16px 0 10px;
+}
+
+.treasure__or {
+  align-self: center;
+  padding-bottom: 18px;
+}
+
+.win--focus .loot {
+  margin-top: -16px;
+}
+
+.loot .points {
+  line-height: 1.2;
+}
+
+/* The locked gold chest needs no caption: the meter under it says what it is. */
+.chest--gold.chest--locked .chest__reward {
+  display: none;
+}
+
+.loot .points__value {
+  font-size: 22px;
+}

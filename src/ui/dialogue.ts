@@ -146,7 +146,9 @@ export class Dialogue {
   async say(text: string, msPerChar = 26): Promise<void> {
     const line = ++this.#line;
     // A long line comes as a few bubbles, one after another; screen readers get it whole.
-    const parts = chunks(text, bubbleMax());
+    // The bubble floating over the window has room for two lines only.
+    const floating = this.el.classList.contains('pal--float');
+    const parts = chunks(text, floating ? Math.min(bubbleMax(), 80) : bubbleMax());
     this.#spoken.textContent = text;
     this.#light();
     for (let i = 0; i < parts.length; i++) {

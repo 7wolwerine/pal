@@ -7,7 +7,8 @@ import { gendered, type GameScene } from '../game.ts';
 import { paintGrid, px } from '../pixel/stage.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
-import { ANSWER_POINTS, ChestModel, GOLD_GOAL, GOLD_PRIZE, REWARDS, XP_PRIZE, type Pick } from './chest-model.ts';
+import { stepAside } from '../ui/step-aside.ts';
+import { ChestModel, GOLD_GOAL, GOLD_PRIZE, REWARDS, XP_PRIZE, type Pick } from './chest-model.ts';
 
 const SCENE = 'chest';
 
@@ -247,9 +248,9 @@ function chestCanvas(golden: boolean): ChestArt {
 
 // ---------- the treasure window: an old game's dialog, redrawn in its own pixels ----------
 
-/** Window canvas, 96 x 116 pixels, shown three times larger (288 x 348 in CSS). */
+/** Window canvas, 96 x 108 pixels, shown three times larger (288 x 324 in CSS). */
 const TW = 96;
-const TH = 116;
+const TH = 108;
 const GOLD_L = '#fff0b0';
 const GOLD = '#e8b84a';
 const GOLD_M = '#b8862e';
@@ -599,7 +600,7 @@ export const chest: GameScene = {
       }
     }
 
-    /** So close: the shortcut — an answer about yourself, or the card. */
+    /** So close: the shortcut — the code from the card a stranger handed you. */
     async function lastStretch(): Promise<void> {
       await sleep(400);
       if (!alive) return;
@@ -610,57 +611,10 @@ export const chest: GameScene = {
       await pal.say(CHEST.offer);
       kindlyAsked(witness, SCENE);
       if (!alive) return;
-      askStreet();
+      askCard();
       void bugWarns(ctx, ctx.window.el, 'chest', { side: 'right', mood: 'angry' }).then(() => {
         if (alive && !model.unlockedBy) void pal.say(PAL_DISMISSES.chest);
       });
-    }
-
-    function askStreet(): void {
-      const input = h('input', {
-        class: 'field',
-        attrs: { type: 'text', autocomplete: 'off', maxlength: '40', 'aria-label': CHEST.question, placeholder: CHEST.question },
-      });
-      const error = h('p', { class: 'error', attrs: { role: 'alert' } });
-      const card = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.cardLink, attrs: { type: 'button' } });
-      const skip = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.skip, attrs: { type: 'button' } });
-      const form = h(
-        'form',
-        { class: 'chest__ask', attrs: { novalidate: '' } },
-        h('label', { class: 'chest__question', text: CHEST.question }),
-        h('div', { class: 'row' }, input, h('button', { class: 'btn', text: CHEST.answerButton(ANSWER_POINTS), attrs: { type: 'submit' } })),
-        error,
-        h('div', { class: 'row row--wrap chest__alts' }, card, skip),
-      );
-      input.addEventListener('input', () => {
-        error.textContent = '';
-      });
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const street = input.value.trim();
-        if (!street) {
-          error.textContent = CHEST.empty;
-          input.focus();
-          return;
-        }
-        witness.disclose(SCENE, 'data-as-currency', 'street', street);
-        kindlyObeyed(witness, SCENE);
-        model.answer();
-        actions.replaceChildren();
-        void (async () => {
-          await countTo(model.points);
-          await pal.say(CHEST.thanks(street));
-          unlock();
-        })();
-      });
-      card.addEventListener('click', () => askCard());
-      skip.addEventListener('click', () => {
-        witness.record({ scene: SCENE, kind: 'declined-points' });
-        actions.replaceChildren();
-        void pal.say(CHEST.skipped).then(() => finish());
-      });
-      actions.replaceChildren(form);
-      input.focus();
     }
 
     /** "I have a code from the card": what the AR bear's sign showed. */
@@ -670,14 +624,17 @@ export const chest: GameScene = {
         attrs: { type: 'text', autocomplete: 'off', maxlength: '12', 'aria-label': CHEST.cardLabel, placeholder: CHEST.cardLabel },
       });
       const error = h('p', { class: 'error', attrs: { role: 'alert' } });
-      const back = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.skip, attrs: { type: 'button' } });
+      const skip = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.skip, attrs: { type: 'button' } });
       const form = h(
         'form',
         { class: 'chest__ask', attrs: { novalidate: '' } },
         h('div', { class: 'row' }, input, h('button', { class: 'btn', text: CHEST.cardSubmit, attrs: { type: 'submit' } })),
         error,
-        back,
+        skip,
       );
+      input.addEventListener('input', () => {
+        error.textContent = '';
+      });
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         if (!isCardCode(input.value)) {
@@ -691,7 +648,11 @@ export const chest: GameScene = {
         actions.replaceChildren();
         void pal.say(CHEST.cardRight).then(() => unlock());
       });
-      back.addEventListener('click', () => askStreet());
+      skip.addEventListener('click', () => {
+        witness.record({ scene: SCENE, kind: 'declined-points' });
+        actions.replaceChildren();
+        void pal.say(CHEST.skipped).then(() => finish());
+      });
       actions.replaceChildren(form);
       input.focus();
     }
@@ -814,12 +775,21 @@ export const chest: GameScene = {
       });
     }
 
+    // Two short bubbles in the window, then PAL steps aside so every chest is in view at once;
+    // from then on PAL's lines come as a bubble over the top of the window.
     void (async () => {
-      await pal.say(CHEST.intro);
+      for (const line of CHEST.intro) {
+        await pal.say(line);
+        if (!alive) return;
+        await sleep(motion ? 900 : 0);
+        if (!alive) return;
+      }
+      stepAside(ctx, true);
     })();
 
     return () => {
       alive = false;
+      stepAside(ctx, false);
       cancelAnimationFrame(shimmer);
       document.querySelector('.treasure')?.remove();
       stage.replaceChildren();

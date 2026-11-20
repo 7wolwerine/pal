@@ -15,10 +15,14 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
   { id: 'dog', label: 'pes' },
 ];
 
-/** The AR bear's sign shows 3107, which upside down reads LOVE, then adds YOU. */
+/**
+ * The code from the card: LOVE YOU (any case), or the number with or without YOU. The AR bear's
+ * sign shows 3107 (upside down it reads LOVE); 3701 is accepted too. Nothing else opens it.
+ */
+const CARD_CODES: ReadonlySet<string> = new Set(['LOVE YOU', '3107', '3107 YOU', '3701', '3701 YOU']);
+
 export function isCardCode(text: string): boolean {
-  const t = text.trim().toUpperCase().replace(/\s+/g, ' ');
-  return t === '3107' || t === 'LOVE' || t === 'LOVE YOU' || t === '3107 YOU';
+  return CARD_CODES.has(text.trim().toUpperCase().replace(/\s+/g, ' '));
 }
 
 export const WELCOME = {

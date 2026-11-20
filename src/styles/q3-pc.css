@@ -459,3 +459,8 @@
   display: flex;
   align-items: center;
 }
+
+/* The bubble floating over the window keeps to its two lines on a phone too. */
+.pc[data-mode='compact'] .pal--float .pal__bubble {
+  min-height: 0;
+}

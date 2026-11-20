@@ -6,6 +6,7 @@ import { gendered, lean, type GameContext } from '../../game.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { contract, quiz, sequence } from './lock.ts';
 import { tidy } from './tidy.ts';
+import { stepAside } from '../../ui/step-aside.ts';
 
 const SCENE = 'fidgets';
 
@@ -24,13 +25,7 @@ export const fidgets: Scene<GameContext> = {
     const { pal, profile, stage, witness } = ctx;
     // The panel and the questions need the whole window: PAL, the conversation and the
     // trust badges step aside, and PAL's lines pop up as a bubble of their own above it.
-    const focus = (on: boolean): void => {
-      const screen = ctx.window.el.parentElement;
-      ctx.window.el.classList.toggle('win--focus', on);
-      pal.el.classList.toggle('pal--float', on);
-      if (on && screen) screen.append(pal.el);
-      else if (!on && pal.el.parentElement !== ctx.window.body) ctx.window.body.prepend(pal.el);
-    };
+    const focus = (on: boolean): void => stepAside(ctx, on);
     focus(true);
 
     // Between the steps the stage empties while PAL talks. So that PAL's window does not
