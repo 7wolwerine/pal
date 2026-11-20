@@ -135,7 +135,7 @@ export const HERO_WIDTH = 16;
 export const HERO_HEIGHT = 26;
 
 /** 'side' stands still in profile, facing `facing`, arms hanging. */
-export type HeroPose = 'stand' | 'walk' | 'happy' | 'hold' | 'side';
+export type HeroPose = 'stand' | 'walk' | 'happy' | 'hold' | 'side' | 'toast';
 
 export interface HeroLook {
   readonly pose: HeroPose;
@@ -227,6 +227,14 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
     arm(g, ix + 11, y + 15, ix + 16, y + 11);
     return;
   }
+  if (pose === 'toast') {
+    // One hand raised high for a toast (something can be put in it, see heroToastHand), the other at the side.
+    arm(g, ix + 3, y + 15, ix + 3, y + 20);
+    arm(g, ix + 11, y + 15, ix + 14, y + 8);
+    rows(g, patch(FRONT_HEAD, worn ? (blink ? FRONT_WORN_BLINK : FRONT_WORN) : blink ? FRONT_BLINK : undefined), ix, y, false);
+    if (worn) messyHair(g, ix, y, false);
+    return;
+  }
   // 'hold': both hands together in front, holding up a little present.
   arm(g, ix + 4, y + 15, ix + 6, y + 19);
   arm(g, ix + 11, y + 15, ix + 9, y + 19);
@@ -247,6 +255,11 @@ function messyHair(g: G, x: number, top: number, flip: boolean): void {
   px(g, dark, at(2), top + 1, 1, 1);
   px(g, dark, at(13), top + 1, 1, 1);
   px(g, dark, at(14), top + 2, 1, 1);
+}
+
+/** Where the raised hand is in the 'toast' pose. */
+export function heroToastHand(x: number, baseY: number): { x: number; y: number } {
+  return { x: Math.round(x) + 15, y: baseY - HERO_HEIGHT + 8 };
 }
 
 /** Where the hands are in the 'hold' pose, to put something in them. */

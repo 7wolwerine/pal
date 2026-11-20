@@ -1,39 +1,42 @@
 import { audio } from '../../audio/engine.ts';
 import { GLASS } from '../../content/glass.ts';
 import type { GameScene } from '../../game.ts';
+import { HERO_HEIGHT, HERO_WIDTH } from '../../pixel/hero.ts';
 import { PixelStage } from '../../pixel/stage.ts';
 import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
-import { HERO_WIDTH, HERO_HEIGHT } from '../../pixel/hero.ts';
 import {
   GLASS_RECT,
   HERO_FEET_Y,
-  HERO_HOME_X,
   HERO_MIRROR_X,
+  HERO_TABLE_X,
   MIRROR_RECT,
-  SPLASH_MS,
   STAGE_H,
   STAGE_W,
+  handDrop,
   paintGlassScene,
+  splashMs,
+  type GlassState,
   type HeroState,
 } from './art.ts';
-import { BOUNCE_AT, SETTLE_MS } from './model.ts';
+import { dropTimes } from './model.ts';
 
 const SCENE = 'glass';
-/** If the player does not touch the glass, it slides off by itself. */
-const SLIDE_AFTER_MS = 7000;
+/** If the player does not touch the glass, the character goes for it anyway. */
+const FETCH_AFTER_MS = 7000;
 /** Picture pixels per ms: a tired walk. */
 const WALK_SPEED = 0.03;
 
 /**
- * A toast, and a glass that falls the wrong way: it bounces like rubber and
- * the water shatters. Right before the reveal, the first sign that the game's
- * world was staged all along.
+ * A toast, and a glass that falls the wrong way. The player's character from
+ * the garden stands by a standing mirror, worn out. A tap on the glass (or a
+ * little waiting) and the character walks over, takes it, raises it for the
+ * toast — and, hups, it slips: it bounces like rubber and the water shatters.
+ * Right before the reveal, the first sign that the game's world was staged.
  *
- * The player's character from the garden stands there too, worn out. A
- * mirror on the wall glints now and then; click it and he walks over, looks
- * at his tired face and tells himself he is still himself. It is optional
- * and never holds up the glass.
+ * A tap on the mirror, any time the character is free, and they look at their
+ * tired face and tell themselves they are still themselves. Optional; it never
+ * holds up the glass for long.
  */
 export const glass: GameScene = {
   id: SCENE,
@@ -49,76 +52,97 @@ export const glass: GameScene = {
 
     let alive = true;
     let now = 0;
-    let fallAt: number | undefined;
+    let glassState: GlassState = { kind: 'table' };
 
-    // The character: standing, then walking to the mirror and looking in.
-    let heroX = HERO_HOME_X;
-    let heroPose: HeroState['pose'] = 'stand';
-    let heroFacing: HeroState['facing'] = 0;
+    // The character: by the mirror at first, walking, looking in, holding the glass.
+    let hero: HeroState = { x: HERO_MIRROR_X, pose: 'stand', facing: 0 };
     let walk: { from: number; to: number; at: number } | undefined;
-    let mirrorBusy = false;
+    /** Something is under way (the mirror or the glass); taps wait until it is over. */
+    let busy = false;
     let mirrorDone = false;
-    // His own bubble, so it never takes PAL's line (or its waiting tap) away.
+    let fetched = false;
+    // The character's own bubble, so it never takes PAL's line (or its waiting tap) away.
     const thoughts = new Speech(stage.el, STAGE_W, STAGE_H);
-    const heroHead = (): { x: number; y: number } => ({ x: heroX + HERO_WIDTH / 2, y: HERO_FEET_Y - HERO_HEIGHT - 1 });
+    const heroHead = (): { x: number; y: number } => ({ x: hero.x + HERO_WIDTH / 2, y: HERO_FEET_Y - HERO_HEIGHT - 1 });
+
+    async function walkTo(x: number): Promise<boolean> {
+      const distance = Math.abs(hero.x - x);
+      if (distance <= 0.5) return true;
+      hero = { ...hero, pose: 'walk', facing: x < hero.x ? -1 : 1 };
+      walk = { from: hero.x, to: x, at: now };
+      await sleep(motion ? distance / WALK_SPEED : 0);
+      walk = undefined;
+      hero = { ...hero, x };
+      return alive;
+    }
 
     stage.hotspot(MIRROR_RECT, GLASS.mirror, () => {
-      if (mirrorBusy || !alive) return;
+      if (busy || !alive) return;
       void lookInMirror();
     });
 
     async function lookInMirror(): Promise<void> {
-      mirrorBusy = true;
-      const distance = Math.abs(heroX - HERO_MIRROR_X);
-      if (distance > 0.5) {
-        heroPose = 'walk';
-        heroFacing = HERO_MIRROR_X < heroX ? -1 : 1;
-        walk = { from: heroX, to: HERO_MIRROR_X, at: now };
-        await sleep(motion ? distance / WALK_SPEED : 0);
-        if (!alive) return;
-        walk = undefined;
-        heroX = HERO_MIRROR_X;
-      }
-      // He turns to the mirror and looks at himself for a moment.
-      heroPose = 'side';
-      heroFacing = -1;
+      busy = true;
+      if (!(await walkTo(HERO_MIRROR_X))) return;
+      // A turn to the mirror and a moment's look.
+      hero = { ...hero, pose: 'side', facing: -1 };
       await sleep(motion ? 900 : 100);
       if (!alive) return;
-      if (!mirrorDone) ctx.witness.record({ scene: SCENE, kind: 'mirror', data: { glassFallen: fallAt !== undefined } });
+      if (!mirrorDone) ctx.witness.record({ scene: SCENE, kind: 'mirror', data: { glassFallen: glassState.kind === 'falling' } });
       mirrorDone = true;
       await thoughts.say(GLASS.mirrorLine, heroHead, { who: 'hero', ms: 2600 });
       if (!alive) return;
       thoughts.hide();
-      heroPose = 'stand';
-      heroFacing = 0;
-      mirrorBusy = false;
+      hero = { ...hero, pose: 'stand', facing: 0 };
+      busy = false;
     }
 
-    const spot = stage.hotspot(GLASS_RECT, GLASS.label, () => fall(true));
-    // While he is busy at the mirror the glass waits, so neither moment steps on the other.
-    let slideTimer = 0;
-    const slideLater = (ms: number): void => {
-      slideTimer = window.setTimeout(() => {
-        if (mirrorBusy) slideLater(1500);
-        else fall(false);
+    const spot = stage.hotspot(GLASS_RECT, GLASS.label, () => fetch(true));
+    // While the character is at the mirror the glass waits, so neither moment steps on the other.
+    let fetchTimer = 0;
+    const fetchLater = (ms: number): void => {
+      fetchTimer = window.setTimeout(() => {
+        if (busy) fetchLater(1500);
+        else fetch(false);
       }, ms);
     };
-    slideLater(SLIDE_AFTER_MS);
+    fetchLater(FETCH_AFTER_MS);
 
-    function fall(touched: boolean): void {
-      if (fallAt !== undefined) return;
-      fallAt = now;
+    function fetch(touched: boolean): void {
+      if (fetched || busy) return;
+      fetched = true;
       spot.hidden = true;
-      window.clearTimeout(slideTimer);
-      void play(touched);
+      window.clearTimeout(fetchTimer);
+      void toast(touched);
     }
 
-    async function play(touched: boolean): Promise<void> {
+    async function toast(touched: boolean): Promise<void> {
+      busy = true;
+      if (!(await walkTo(HERO_TABLE_X))) return;
+      // Takes the glass off the table, then raises it.
+      hero = { ...hero, pose: 'hold', facing: 0 };
+      glassState = { kind: 'held' };
+      audio.click(76, 0.2);
+      await sleep(motion ? 600 : 100);
+      if (!alive) return;
+      hero = { ...hero, pose: 'toast' };
+      glassState = { kind: 'raised' };
+      await sleep(motion ? 900 : 100);
+      if (!alive) return;
+      // Hups.
+      const from = handDrop(hero.x);
+      glassState = { kind: 'falling', at: now, from };
+      hero = { ...hero, pose: 'stand' };
+      await play(from, touched);
+    }
+
+    async function play(from: ReturnType<typeof handDrop>, touched: boolean): Promise<void> {
+      const times = dropTimes(from);
       if (motion) {
         // The sounds follow the motion: a boing on each bounce, a shatter for the water.
         const events = [
-          ...BOUNCE_AT.map((at, i) => ({ at, sound: () => audio.boing(0.45 - i * 0.12) })),
-          { at: SPLASH_MS, sound: () => audio.shatter() },
+          ...times.bounceAt.map((at, i) => ({ at, sound: () => audio.boing(0.45 - i * 0.12) })),
+          { at: splashMs(from), sound: () => audio.shatter() },
         ].sort((a, b) => a.at - b.at);
         let elapsed = 0;
         for (const e of events) {
@@ -127,30 +151,33 @@ export const glass: GameScene = {
           if (!alive) return;
           e.sound();
         }
-        await sleep(Math.max(0, SETTLE_MS - elapsed) + 700);
+        await sleep(Math.max(0, times.settle - elapsed) + 700);
       } else {
         audio.boing();
         audio.shatter();
         await sleep(400);
       }
       if (!alive) return;
+      busy = false;
       ctx.witness.record({ scene: SCENE, kind: 'glass-bounced', trick: 'broken-physics', data: { touched } });
       await speech.say(GLASS.after, voice, { who: 'pal', tap: true });
+      // Someone still at the mirror finishes the thought first.
+      while (alive && busy) await sleep(200);
       if (alive) done();
     }
 
     stage.run((g, t) => {
       now = t;
       if (walk) {
-        const u = Math.min(1, (t - walk.at) * WALK_SPEED / Math.max(1, Math.abs(walk.to - walk.from)));
-        heroX = walk.from + (walk.to - walk.from) * u;
+        const u = Math.min(1, ((t - walk.at) * WALK_SPEED) / Math.max(1, Math.abs(walk.to - walk.from)));
+        hero = { ...hero, x: walk.from + (walk.to - walk.from) * u };
       }
-      paintGlassScene(g, t, fallAt, motion, { x: heroX, pose: heroPose, facing: heroFacing });
+      paintGlassScene(g, t, glassState, motion, hero);
     });
 
     return () => {
       alive = false;
-      window.clearTimeout(slideTimer);
+      window.clearTimeout(fetchTimer);
       speech.stop();
       thoughts.stop();
       stage.stop();

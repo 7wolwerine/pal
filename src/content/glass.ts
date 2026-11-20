@@ -5,12 +5,12 @@
  * water shatters into shards. The first crack in the game's reality.
  */
 export const GLASS = {
-  sceneLabel: 'Oslava. Na stole stojí láhev a sklenice s vodou, kousek od okraje. Na stěně visí zrcadlo, opodál stojí tvoje postavička.',
+  sceneLabel: 'Oslava. Na stolku stojí láhev a sklenice s vodou. U stojacího zrcadla stojí tvoje postavička.',
   toast: 'Na zdraví! Připijem si na tvou výhru.',
   label: 'Sklenice s vodou',
   after: 'Hm. To se nemělo stát.',
   go: 'Pokračovat',
-  mirror: 'Zrcadlo na stěně',
+  mirror: 'Stojací zrcadlo',
   /** What the character says to the tired face in the mirror. Exactly this. */
   mirrorLine: 'Navzdory všemu jsem to pořád já.',
 } as const;
