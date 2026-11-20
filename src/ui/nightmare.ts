@@ -10,6 +10,7 @@ import { paintFlower } from '../scenes/flower/art.ts';
 import { CHARACTER_AT_MAILBOX, CHARACTER_HOME, FEET_Y, paintBackdrop, paintCloseUp, paintMailbox, paintPlant } from '../scenes/mailbox/art.ts';
 import { paintScene } from '../scenes/paint/art.ts';
 import { HOLE_CENTRE, Painting, SKY, paintingRows } from '../scenes/paint/model.ts';
+import { HERO_MIRROR_X, HERO_TABLE_X, STAGE_H as GLASS_H_STAGE, STAGE_W as GLASS_W_STAGE, handDrop, paintGlassScene, type GlassState } from '../scenes/glass/art.ts';
 import { paintShelter } from '../scenes/shelter/art.ts';
 import { ShelterModel } from '../scenes/shelter/model.ts';
 import { h, prefersReducedMotion, sleep } from './dom.ts';
@@ -57,8 +58,9 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
   const skip = h('button', { class: 'night__skip', text: NIGHT.skip, attrs: { type: 'button' } });
   // The end of the tape: the player's own hand-painted words, exactly as painted, and the count under them.
   const kindly = h('img', { class: 'night__kindly', attrs: { src: `${import.meta.env.BASE_URL}kindly.webp`, alt: NIGHT.kindly.alt, draggable: 'false' } });
+  const said = h('p', { class: 'night__said', text: NIGHT.kindly.said });
   const obeyed = h('p', { class: 'night__obeyed', text: NIGHT.kindly.obeyed(facts.kindly.obeyed) });
-  const end = h('div', { class: 'night__end', attrs: { hidden: '' } }, kindly, obeyed);
+  const end = h('div', { class: 'night__end', attrs: { hidden: '' } }, kindly, said, obeyed);
   const el = h('section', { class: 'night', attrs: { 'aria-label': NIGHT.label } }, h('div', { class: 'night__tv' }, screen, end, rec, clock), caption, skip);
   document.body.append(el);
 
@@ -231,6 +233,13 @@ function factsOf(events: readonly WitnessEvent[], profile: Profile): NightFacts 
     printed: events.some((e) => e.kind === 'surprise' && e.data?.onPaper === true),
     cost: disclosed.has('pet') ? NIGHT.cost.pet(disclosed.get('pet') ?? '') : disclosed.has('teacher') ? NIGHT.cost.teacher(disclosed.get('teacher') ?? '') : undefined,
     kindly: kindlyCount(events),
+    card: events.some((e) => e.kind === 'ar-code' && e.scene === 'chest') || events.some((e) => e.kind === 'gold-open' && e.data?.by === 'card'),
+    refusals: events.filter((e) => e.kind === 'plea-refused').length,
+    uacNo: events.filter((e) => e.kind === 'uac-declined').length,
+    mailSent: events.some((e) => e.kind === 'mail-sent'),
+    mirror: events.some((e) => e.kind === 'mirror'),
+    called: events.some((e) => e.kind === 'called-support'),
+    dictated: events.some((e) => e.kind === 'dictated-code'),
   };
 }
 
@@ -423,7 +432,8 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
         text(g, _t, u) {
           const count = Math.round(f.points * Math.min(1, u / 0.6));
           line(g, `● ${count.toLocaleString('cs-CZ')}`, 220, 150, 48);
-          if (f.street) line(g, `> ${typed(f.street, u, 0.55, 0.85)}`, 220, 240, 30, DIM);
+          if (f.card) line(g, `> ${typed('LOVE YOU', u, 0.55, 0.8)}`, 220, 240, 30, DIM);
+          else if (f.street) line(g, `> ${typed(f.street, u, 0.55, 0.85)}`, 220, 240, 30, DIM);
           if (f.cost) line(g, `> ${typed(f.cost, u, 0.7, 0.95)}`, 120, 300, 22, DIM);
         },
       };
@@ -434,7 +444,8 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
           panel(g, 140, 80, 360, 160, 'Zprávy');
           line(g, 'Potvrzovací kód:', 170, 150, 22, DIM);
           line(g, '482 917', 170, 195, 40);
-          line(g, `> ${typed('482917', u, 0.4, 0.8)}`, 170, 290, 30);
+          if (f.refusals > 0 && u < 0.45) line(g, `[ Teď nemám čas ] × ${Math.min(f.refusals, Math.ceil((u / 0.45) * f.refusals))}`, 170, 290, 24, DIM);
+          else line(g, `> ${typed('482917', u, f.refusals > 0 ? 0.5 : 0.4, 0.85)}`, 170, 290, 30);
         },
       };
     case 'download':
@@ -445,8 +456,8 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
           g.fillStyle = '#0f3d2c';
           g.fillRect(150, 180, 340, 26);
           g.fillStyle = INK;
-          g.fillRect(150, 180, 340 * Math.min(1, u / 0.7), 26);
-          line(g, u < 0.75 ? 'Stahování…' : u < 0.9 ? '[ Spustit ]' : 'Nainstalováno.', 150, 240, 24);
+          g.fillRect(150, 180, 340 * (u < 0.45 ? u / 0.45 : u < 0.7 ? 1 : Math.min(1, (u - 0.7) / 0.2)), 26);
+          line(g, u < 0.45 ? 'Stahování…' : u < 0.7 ? 'Vydavatel: Neznámý  [ Ano ]' : u < 0.9 ? 'Čtu uložená hesla…' : 'Nainstalováno.', 150, 240, 24);
         },
       };
     case 'prize':
@@ -455,7 +466,49 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
         text(g, _t, u) {
           line(g, '★ CERTIFIKÁT ★', 200, 120, 30, DIM);
           line(g, f.name ?? '', 200, 180, 42);
-          if (f.email) line(g, `> ${typed(f.email, u, 0.35, 0.85)}`, 120, 260, 26);
+          if (f.email) line(g, `> ${typed(f.email, u, 0.35, 0.7)}`, 120, 260, 26);
+          if (f.mailSent && u > 0.75) line(g, '✉ ODESLÁNO', 200, 320, 30);
+        },
+      };
+    case 'glass': {
+      const from = handDrop(HERO_TABLE_X);
+      return {
+        id,
+        pixel(g, t, u) {
+          // The walk to the table, the glass raised, and the fall: the real moment, compressed.
+          const walk = Math.min(1, u / 0.3);
+          const x = HERO_MIRROR_X + (HERO_TABLE_X - HERO_MIRROR_X) * walk;
+          const glass: GlassState = u < 0.3 ? { kind: 'table' } : u < 0.38 ? { kind: 'held' } : u < 0.48 ? { kind: 'raised' } : { kind: 'falling', at: t - (u - 0.48) * SCENE_MS, from };
+          const pose = u < 0.3 ? 'walk' : u < 0.38 ? 'hold' : u < 0.48 ? 'toast' : 'stand';
+          g.save();
+          g.scale(W / GLASS_W_STAGE, H / GLASS_H_STAGE);
+          paintGlassScene(g, t, glass, true, { x, pose, facing: u < 0.3 ? 1 : 0 });
+          g.restore();
+        },
+      };
+    }
+    case 'crash':
+      return {
+        id,
+        text(g, _t, u) {
+          g.fillStyle = '#0b3a28';
+          g.fillRect(60, 50, 520, 300);
+          line(g, ':(', 90, 110, 64);
+          line(g, '+420 000 123 456', 90, 190, 34);
+          if (f.dictated) line(g, `> ${typed('4… 8… 1… 5… 9… 2…', u, 0.35, 0.75)}`, 90, 260, 26, DIM);
+          else if (f.called) line(g, typed('„Dobryj děň, zdě technická podpora…“', u, 0.35, 0.8), 90, 260, 20, DIM);
+          if (f.dictated && u > 0.8) {
+            // The cursor that was not the player's.
+            const cx = 300 + Math.sin(u * 40) * 120;
+            const cy = 300 + Math.cos(u * 31) * 30;
+            g.fillStyle = INK;
+            g.beginPath();
+            g.moveTo(cx, cy);
+            g.lineTo(cx, cy + 26);
+            g.lineTo(cx + 18, cy + 18);
+            g.closePath();
+            g.fill();
+          }
         },
       };
   }

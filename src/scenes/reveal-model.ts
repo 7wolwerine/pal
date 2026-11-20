@@ -299,3 +299,54 @@ export function buildReveal(witness: Witness): RevealModel {
     },
   };
 }
+
+/**
+ * "Co o tobě vím": what the record says about the player's tendencies and
+ * preferences, as a few dense sentences. Only what the events show; a
+ * tendency with no evidence is left out rather than guessed.
+ */
+export function whatIKnow(events: readonly WitnessEvent[]): string[] {
+  const count = (kind: string): number => events.filter((e) => e.kind === kind).length;
+  const has = (kind: string): boolean => events.some((e) => e.kind === kind);
+  const out: string[] = [];
+
+  const { asked, obeyed } = kindlyCount(events);
+  if (asked > 0) out.push(obeyed >= asked ? `Na zdvořilou prosbu slyšíš vždycky: ${obeyed} z ${asked}.` : `Na zdvořilou prosbu slyšíš ${obeyed} z ${asked}. Odmítnout umíš, jen to děláš málokdy.`);
+
+  const role = events.find((e) => e.kind === 'plea-opener')?.data?.role;
+  if (role === 'helper') out.push('Když někdo prosí, jdeš mu naproti dřív, než řekne, o co jde.');
+  else if (role === 'fixer') out.push('Nejdřív se ptáš, co se stalo. Problémy chceš řešit, ne utěšovat.');
+  else if (role === 'loner') out.push('Držíš si odstup. Pomohl jsi stejně.');
+  const refusals = count('plea-refused');
+  if (refusals > 0) out.push(`Ne řekneš, ale vydržíš ${refusals}×. Pak povolíš, když to bolí dost.`);
+
+  const presses = count('forbidden-press');
+  if (presses > 0) out.push(`Zákaz tě láká: „Nesahat“ jsi zmáčkl ${presses}×.`);
+  else if (events.some((e) => e.scene === 'dontclick')) out.push('Zákazy respektuješ. Tlačítka „Nesahat“ ses nedotkl.');
+
+  const curious = [has('opened-mail') && 'dopis od neznámého', has('plugged') && 'cizí flashku', has('ar-code') && 'kameru pro cizí stránku'].filter(Boolean);
+  if (curious.length) out.push(`Zvědavost je u tebe silnější než opatrnost: ${curious.join(', ')}.`);
+
+  if (count('tidied') > 0 || has('frame-fixed')) out.push('Nesneseš nepořádek. Rovnáš i to, o co tě nikdo nežádal.');
+  const deaths = count('death');
+  if (deaths > 0) out.push(`Když se nedaří, zkoušíš to znovu: ${deaths}× jsi prohrál a nepřestal.`);
+  if (has('stay')) out.push('Slibuješ, že zůstaneš. A myslíš to vážně.');
+  if (has('glass-broken')) out.push('Co ti vadí, rozbiješ vlastní rukou. Na cedulku se nedíváš.');
+
+  const path = events.find((e) => e.kind === 'shelter')?.data?.path;
+  if (path === 'hut') out.push('Raději chata než jeskyně: chceš dveře, které jdou zavřít.');
+  else if (path === 'cave') out.push('Raději jeskyně a oheň než stavění od základů.');
+  const pick = events.find((e) => e.kind === 'gold-choice')?.data?.pick;
+  if (pick === 'gold') out.push('Bereš zlaťáky, ne zkušenost. Co je hmatatelné, to platí.');
+  else if (pick === 'xp') out.push('Bereš zkušenost, ne zlaťáky. Chceš růst, ne mít.');
+
+  const uacNo = count('uac-declined');
+  if (has('ran-download')) out.push(uacNo > 0 ? 'Neznámému vydavateli jsi řekl ne. Kamarádovi pak ano.' : 'Programu od kamaráda dáš klíče od počítače bez otázek.');
+  if (has('dictated-code')) out.push('Hlasu z telefonu nadiktuješ kód, když zní dost úředně.');
+  else if (has('called-support')) out.push('Na číslo z modré obrazovky zavoláš.');
+  const leave = events.filter((e) => e.kind === 'window-button').length;
+  if (leave > 0) out.push(`Odejít jsi chtěl ${leave}×. Zůstal jsi.`);
+  const vigilance = count('vigilance');
+  if (vigilance > 0) out.push(`Všímáš si, když něco nesedí: ${vigilance}× ses zeptal nebo to prověřil.`);
+  return out;
+}

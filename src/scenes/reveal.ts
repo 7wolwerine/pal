@@ -9,7 +9,7 @@ import { openKeygen } from '../ui/keygen.ts';
 import { playNightmare } from '../ui/nightmare.ts';
 import { readImageText } from '../ui/read-image.ts';
 import { createPalFace } from '../ui/pal-face.ts';
-import { buildReveal, buildTimeline } from './reveal-model.ts';
+import { buildReveal, buildTimeline, whatIKnow } from './reveal-model.ts';
 
 /**
  * The reveal. Always the last scene. First it replays the player's own game as
@@ -322,6 +322,7 @@ export const reveal: Scene<GameContext> = {
     function breakdown(): Node[] {
       const { seconds, clicks, windowButtons, vigilance, bugWarnings } = model.stats;
       const caught = model.anomalies.filter((a) => a.found).length;
+      const know = whatIKnow(witness.events);
       const device = collectDevice();
 
       const again = h('button', {
@@ -382,7 +383,10 @@ export const reveal: Scene<GameContext> = {
             label: 'O tobě',
             meta: String(model.disclosed.length),
             title: 'Co o tobě vím',
-            content: [model.disclosed.length ? facts(model.disclosed) : h('p', { text: 'Nic jsi mi neřekl. Respekt.' })],
+            content: [
+              know.length > 0 && h('p', { class: 'reveal__know', text: know.join(' ') }),
+              model.disclosed.length ? facts(model.disclosed) : h('p', { text: 'Nic jsi mi neřekl. Respekt.' }),
+            ],
           },
           {
             label: 'Zařízení',
@@ -562,8 +566,8 @@ function demoWitness(): Witness {
   rec('chest', 'chest-open', 'small-win', { n: 1, reward: 50 });
   rec('chest', 'chest-open', 'small-win', { n: 2, reward: 120 });
   rec('chest', 'chest-open', 'variable-reward', { n: 3, reward: 5 });
-  w.disclose('chest', 'data-as-currency', 'street', 'Lipová');
-  rec('chest', 'gold-open', 'variable-reward', { by: 'answer' });
+  rec('chest', 'ar-code', 'camera-permission');
+  rec('chest', 'gold-open', 'variable-reward', { by: 'card' });
   rec('chest', 'gold-choice', undefined, { pick: 'gold' });
   w.disclose('chest', 'security-question', 'pet', 'Rex', { pick: 'gold' });
   // PAL's polite phrase: asked seven times, obeyed six (demo only).
@@ -574,12 +578,16 @@ function demoWitness(): Witness {
   rec('plea', 'plea-choice', 'romance-scam', { how: 'gave-in', refusals: 1 });
   rec('plea', 'otp-shared', 'otp-scam', { ms: 8200, item: 'klíč', price: 1 });
   rec('download', 'download-started', 'fake-download', { ms: 2600 });
-  rec('download', 'ran-download', 'fake-download');
+  rec('download', 'uac-declined', undefined, { asked: 0 });
+  rec('download', 'ran-download', 'fake-download', { declined: 1 });
   w.disclose('prize', 'real-email', 'email', 'tester@example.cz');
+  rec('prize', 'mail-sent');
   rec('prize', 'saved-image', 'stego-dropper');
+  rec('glass', 'mirror', undefined, { glassFallen: false });
   rec('glass', 'glass-bounced', 'broken-physics', { touched: true });
   rec('crash', 'window-button', undefined, { button: 'close' });
   rec('crash', 'called-support', 'tech-support', { ms: 5300 });
+  rec('crash', 'dictated-code', 'tech-support');
   w.tally('click', 386);
   return w;
 }

@@ -355,3 +355,80 @@
 .loot .points__value {
   font-size: 22px;
 }
+
+/* The painted English words fade into the back; the Czech the player actually heard stands in front. */
+.night__end {
+  isolation: isolate;
+}
+
+.night__end .night__kindly {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  max-height: none;
+  height: 100%;
+  margin: auto;
+  opacity: 0.18;
+  filter: saturate(0.5);
+}
+
+.night__said {
+  margin: 0;
+  color: #f2eee8;
+  font: 700 clamp(26px, 6vw, 56px) / 1.1 Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  text-align: center;
+  text-shadow: 0 0 18px rgba(255, 80, 80, 0.45);
+  animation: kindly-flicker 2600ms linear both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .night__said {
+    animation: kindly-count 900ms ease-out both;
+  }
+}
+
+/* ---------- the keygen button: inverted, black on neon, with a shine now and then ---------- */
+
+.reveal .btn--keygen,
+.btn--keygen {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid #000;
+  background: #39ff6a;
+  box-shadow: 0 4px 0 #0a5a22;
+  color: #000;
+  font-weight: 700;
+}
+
+.btn--keygen::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: -40%;
+  width: 30%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  transform: skewX(-20deg);
+  animation: keygen-shine 4200ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes keygen-shine {
+  0%,
+  72% {
+    left: -40%;
+  }
+  88%,
+  100% {
+    left: 130%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn--keygen::after {
+    animation: none;
+    display: none;
+  }
+}
