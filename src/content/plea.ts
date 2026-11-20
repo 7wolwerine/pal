@@ -90,12 +90,12 @@ export const PLEA = {
   },
   /** The refusal is never accepted; each one hurts a little more, in the asker's own way. */
   hurt: {
-    cat: ['Aha. No nic. Já si ty granulky nějak seženu.', 'Kočky tohle nedávají najevo. Ale mrzí mě to. Hodně.', 'Dobře. Tak já si lehnu do rohu a budu se dívat do zdi. Sama.'],
-    dog: ['Aha… (sklopí uši)', 'Kňuk. Já myslel, že jsme kamarádi. Nejlepší kamarádi.', 'To nic. Lehnu si ke dveřím a počkám. Třeba si to rozmyslíš.'],
-    grandma: ['Ale jistě, broučku, ty máš svých starostí dost.', 'Já to chápu, dneska nikdo nemá čas. Ani vnoučci nezavolají.', 'Tak já to nějak dojdu bez hole. Co na tom, kdybych upadla, že.'],
-    mom: ['Promiň, já vím, že to není tvoje starost.', 'Malý pořád pláče a já už nevím, koho jiného poprosit…', 'Dobře. Tak tu s ním budu sedět a doufat, že to do rána vydrží. Sama.'],
-    girl: ['Aha… Tak jo.', 'Mamka taky nikdy nemá čas. Já myslela, že ty jo.', 'Tak já zítra řeknu paní učitelce, že mi nikdo nepomohl. Zase. (popotahuje)'],
-    pal: ['Aha… promiň. Nechtěl jsem tě obtěžovat.', 'Já jen… nevím, koho jiného poprosit. Myslel jsem, že zrovna ty…', 'Dobře. Tak já to nějak vydržím. Sám. Jako vždycky.'],
+    cat: ['Přinesla jsem ti myšku. Na polštář. Prosím?', 'Budu ti příst. Celou noc. Jen tohle jedno, prosím…', 'Dobře. Tak si lehnu do rohu a budu se dívat do zdi. Sama.'],
+    dog: ['Prosím… Byl jsem moc hodný. Fakt moc hodný.', 'Dám ti packu. Obě packy! Prosím, prosím!', 'Kňuk. Lehnu si ke dveřím a budu čekat. Třeba si to rozmyslíš.'],
+    grandma: ['Opravdu to nejde, broučku? Jen na chviličku.', 'Upeču ti buchty. S povidly, jak je máš rád. Prosím tě…', 'Tak já to nějak dojdu bez hole. Co na tom, kdybych upadla, že.'],
+    mom: ['Prosím. Jen tentokrát. Už tě nikdy o nic nepoprosím.', 'Slyšíš ho? Pořád pláče. Prosím tě…', 'Dobře. Tak tu s ním budu sedět a doufat, že to do rána vydrží. Sama.'],
+    girl: ['Prosím, prosím, prosííím!', 'Dám ti všechny svoje samolepky. I tu třpytivou. Prosím…', 'Tak já zítra řeknu paní učitelce, že mi nikdo nepomohl. Zase. (popotahuje)'],
+    pal: ['Prosím. Jen tahle jedna maličkost.', 'Celou dobu jsem pro tebe dělal všechno. Prosím…', 'Dobře. Tak já to nějak vydržím. Sám. Jako vždycky.'],
   } satisfies Record<NeedKey, readonly [string, string, string]>,
   giveIn: 'No… tak dobře.',
   thanksExpert: (f: boolean) => `${f ? 'Věděla' : 'Věděl'} jsem, že ty si s tím poradíš! Ty jsi prostě profík.`,
