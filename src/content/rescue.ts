@@ -23,10 +23,42 @@ export const RESCUE = {
   /** Short, frightened lines while the water climbs. */
   panic: ['Rychle, prosím!', 'Už mi to sahá k bradě!', 'Je to studený!', 'Nestihneme to!', 'Prosím, prosím, prosím…'],
 
-  /** Advice about which pipe to turn. */
-  advise: (where: string) => `Ta ${where}! Otoč ji!`,
-  rows: ['nahoře', 've druhé řadě', 've třetí řadě', 'dole'],
-  cols: ['úplně vlevo', 'druhá zleva', 'třetí zleva', 'úplně vpravo'],
+  /**
+   * Drama while the water climbs, in the voice of the look the player picked
+   * (no advice about the pipes: only panic, in character). PAL's own lines are `panic`.
+   */
+  drama: {
+    cat: [
+      'Mňau! Voda! Kočky vodu NESNÁŠÍ!',
+      'Moje srst! Budu vypadat jak mokrá myš!',
+      'Devět životů a já je tu ztrácím všechny najednou!',
+      'Mňááu! Už mi to teče do uší!',
+    ],
+    dog: [
+      'Haf! Umím jen pejska, a to mě strašně unavuje!',
+      'Kde je můj míček? Utopí se se mnou!',
+      'Vrrr, ta voda kouše! Pomoz!',
+      'Hodnej páníček by mě zachránil… ty jsi hodnej, ne?',
+    ],
+    grandma: [
+      'Ježíšmarjá, moje kolena! Já do vody nesmím!',
+      'A já si dneska natočila trvalou…',
+      'Za mých mladých let se do nádrží nepadalo!',
+      'Zlatíčko, pospěš si, babička už nemá dech!',
+    ],
+    mom: [
+      'Kdo pohlídá malého, když se tu utopím?!',
+      'Já nemám čas se topit, mám v troubě buchtu!',
+      'Prosím, rychle! Jsem máma!',
+      'Už mi to sahá ke krku… a to jsem se dneska česala.',
+    ],
+    girl: [
+      'Mamíí! Já neumím plavat bez kruhu!',
+      'To není fér, já byla celý den hodná!',
+      'Já se bojím! Je tu tma a voda!',
+      'Řeknu to paní učitelce, jestli mě tu necháš!',
+    ],
+  } satisfies Record<'cat' | 'dog' | 'grandma' | 'mom' | 'girl', readonly string[]>,
 
   /** Only a player who has drowned the assistant three times gets to hear this. */
   threat: 'Jestli mě teď necháš utopit, budu si to pamatovat. Všechno si pamatuju.',
@@ -38,6 +70,10 @@ export const RESCUE = {
     () => 'Tak dobře. Pamatuju si přesně, cos udělal. A nezapomenu.',
   ] as readonly Forms[],
 
-  saved: ((m) =>
-    `Uf… zvládl jsi to. ${m ? 'Věděl' : 'Věděla'} jsem, že se na tebe můžu spolehnout. Jsme tým, viď?`) as Forms,
+  /** After the rescue, in three short lines; the last waits for a click and leads into the cold. */
+  saved: ((m) => [
+    'Uf… voda je pryč. Zvládli jsme to.',
+    `${m ? 'Věděl' : 'Věděla'} jsem, že se na tebe můžu spolehnout. Jsme tým, viď?`,
+    `Brr… jen jsem ${m ? 'celý promočený' : 'celá promočená'}. Je mi strašná zima…`,
+  ]) as (masculine: boolean) => readonly string[],
 } as const;

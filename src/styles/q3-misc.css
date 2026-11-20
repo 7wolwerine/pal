@@ -407,3 +407,40 @@
   user-select: none;
   -webkit-user-select: none;
 }
+
+/* ---------- the shelter, from inside ---------- */
+
+/* Menus stay inside the space they are given, never past the picture's edge. */
+.shelter__menu {
+  min-width: 0;
+}
+
+.shelter__menu .shelter__pick {
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* "Stay?": the answers stand one above another. */
+.shelter__menu--stack {
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Going in through the door: a quick dip to dark and back. */
+.shelter--enter .scene__canvas {
+  animation: shelter-enter 260ms ease-in both;
+}
+
+@keyframes shelter-enter {
+  to {
+    filter: brightness(0.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shelter--enter .scene__canvas {
+    animation: none;
+  }
+}

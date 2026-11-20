@@ -1,4 +1,4 @@
-import type { ShelterPath, TaskId } from '../../content/shelter.ts';
+import type { ShelterPath } from '../../content/shelter.ts';
 import { px, type Rect } from '../../pixel/stage.ts';
 import { mix, type ShelterModel } from './model.ts';
 
@@ -13,33 +13,15 @@ export const CAVE_RECT: Rect = { x: 98, y: 34, w: 62, h: 52 };
 /** Where the assistant stands: in the middle, at the hut's door, or in the cave. */
 export const SPOT = { start: 76, hut: 56, cave: 104 } as const;
 
-export const TASK_RECTS: Record<TaskId, Rect> = {
-  roof: { x: 22, y: 33, w: 22, h: 15 },
-  door: { x: 36, y: 62, w: 16, h: 23 },
-  window: { x: 13, y: 55, w: 17, h: 15 },
-  hearth: { x: 120, y: 70, w: 22, h: 15 },
-  wood: { x: 140, y: 64, w: 14, h: 20 },
-  fire: { x: 120, y: 60, w: 22, h: 25 },
-};
-
 const COLD = { sky: '#141c33', skyLow: '#2a3557', snow: '#d9e2ee', snowShade: '#b8c4d6', rock: '#4a5266', rockHi: '#5f6880' };
 const WARM = { sky: '#2a2148', skyLow: '#5a3d6b', snow: '#f1e6e8', snowShade: '#d8c8d0', rock: '#5f5468', rockHi: '#7a6a80' };
 
 const SNOW = Array.from({ length: 90 }, (_, i) => ({ x: (i * 37) % STAGE_W, y: (i * 53) % STAGE_H, v: 0.02 + ((i * 7) % 10) / 450 }));
 
-/** A short burst of comedy when the silly way is tried. */
-export interface Flop {
-  readonly id: TaskId;
-  readonly at: number;
-}
-
 export interface ShelterLook {
   readonly model?: ShelterModel;
   /** Shown warmth, eased towards the model's. */
   readonly warmth: number;
-  readonly flop?: Flop;
-  /** Stage time of the last knock and which job it hit. */
-  readonly knock?: { id: TaskId; at: number };
   readonly done: boolean;
   readonly motion: boolean;
 }
@@ -49,7 +31,7 @@ export function paintShelter(g: G, t: number, s: ShelterLook): void {
   const c = (k: keyof typeof COLD): string => mix(COLD[k], WARM[k], w * 0.6);
   const time = s.motion ? t : 0;
   const path: ShelterPath | undefined = s.model?.path;
-  const doneOf = (id: TaskId): number => {
+  const doneOf = (id: string): number => {
     if (!s.model) return 0;
     const j = s.model.jobs.find((x) => x.id === id);
     return j ? j.done / j.knocks : 0;
@@ -62,8 +44,7 @@ export function paintShelter(g: G, t: number, s: ShelterLook): void {
     if ((i * 13 + Math.floor(time / 900)) % 7 === 0) continue;
     px(g, '#e8ecf6', (i * 41) % STAGE_W, (i * 17) % 40, 1, 1);
   }
-  px(g, '#e8ecf6', 78, 8, 7, 7);
-  px(g, c('sky'), 81, 6, 7, 7);
+  paintCrescent(g, 82, 12, c('sky'));
 
   // Snowy ground.
   px(g, c('snow'), 0, GROUND_Y - 4, STAGE_W, STAGE_H - GROUND_Y + 4);
@@ -72,8 +53,6 @@ export function paintShelter(g: G, t: number, s: ShelterLook): void {
 
   paintHut(g, time, s, path === 'hut', doneOf);
   paintCave(g, time, s, path === 'cave', doneOf);
-  if (s.flop) paintFlop(g, t, s.flop);
-  if (s.knock && s.motion && t - s.knock.at < 300) paintChips(g, t, s.knock);
 
   // Snow, thinning out as it warms up.
   const flakes = Math.round(SNOW.length * Math.max(0.15, 1 - w));
@@ -84,7 +63,7 @@ export function paintShelter(g: G, t: number, s: ShelterLook): void {
   }
 }
 
-function paintHut(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id: TaskId) => number): void {
+function paintHut(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id: string) => number): void {
   const wood = '#6b4a36';
   const woodHi = '#86603f';
   const woodLo = '#4f3426';
@@ -147,7 +126,7 @@ function paintHut(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id:
   }
 }
 
-function paintCave(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id: TaskId) => number): void {
+function paintCave(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id: string) => number): void {
   const rock = mix(COLD.rock, WARM.rock, s.warmth * 0.6);
   const rockHi = mix(COLD.rockHi, WARM.rockHi, s.warmth * 0.6);
   // the rock: a lumpy mound
@@ -209,69 +188,17 @@ function paintCave(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id
   }
 }
 
-function paintFlop(g: G, t: number, flop: Flop): void {
-  const u = Math.min(1, (t - flop.at) / 1400);
-  if (u >= 1) return;
-  switch (flop.id) {
-    case 'roof': {
-      // an umbrella blown away into the night
-      const x = 34 + u * 60;
-      const y = 36 - u * 30 - Math.sin(u * 9) * 3;
-      px(g, '#ed93b1', x - 5, y, 11, 3);
-      px(g, '#ed93b1', x - 3, y - 1, 7, 1);
-      px(g, '#3b2a3a', x, y + 3, 1, 5);
-      break;
-    }
-    case 'door': {
-      // a chair tipping over
-      const tip = Math.min(1, u * 2);
-      px(g, '#a0703f', 52 + Math.round(tip * 3), 74 + Math.round(tip * 6), 6, 2);
-      px(g, '#a0703f', 56 + Math.round(tip * 4), 76 + Math.round(tip * 4), 2, 8 - Math.round(tip * 4));
-      break;
-    }
-    case 'window': {
-      // a red sock that sags and drops
-      const y = 60 + Math.round(u * u * 24);
-      px(g, '#e24b4a', 19, y, 4, 6);
-      px(g, '#e24b4a', 19, y + 5, 7, 3);
-      px(g, '#ffffff', 19, y, 4, 1);
-      break;
-    }
-    case 'hearth': {
-      // a snowman that slumps into a heap
-      const slump = Math.round(u * 6);
-      px(g, '#ffffff', 122, 74 + slump, 8, 8 - Math.min(4, slump));
-      if (slump < 5) px(g, '#ffffff', 123, 69 + slump, 6, 5);
-      if (slump < 4) px(g, '#ff8a2a', 128, 71 + slump, 2, 1);
-      break;
-    }
-    case 'wood': {
-      // thick grey smoke rolling out of the cave
-      for (let i = 0; i < 5; i++) {
-        g.globalAlpha = 0.6 * (1 - u);
-        px(g, '#9aa3ad', 116 + i * 5 - u * 10, 62 - u * 18 - i * 2, 7, 5);
-        g.globalAlpha = 1;
-      }
-      break;
-    }
-    case 'fire': {
-      // little puffs of breath that do nothing at all
-      for (let i = 0; i < 3; i++) {
-        const x = 114 + u * 14 + i * 3;
-        px(g, '#e3eaf3', x, 70 + i, 3, 1);
-      }
-      break;
+/** A crescent moon: a round moon with the sky's colour taking a bite out of its side. */
+export function paintCrescent(g: G, cx: number, cy: number, sky: string): void {
+  for (let y = -5; y <= 5; y++) {
+    for (let x = -5; x <= 5; x++) {
+      if (x * x + y * y > 25) continue;
+      // The bite: a second disc, shifted up and to the right.
+      const inBite = (x - 2.6) ** 2 + (y + 1.2) ** 2 <= 19;
+      px(g, inBite ? sky : '#f3f0dc', cx + x, cy + y, 1, 1);
     }
   }
-}
-
-function paintChips(g: G, t: number, knock: { id: TaskId; at: number }): void {
-  const r = TASK_RECTS[knock.id];
-  const u = (t - knock.at) / 300;
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2;
-    px(g, i % 2 ? '#fff6c8' : '#c58c52', r.x + r.w / 2 + Math.cos(a) * u * 9, r.y + r.h / 2 + Math.sin(a) * u * 7 - u * 3, 1, 1);
-  }
+  px(g, '#ffffff', cx - 4, cy - 1, 1, 2);
 }
 
 /** A four-pointed twinkle that says "here". */

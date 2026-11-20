@@ -3,8 +3,7 @@ import type { ShelterPath, TaskId } from '../../content/shelter.ts';
 /**
  * The shelter's bookkeeping: which place was chosen, which jobs are left,
  * how much real work each still needs, and how often the silly way was
- * tried. In the cave the jobs come in order (no fire without a hearth and
- * wood); in the hut any order will do. No DOM, so it is testable.
+ * tried. The jobs can be done in any order. No DOM, so it is testable.
  */
 export interface Job {
   readonly id: TaskId;
@@ -22,7 +21,7 @@ export class ShelterModel {
 
   constructor(path: ShelterPath, plan: readonly { id: TaskId; knocks: number }[]) {
     this.path = path;
-    this.ordered = path === 'cave';
+    this.ordered = false;
     this.jobs = plan.map((j) => ({ id: j.id, knocks: Math.max(1, j.knocks), started: false, done: 0 }));
   }
 

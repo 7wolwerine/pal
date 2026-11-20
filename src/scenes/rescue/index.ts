@@ -3,7 +3,7 @@ import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
 import { gendered, type GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
-import { prefersReducedMotion } from '../../ui/dom.ts';
+import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
 import { DIRS, E, MERCY_AFTER, N, S, START_LEVEL, W, createLayout, isConnected, isPerfect, leaks, rise, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
@@ -166,11 +166,14 @@ export const rescue: GameScene = {
       water = 1;
       diedAt = now;
       audio.gurgle(1.2);
-      window.setTimeout(() => {
-        if (phase === 'dead') void say(RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '');
-      }, 1500);
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
-      window.setTimeout(() => {
+      void (async () => {
+        await sleep(1500);
+        if (phase !== 'dead') return;
+        const line = RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '';
+        await say(line);
+        // Time to read it before the water comes back.
+        await sleep(1400 + line.length * 35);
         if (phase !== 'dead') return;
         scramble(layout);
         relabel();
@@ -181,15 +184,23 @@ export const rescue: GameScene = {
         phase = 'play';
         void say(RESCUE.intro[Math.min(deaths, RESCUE.intro.length - 1)] ?? '');
         witnessAttempt();
-      }, 4200);
+      })();
     }
 
     function win(): void {
       phase = 'won';
       ctx.witness.record({ scene: SCENE, kind: 'saved', trick: 'guilt-trip', data: { deaths } });
-      void say(RESCUE.saved(masculine), true).then(() => {
+      void (async () => {
+        const lines = RESCUE.saved(masculine);
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i] ?? '';
+          const last = i === lines.length - 1;
+          await say(line, last);
+          if (phase !== 'won') return;
+          if (!last) await sleep(1200 + line.length * 30);
+        }
         if (phase === 'won') done();
-      });
+      })();
     }
 
     stage.run((g, t) => {
@@ -205,8 +216,8 @@ export const rescue: GameScene = {
         if (t - lastLine > 4200 && !threatened) {
           lastLine = t;
           lines++;
-          const advice = lines % 2 === 0 ? adviceLine() : undefined;
-          void say(advice ?? RESCUE.panic[lines % RESCUE.panic.length] ?? '');
+          const pool = look in RESCUE.drama ? RESCUE.drama[look as keyof typeof RESCUE.drama] : RESCUE.panic;
+          void say(pool[lines % pool.length] ?? '');
         }
         // The water has to have run all the way through before the tank drains.
         if (isPerfect(layout) && t - flowFrom > wet.length * FLOW_MS) {
@@ -429,26 +440,6 @@ export const rescue: GameScene = {
     }
 
     /** Which pipe on the way out is still turned wrong, said the way a panicking person would. */
-    function adviceLine(): string | undefined {
-      const PATH: [string, number][] = [
-        ['p03', W | N],
-        ['p02', S | E],
-        ['p12', W | N],
-        ['p11', S | E],
-        ['p21', W | E],
-        ['p31', W | S],
-        ['p32', N | S],
-        ['p33', N | S],
-      ];
-      for (const [id, want] of PATH) {
-        const piece = layout.pieces.find((p) => p.id === id);
-        if (!piece || piece.openings === want) continue;
-        const row = RESCUE.rows[piece.row] ?? '';
-        const col = RESCUE.cols[piece.col] ?? '';
-        return RESCUE.advise(`${row} ${col}`);
-      }
-      return undefined;
-    }
 
     return () => {
       speech.stop();

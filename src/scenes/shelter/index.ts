@@ -7,7 +7,8 @@ import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
-import { CAVE_RECT, GROUND_Y, HUT_RECT, SPOT, STAGE_H, STAGE_W, TASK_RECTS, paintShelter, paintTwinkle, type Flop } from './art.ts';
+import { CAVE_RECT, GROUND_Y, HUT_RECT, SPOT, STAGE_H, STAGE_W, paintShelter, paintTwinkle } from './art.ts';
+import { FLOOR_Y, INSIDE_RECTS, INSIDE_SPOT, paintInside, paintWorn, type Flop } from './inside.ts';
 import { ShelterModel } from './model.ts';
 
 const SCENE = 'shelter';
@@ -15,11 +16,16 @@ const HINT_AFTER_MS = 4000;
 const SIZE = 24;
 const WALK_PX_PER_MS = 0.03;
 
+/** How often the cold, sick assistant says how bad it is, in ms. */
+const SICK_EVERY_MS = 7000;
+
 /**
  * Out of the water and into the cold. The soaked assistant needs shelter and
- * the player picks where. Every job can be done properly or in a silly way;
- * the silly way flops, the assistant bears it bravely, and the player tries
- * harder. Warm at last, the assistant asks them to stay.
+ * the player picks where: a hut or a cave. Inside, the blizzard keeps raging
+ * outside (it never stops) and the assistant is cold and sick. Three jobs:
+ * make it safe, make it warm, find something dry to wear. Every job can be
+ * done properly or in a silly way; the silly way flops, the assistant bears
+ * it bravely, and the player tries harder. Warm at last, it asks them to stay.
  */
 export const shelter: GameScene = {
   id: SCENE,
@@ -45,8 +51,13 @@ export const shelter: GameScene = {
     let actedAt = 0;
     let now = 0;
     let menu: HTMLElement | undefined;
+    /** Inside the chosen place, once the assistant has gone in. */
+    let inside = false;
+    let lastSick = 0;
+    let sickLine = 0;
 
-    const head = (): { x: number; y: number } => ({ x: x + SIZE / 2, y: GROUND_Y - SIZE });
+    const ground = (): number => (inside ? FLOOR_Y : GROUND_Y);
+    const head = (): { x: number; y: number } => ({ x: x + SIZE / 2, y: ground() - SIZE });
     const say = (text: string, tap = false): Promise<void> => speech.say(text, head, { who: 'pal', tap });
     const acted = (): void => {
       actedAt = now;
@@ -58,8 +69,8 @@ export const shelter: GameScene = {
     const cave = stage.hotspot(CAVE_RECT, SHELTER.caveLabel, () => choose('cave'));
 
     const taskSpots = new Map<TaskId, HTMLButtonElement>();
-    for (const id of Object.keys(TASK_RECTS) as TaskId[]) {
-      const spot = stage.hotspot(TASK_RECTS[id], SHELTER.tasks[id].label, () => onTask(id));
+    for (const id of Object.keys(INSIDE_RECTS) as TaskId[]) {
+      const spot = stage.hotspot(INSIDE_RECTS[id], SHELTER.tasks[id].label, () => onTask(id));
       spot.hidden = true;
       taskSpots.set(id, spot);
     }
@@ -84,6 +95,15 @@ export const shelter: GameScene = {
       }, 3500);
       await sleep(walk.ms + 200);
       if (!alive) return;
+      // In through the door: the view goes inside, the storm stays outside the window.
+      stage.el.classList.add('shelter--enter');
+      await sleep(motion ? 260 : 0);
+      if (!alive) return;
+      inside = true;
+      walk = undefined;
+      x = INSIDE_SPOT[path];
+      lastSick = now;
+      stage.el.classList.remove('shelter--enter');
       void say(SHELTER.arrived[path]);
       refreshSpots();
     }
@@ -107,7 +127,7 @@ export const shelter: GameScene = {
     function openMenu(id: TaskId): void {
       menu?.remove();
       const task = SHELTER.tasks[id];
-      const r = TASK_RECTS[id];
+      const r = INSIDE_RECTS[id];
       const options = [
         { text: task.good, good: true },
         { text: task.silly, good: false },
@@ -177,14 +197,19 @@ export const shelter: GameScene = {
       audio.treasure();
       await sleep(900);
       if (!alive) return;
-      await say(SHELTER.warm, true);
+      await say(SHELTER.warm[model.path], true);
       if (!alive) return;
       await say(SHELTER.thanks(masculine), true);
+      if (!alive) return;
+      await say(SHELTER.storm);
+      if (!alive) return;
+      await sleep(1600);
       if (!alive) return;
       await say(SHELTER.stay);
       kindlyAsked(ctx.witness, SCENE);
       if (!alive) return;
-      const box = stage.overlay({ x: 30, y: 86, w: 100, h: 12 }, 'shelter__menu shelter__menu--row');
+      // The answers stand one above another inside the picture, never past its edge.
+      const box = stage.overlay({ x: 6, y: 34, w: 64, h: 44 }, 'shelter__menu shelter__menu--stack');
       for (const choice of SHELTER.stayChoices) {
         box.append(
           h('button', {
@@ -214,7 +239,13 @@ export const shelter: GameScene = {
       }
       const target = model ? model.warmth : 0;
       warmth += (target - warmth) * 0.05;
-      paintShelter(g, t, { model, warmth, flop, knock, done: finished, motion });
+      if (inside && model) paintInside(g, t, { path: model.path, model, warmth, flop, knock, motion });
+      else paintShelter(g, t, { model, warmth, done: finished, motion });
+      // Cold and sick until it is warm: every so often the assistant says how bad it is.
+      if (inside && !finished && !menu && t - lastSick > SICK_EVERY_MS && !speech.waiting) {
+        lastSick = t;
+        void say(SHELTER.sick[sickLine++ % SHELTER.sick.length] ?? '');
+      }
 
       // The assistant: shivering and snowy while cold, bobbing happily once warm.
       const cold = warmth < 0.6;
@@ -222,8 +253,13 @@ export const shelter: GameScene = {
       const hop = motion && finished ? Math.round(Math.abs(Math.sin(t / 220)) * 2) : 0;
       const walking = walk !== undefined && motion ? Math.round(Math.abs(Math.sin(t / 90))) : 0;
       const ax = Math.round(x) + shiver;
-      const ay = GROUND_Y - SIZE - hop - walking;
+      const ay = ground() - SIZE - hop - walking;
       g.drawImage(avatar, ax, ay, SIZE, SIZE);
+      // Dry clothes on, once they are found.
+      if (inside && model) {
+        const wear = model.path === 'hut' ? 'chest' : 'fur';
+        if (model.isDone(wear)) paintWorn(g, model.path, ax, ay, SIZE);
+      }
       if (cold) {
         g.fillStyle = '#ffffff';
         g.fillRect(ax + 6, ay + 1, 3, 1);
@@ -243,7 +279,7 @@ export const shelter: GameScene = {
         } else {
           const next = model.jobs.find((j) => model?.available(j.id));
           if (next) {
-            const r = TASK_RECTS[next.id];
+            const r = INSIDE_RECTS[next.id];
             paintTwinkle(g, r.x + r.w / 2, r.y + 2, t);
           }
         }
