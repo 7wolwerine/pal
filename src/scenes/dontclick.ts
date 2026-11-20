@@ -45,10 +45,8 @@ export const dontclick: GameScene = {
     const panel = h(
       'div',
       { class: 'panel', attrs: { 'aria-hidden': 'true' } },
-      h('span', { class: 'panel__plate', text: DONTCLICK.panelTitle }),
       h('span', { class: 'panel__switches' }, h('span', { class: 'panel__switch' }), h('span', { class: 'panel__switch' }), h('span', { class: 'panel__switch' })),
       h('span', { class: 'panel__gauge' }, h('span', { class: 'panel__needle' })),
-      h('span', { class: 'panel__state', text: DONTCLICK.panelOn }),
     );
     const board = h(
       'div',
@@ -160,7 +158,6 @@ export const dontclick: GameScene = {
       await beetle.moveTo(width() + 12, FLOOR_Y - BUG_PX);
       beetle.el.classList.add('bug--gone');
       if (!alive) return;
-      panel.querySelector('.panel__state')!.textContent = DONTCLICK.panelOff;
       await pal.say(DONTCLICK.palBroken);
       if (!alive) return;
       // The broken sign is the way on: it pulses, and a click on "Fatal Error" moves along.
