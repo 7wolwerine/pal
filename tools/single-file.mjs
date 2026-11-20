@@ -2,12 +2,15 @@
 //
 //   node tools/single-file.mjs <dist dir> [out dir]
 //
-// The script and the stylesheet are inlined. The Content-Security-Policy stays
-// strict: instead of 'unsafe-inline' it lists the SHA-256 of exactly those two
-// inline blocks, and connect-src stays 'none'. The zip is written by hand
-// (stored, no compression) so this needs no dependencies.
+// The script and the stylesheet are inlined, and so is the music: each loop
+// from music/ as a base64 data block (a <script> of a non-JavaScript type,
+// which the browser never runs) that the audio engine reads instead of
+// fetching. The Content-Security-Policy stays strict: instead of
+// 'unsafe-inline' it lists the SHA-256 of exactly the two inline code blocks,
+// and connect-src allows nothing but PAL's mail server. The zip is written by
+// hand (stored, no compression) so this needs no dependencies.
 import { createHash } from 'node:crypto';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const [dist, out = dist] = process.argv.slice(2);
@@ -34,6 +37,16 @@ html = html
   .replace('script-src &#39;self&#39;', () => `script-src ${sha(js).replaceAll("'", '&#39;')}`)
   .replace('style-src &#39;self&#39;', () => `style-src ${sha(css).replaceAll("'", '&#39;')}`);
 if (!html.includes('sha256-')) throw new Error('the CSP was not updated');
+
+// From a file there is no 'self' to fetch from; the music comes inline instead.
+html = html.replace('connect-src &#39;self&#39; ', 'connect-src ');
+if (!/connect-src https:\/\/neotvir\.at[;"]/.test(html)) throw new Error('unexpected connect-src');
+const musicDir = join(dist, 'music');
+const music = existsSync(musicDir) ? readdirSync(musicDir).filter((n) => /^[a-z0-9-]+\.aac$/.test(n)).sort() : [];
+if (music.length === 0) throw new Error('no music to inline');
+const blocks = music.map((n) => `<script type="application/octet-stream" data-music="${n}">${readFileSync(join(musicDir, n)).toString('base64')}</script>`).join('\n');
+if (!html.includes('</body>')) throw new Error('no </body> to put the music before');
+html = html.replace('</body>', () => `${blocks}\n</body>`);
 
 const page = Buffer.from(html, 'utf8');
 writeFileSync(join(out, 'pal.html'), page);
@@ -102,8 +115,9 @@ const readme = Buffer.from(
   [
     'PAL (Play and Learn)',
     '',
-    'Otevři pal.html v prohlížeči. Běží bez internetu a nic neodesílá:',
-    'stránka má Content-Security-Policy connect-src \'none\'.',
+    'Otevři pal.html v prohlížeči. Hra i hudba jsou celé uvnitř souboru a běží bez internetu.',
+    'Jediné, co může odejít, je certifikát na e-mail, o který si sám řekneš:',
+    'stránka má Content-Security-Policy connect-src https://neotvir.at a nic jiného.',
     '',
   ].join('\r\n'),
   'utf8',

@@ -1,13 +1,22 @@
-import { THEMES, degreeToMidi, midiToHz, type Theme, type ThemeId } from './themes.ts';
+import { SCENE_THEME, THEMES, degreeToMidi, midiToHz, type Theme, type ThemeId } from './themes.ts';
+import { TRACKS, isTrack, type Track, type TrackId } from './tracks.ts';
+
+/** What can play underneath a scene: a synth theme, or one of the recorded loops. */
+export type Cue = ThemeId | TrackId;
 
 const LOOKAHEAD_S = 0.15;
 const TICK_MS = 30;
 const FADE_S = 2.2;
 const MASTER = 0.16;
+/** The recordings are mastered loud; this sits them under the game at about the synth's weight. */
+const TRACK_LEVEL = 1.2;
 
 interface Voice {
-  readonly id: ThemeId;
-  readonly theme: Theme;
+  readonly id: Cue;
+  /** A synth theme; unset while a recording plays instead. */
+  theme?: Theme;
+  /** The recording, once it is loaded and running. */
+  source?: AudioBufferSourceNode;
   readonly bus: GainNode;
   step: number;
   nextAt: number;
@@ -16,16 +25,27 @@ interface Voice {
 }
 
 /**
- * A tiny synthesizer that plays looping themes and short sound effects.
- * It only starts after the first user gesture (browsers require that), fades
- * smoothly between themes, pauses while the tab is hidden, and can be muted.
- * Everything is generated locally with WebAudio; there are no audio files.
+ * Plays the music under each scene and the short sound effects. The music is
+ * a recorded loop per scene (see tracks.ts), fetched from the game's own files
+ * when the scene starts, or a little synth theme (the keygen, and a stand-in
+ * whenever a recording cannot be loaded). The effects are generated with
+ * WebAudio. It only starts after the first user gesture (browsers require
+ * that), fades smoothly between scenes, pauses while the tab is hidden, and
+ * can be muted.
  */
 class AudioEngine {
   #ctx: AudioContext | null = null;
   #master: GainNode | null = null;
   #voices: Voice[] = [];
-  #wanted: ThemeId | null = null;
+  #wanted: Cue | null = null;
+  /**
+   * The files, fetched once each and kept compressed (a few megabytes in all).
+   * Decoded audio is far bigger, so a decoded loop is let go once it is neither
+   * playing nor wanted; it is decoded again from the kept bytes if it returns.
+   * A failed fetch or decode is forgotten, so the next scene that needs the file tries again.
+   */
+  #bytes = new Map<string, Promise<ArrayBuffer | null>>();
+  #decoded = new Map<string, Promise<AudioBuffer | null>>();
   #timer = 0;
   #muted = false;
 
@@ -69,11 +89,51 @@ class AudioEngine {
     }
   }
 
-  /** Crossfades to a theme. Before unlock, just remembers it. */
-  play(id: ThemeId): void {
+  /** Crossfades to a theme or a recording. Before unlock, just remembers it (and starts fetching the file). */
+  play(id: Cue): void {
     if (this.#wanted === id) return;
     this.#wanted = id;
+    if (isTrack(id)) void this.#fetch(TRACKS[id].file);
     if (this.#ctx) this.#start(id);
+  }
+
+  /** Starts downloading a scene's recording ahead of time, so it is ready when the scene begins. */
+  preload(id: Cue | undefined): void {
+    if (id && isTrack(id)) void this.#fetch(TRACKS[id].file);
+  }
+
+  #fetch(file: string): Promise<ArrayBuffer | null> {
+    let bytes = this.#bytes.get(file);
+    if (!bytes) {
+      // The offline single-file build carries the loops inside the page itself.
+      const inline = document.querySelector<HTMLScriptElement>(`script[type="application/octet-stream"][data-music="${file}"]`);
+      bytes = (
+        inline
+          ? Promise.resolve(Uint8Array.from(atob(inline.text.trim()), (c) => c.charCodeAt(0)).buffer)
+          : fetch(`${import.meta.env.BASE_URL}music/${file}`).then((r) => (r.ok ? r.arrayBuffer() : null))
+      )
+        .catch(() => null)
+        .then((b) => {
+          if (!b && this.#bytes.get(file) === bytes) this.#bytes.delete(file);
+          return b;
+        });
+      this.#bytes.set(file, bytes);
+    }
+    return bytes;
+  }
+
+  #decode(ctx: AudioContext, file: string): Promise<AudioBuffer | null> {
+    let decoded = this.#decoded.get(file);
+    if (!decoded) {
+      decoded = this.#fetch(file)
+        .then((bytes) => (bytes ? ctx.decodeAudioData(bytes.slice(0)).catch(() => null) : null))
+        .then((buffer) => {
+          if (!buffer && this.#decoded.get(file) === decoded) this.#decoded.delete(file);
+          return buffer;
+        });
+      this.#decoded.set(file, decoded);
+    }
+    return decoded;
   }
 
   /** A bright little "treasure found" jingle. */
@@ -227,7 +287,7 @@ class AudioEngine {
     });
   }
 
-  #start(id: ThemeId): void {
+  #start(id: Cue): void {
     const ctx = this.#ctx;
     const master = this.#master;
     if (!ctx || !master) return;
@@ -239,14 +299,50 @@ class AudioEngine {
       v.bus.gain.linearRampToValueAtTime(0, now + FADE_S);
       v.stopAt = now + FADE_S;
     }
-    const theme = THEMES[id];
     const bus = ctx.createGain();
     bus.gain.setValueAtTime(0, now);
-    bus.gain.linearRampToValueAtTime(1, now + FADE_S);
     bus.connect(master);
-    const voice: Voice = { id, theme, bus, step: 0, nextAt: now + 0.05 };
-    if (theme.drone !== undefined) voice.drone = this.#drone(bus, theme);
+    const voice: Voice = { id, bus, step: 0, nextAt: now + 0.05 };
     this.#voices.push(voice);
+    if (isTrack(id)) void this.#startTrack(ctx, voice, TRACKS[id]);
+    else this.#startTheme(ctx, voice, THEMES[id]);
+  }
+
+  #fadeIn(ctx: AudioContext, voice: Voice): void {
+    const now = ctx.currentTime;
+    voice.bus.gain.setValueAtTime(0, now);
+    voice.bus.gain.linearRampToValueAtTime(1, now + FADE_S);
+  }
+
+  #startTheme(ctx: AudioContext, voice: Voice, theme: Theme): void {
+    voice.theme = theme;
+    voice.step = 0;
+    voice.nextAt = ctx.currentTime + 0.05;
+    if (theme.drone !== undefined) voice.drone = this.#drone(voice.bus, theme);
+    this.#fadeIn(ctx, voice);
+  }
+
+  /** Loads the recording and fades it in; if it cannot be had, the scene's synth theme plays instead. */
+  async #startTrack(ctx: AudioContext, voice: Voice, track: Track): Promise<void> {
+    const buffer = await this.#decode(ctx, track.file);
+    // Faded out (or torn down) while it loaded: nothing to start.
+    if (voice.stopAt !== undefined || this.#ctx !== ctx) return;
+    if (!buffer) {
+      const fallback = SCENE_THEME[voice.id] ?? (Object.hasOwn(THEMES, voice.id) ? (voice.id as ThemeId) : 'window');
+      this.#startTheme(ctx, voice, THEMES[fallback]);
+      return;
+    }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.loopStart = track.loopStart;
+    source.loopEnd = Math.min(track.loopEnd, buffer.duration);
+    const level = ctx.createGain();
+    level.gain.value = track.gain * TRACK_LEVEL;
+    source.connect(level).connect(voice.bus);
+    source.start(ctx.currentTime + 0.02, Math.min(track.start, buffer.duration));
+    voice.source = source;
+    this.#fadeIn(ctx, voice);
   }
 
   #schedule(): void {
@@ -254,6 +350,7 @@ class AudioEngine {
     if (!ctx || ctx.state !== 'running') return;
     const horizon = ctx.currentTime + LOOKAHEAD_S;
     for (const v of this.#voices) {
+      if (!v.theme) continue;
       const stepS = 60 / v.theme.bpm / 2;
       while (v.nextAt < horizon) {
         this.#playStep(v, v.nextAt, stepS);
@@ -262,16 +359,28 @@ class AudioEngine {
       }
     }
     // Drop voices that have finished fading out.
+    const before = this.#voices.length;
     this.#voices = this.#voices.filter((v) => {
       if (v.stopAt === undefined || ctx.currentTime < v.stopAt + 0.1) return true;
       v.drone?.forEach((o) => o.stop());
+      v.source?.stop();
       v.bus.disconnect();
       return false;
     });
+    if (this.#voices.length !== before) this.#release();
+  }
+
+  /** Lets go of decoded loops that nothing plays or wants any more. */
+  #release(): void {
+    const keep = new Set<string>();
+    for (const v of this.#voices) if (isTrack(v.id)) keep.add(TRACKS[v.id].file);
+    if (this.#wanted && isTrack(this.#wanted)) keep.add(TRACKS[this.#wanted].file);
+    for (const file of [...this.#decoded.keys()]) if (!keep.has(file)) this.#decoded.delete(file);
   }
 
   #playStep(v: Voice, at: number, stepS: number): void {
     const { theme, bus } = v;
+    if (!theme) return;
     const i = v.step % theme.melody.length;
     const degree = theme.melody[i];
     if (degree !== null && degree !== undefined) {

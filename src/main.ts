@@ -1,5 +1,6 @@
 import { audio } from './audio/engine.ts';
 import { SCENE_THEME } from './audio/themes.ts';
+import { SCENE_TRACK } from './audio/tracks.ts';
 import { WINDOW_REACTIONS } from './content/window.ts';
 import { Director } from './core/director.ts';
 import { Witness } from './core/witness.ts';
@@ -150,8 +151,10 @@ function boot(): void {
     // The path of hearts to the prize, always in sight until the prize is reached.
     journey.show(scene.id);
     if (journey.left(scene.id) === 3) witness.record({ scene: scene.id, kind: 'near-goal', trick: 'goal-gradient' });
-    // Each scene has its own calm theme; the reveal turns it dark.
-    audio.play(SCENE_THEME[scene.id] ?? 'window');
+    // Each scene has its own loop of music, and the next one starts downloading now.
+    audio.play(SCENE_TRACK[scene.id] ?? SCENE_THEME[scene.id] ?? 'window');
+    const next = SCENES[SCENES.findIndex((s) => s.id === scene.id) + 1];
+    if (next) audio.preload(SCENE_TRACK[next.id]);
   });
 
   // Development handle for poking at the live game from the console. Stripped from the build.

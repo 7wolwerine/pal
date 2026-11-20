@@ -347,7 +347,7 @@ export const reveal: Scene<GameContext> = {
               name: ctx.profile.name ?? 'Ty',
               events: ctx.witness.events,
               found,
-              onClose: () => audio.play('dark'),
+              onClose: () => audio.play('reveal'),
             });
           },
         },
