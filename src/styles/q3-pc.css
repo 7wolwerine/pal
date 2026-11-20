@@ -464,3 +464,9 @@
 .pc[data-mode='compact'] .pal--float .pal__bubble {
   min-height: 0;
 }
+
+/* On a phone the five looks go three to a row: two rows fit under PAL's bubble without scrolling. */
+.pc[data-mode='compact'] .picks {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}

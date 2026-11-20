@@ -22,6 +22,7 @@ import { reveal } from './scenes/reveal.ts';
 import { welcome } from './scenes/welcome.ts';
 import { Dialogue } from './ui/dialogue.ts';
 import { h } from './ui/dom.ts';
+import { attachConsole } from './ui/console.ts';
 import { createJourney } from './ui/journey.ts';
 import { minimizeWindow } from './ui/minimize.ts';
 import { createPc } from './ui/pc.ts';
@@ -161,7 +162,10 @@ function boot(): void {
   const params = new URLSearchParams(location.search);
   const debug = import.meta.env.DEV || params.has('debug');
   const jump = debug ? params.get('scene') : null;
-  if (debug) addDebugArrows(director, profile, pal, ctx);
+  const jumper = makeJumper(director, profile, pal, ctx);
+  if (debug) addDebugArrows(director, jumper);
+  // The cheat console: a semicolon opens it, in the real game too.
+  attachConsole({ window: win.el, profile, journey, jump: jumper });
   if (jump) {
     fillDebugProfile(profile);
     debugBond(director.sceneIds, jump, profile, pal);
@@ -187,7 +191,11 @@ function debugBond(ids: readonly string[], target: string, profile: Profile, pal
   if (profile.assistantName) pal.setName(profile.assistantName);
 }
 
-function addDebugArrows(director: Director<GameContext, GameScene>, profile: Profile, pal: Dialogue, ctx: GameContext): void {
+/**
+ * Opens any scene straight away, with stand-in answers for anything not asked yet. Used by the
+ * debug arrows and by the console's edit mode.
+ */
+function makeJumper(director: Director<GameContext, GameScene>, profile: Profile, pal: Dialogue, ctx: GameContext): (id: string) => void {
   const ids = director.sceneIds;
   // The reveal takes PAL's window over for good (its own content, title, badges and a
   // dark theme) and does not give it back: a real game never leaves it. Remember the
@@ -210,16 +218,23 @@ function addDebugArrows(director: Director<GameContext, GameScene>, profile: Pro
     if (win.el.classList.contains('win--min')) document.querySelector<HTMLElement>('.pc__tab')?.click();
     if (document.documentElement.dataset.theme === 'revealed') ctx.setTheme('harmless');
   };
-  const go = (step: number): void => {
-    const current = director.currentId ?? ids[0] ?? '';
-    const at = Math.max(0, ids.indexOf(current));
-    const next = ids[Math.max(0, Math.min(ids.length - 1, at + step))];
-    if (!next) return;
+  return (next: string): void => {
+    if (!ids.includes(next)) return;
     fillDebugProfile(profile);
     debugBond(ids, next, profile, pal);
     pal.cancelTap();
     restoreShell();
     director.jumpTo(next);
+  };
+}
+
+function addDebugArrows(director: Director<GameContext, GameScene>, jump: (id: string) => void): void {
+  const ids = director.sceneIds;
+  const go = (step: number): void => {
+    const current = director.currentId ?? ids[0] ?? '';
+    const at = Math.max(0, ids.indexOf(current));
+    const next = ids[Math.max(0, Math.min(ids.length - 1, at + step))];
+    if (next) jump(next);
   };
   const label = h('span', { class: 'debug__label' });
   const bar = h(
