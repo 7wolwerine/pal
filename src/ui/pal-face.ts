@@ -9,7 +9,8 @@ import { prefersReducedMotion } from './dom.ts';
  * the grin is too wide, crooked and full of teeth, and the picture itself
  * twitches and tears, as if the mask no longer held.
  */
-export type PalMood = 'neutral' | 'happy' | 'sad' | 'dark';
+/** 'evil' is PAL turned bad but still PAL: the pink head, angry brows, red eyes, a sly grin. 'dark' is the true face. */
+export type PalMood = 'neutral' | 'happy' | 'sad' | 'evil' | 'dark';
 
 const SIZE = 16;
 
@@ -40,6 +41,17 @@ const SOUR: Palette = {
   eye: '#140c24',
   glint: '#ece6b4',
   mouth: '#140c24',
+  blush: null,
+};
+
+/** PAL gone bad: still pink, a shade hotter, with red eyes. */
+const EVIL: Palette = {
+  body: '#ee7fb0',
+  hi: '#ffc0dc',
+  rim: '#a8366a',
+  eye: '#d0142c',
+  glint: '#ffe36a',
+  mouth: '#5a1030',
   blush: null,
 };
 
@@ -186,7 +198,7 @@ function paintEye(g: CanvasRenderingContext2D, p: Palette, x: number, y: number)
 function paint(g: CanvasRenderingContext2D, mood: PalMood, blink: boolean, quirk: Quirk = 'none'): void {
   // For one frame the old sweet smile is back, in the wrong colours: the mask, held up again.
   if (mood === 'dark' && quirk === 'mask') return paintFace(g, 'happy', false, 'none', MASK);
-  paintFace(g, mood, blink, quirk, mood === 'dark' ? SOUR : SWEET);
+  paintFace(g, mood, blink, quirk, mood === 'dark' ? SOUR : mood === 'evil' ? EVIL : SWEET);
 }
 
 function paintFace(g: CanvasRenderingContext2D, mood: PalMood, blink: boolean, quirk: Quirk, p: Palette): void {
@@ -225,7 +237,13 @@ function paintFace(g: CanvasRenderingContext2D, mood: PalMood, blink: boolean, q
 
   // Mouth.
   g.fillStyle = p.mouth;
-  if (mood === 'sad') {
+  if (mood === 'evil') {
+    // Brows pulled down hard towards the middle.
+    for (const [x, y] of [[3, 4], [4, 4], [5, 5], [6, 5], [9, 5], [10, 5], [11, 4], [12, 4]] as const) dot(g, p.mouth, x, y);
+    // A wide, lopsided grin with one fang.
+    for (const [x, y] of [[4, 10], [5, 11], [6, 11], [7, 12], [8, 12], [9, 12], [10, 11], [11, 10], [12, 9]] as const) g.fillRect(x, y, 1, 1);
+    dot(g, '#ffffff', 9, 11);
+  } else if (mood === 'sad') {
     // A wobbly frown and a fat tear.
     for (const [x, y] of [
       [6, 12],
