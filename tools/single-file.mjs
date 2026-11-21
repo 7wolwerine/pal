@@ -5,7 +5,10 @@
 // The script and the stylesheet are inlined, and so is the music: each loop
 // from music/ as a base64 data block (a <script> of a non-JavaScript type,
 // which the browser never runs) that the audio engine reads instead of
-// fetching. The Content-Security-Policy stays strict: instead of
+// fetching. Every public/ image the game shows (the AR codes, the
+// nightmare's last frame) travels the same way, as a data-asset block that
+// src/ui/asset.ts turns into a data: URL, and the tab icons become data: URLs
+// in their own <link> tags. The Content-Security-Policy stays strict: instead of
 // 'unsafe-inline' it lists the SHA-256 of exactly the two inline code blocks,
 // and connect-src allows nothing but PAL's mail server. The zip is written by
 // hand (stored, no compression) so this needs no dependencies.
@@ -45,8 +48,28 @@ const musicDir = join(dist, 'music');
 const music = existsSync(musicDir) ? readdirSync(musicDir).filter((n) => /^[a-z0-9-]+\.aac$/.test(n)).sort() : [];
 if (music.length === 0) throw new Error('no music to inline');
 const blocks = music.map((n) => `<script type="application/octet-stream" data-music="${n}">${readFileSync(join(musicDir, n)).toString('base64')}</script>`).join('\n');
-if (!html.includes('</body>')) throw new Error('no </body> to put the music before');
-html = html.replace('</body>', () => `${blocks}\n</body>`);
+
+// Every public/ image the bundle names (a quoted path that is a real file in dist).
+const MIME = { png: 'image/png', webp: 'image/webp', svg: 'image/svg+xml' };
+const assets = [...new Set([...js.matchAll(/["'`]([a-z0-9][a-z0-9/-]*\.(?:png|webp|svg))["'`]/gi)].map((m) => m[1]))]
+  .filter((path) => existsSync(join(dist, path)))
+  .sort();
+for (const needed of ['ar/pal-marker.png', 'ar/pal-marker-screen.png', 'kindly.webp']) {
+  if (!assets.includes(needed)) throw new Error(`expected the bundle to name ${needed}`);
+}
+const assetBlocks = assets.map((path) => `<script type="application/octet-stream" data-asset="${path}">${readFileSync(join(dist, path)).toString('base64')}</script>`).join('\n');
+
+// The tab icons: each <link> gets its file as a data: URL.
+html = html.replace(/(<link rel="(?:icon|apple-touch-icon)" href=")\.\/([^"]+)"/g, (_, start, path) => {
+  const mime = MIME[path.slice(path.lastIndexOf('.') + 1)];
+  if (!mime) throw new Error(`unexpected icon ${path}`);
+  return `${start}data:${mime};base64,${readFileSync(join(dist, path)).toString('base64')}"`;
+});
+// Nothing may still point at a file next to the page: offline there is none.
+if (/(?:href|src)="\.\//.test(html)) throw new Error('the page still links to a file next to it');
+
+if (!html.includes('</body>')) throw new Error('no </body> to put the music and images before');
+html = html.replace('</body>', () => `${blocks}\n${assetBlocks}\n</body>`);
 
 const page = Buffer.from(html, 'utf8');
 writeFileSync(join(out, 'pal.html'), page);
@@ -115,7 +138,7 @@ const readme = Buffer.from(
   [
     'PAL (Play and Learn)',
     '',
-    'Otevři pal.html v prohlížeči. Hra i hudba jsou celé uvnitř souboru a běží bez internetu.',
+    'Otevři pal.html v prohlížeči. Hra, obrázky i hudba jsou celé uvnitř souboru a běží bez internetu.',
     'Jediné, co může odejít, je certifikát na e-mail, o který si sám řekneš:',
     'stránka má Content-Security-Policy connect-src https://neotvir.at a nic jiného.',
     '',

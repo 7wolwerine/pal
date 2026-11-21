@@ -23,9 +23,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # The build also makes one self-contained pal.html (and pal.zip) next to the site, to download and play offline.
       - run: npm run build
-      # One self-contained pal.html (and pal.zip) next to the site, to download and play offline.
-      - run: npm run single
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist

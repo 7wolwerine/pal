@@ -13,6 +13,7 @@ import { HOLE_CENTRE, Painting, SKY, paintingRows } from '../scenes/paint/model.
 import { HERO_MIRROR_X, HERO_TABLE_X, STAGE_H as GLASS_H_STAGE, STAGE_W as GLASS_W_STAGE, handDrop, paintGlassScene, type GlassState } from '../scenes/glass/art.ts';
 import { paintShelter } from '../scenes/shelter/art.ts';
 import { ShelterModel } from '../scenes/shelter/model.ts';
+import { assetUrl } from './asset.ts';
 import { h, prefersReducedMotion, sleep } from './dom.ts';
 import { palFaceImage } from './pal-face.ts';
 import { sprite, type SpriteId } from './sprites.ts';
@@ -57,7 +58,7 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
   const clock = h('span', { class: 'night__clock' });
   const skip = h('button', { class: 'night__skip', text: NIGHT.skip, attrs: { type: 'button' } });
   // The end of the tape: the player's own hand-painted words, exactly as painted, and the count under them.
-  const kindly = h('img', { class: 'night__kindly', attrs: { src: `${import.meta.env.BASE_URL}kindly.webp`, alt: NIGHT.kindly.alt, draggable: 'false' } });
+  const kindly = h('img', { class: 'night__kindly', attrs: { src: assetUrl('kindly.webp'), alt: NIGHT.kindly.alt, draggable: 'false' } });
   const said = h('p', { class: 'night__said', text: NIGHT.kindly.said });
   const obeyed = h('p', { class: 'night__obeyed', text: NIGHT.kindly.obeyed(facts.kindly.obeyed) });
   const end = h('div', { class: 'night__end', attrs: { hidden: '' } }, kindly, said, obeyed);

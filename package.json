@@ -6,7 +6,7 @@
   "description": "PAL (Play and Learn): a harmless browser game about social engineering.",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node tools/single-file.mjs dist",
     "preview": "vite preview",
     "test": "vitest run",
     "marker": "node tools/make-marker.ts",
