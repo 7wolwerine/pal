@@ -5,7 +5,7 @@
  * can blink, do its own little gesture, and look happy or sad the same way.
  */
 
-export const SPRITE_IDS = ['pal', 'palNeutral', 'palDark', 'girl', 'mom', 'grandma', 'cat', 'dog'] as const;
+export const SPRITE_IDS = ['pal', 'girl', 'mom', 'grandma', 'cat', 'dog'] as const;
 export type SpriteId = (typeof SPRITE_IDS)[number];
 
 export const SPRITE_SIZE = 20;
@@ -55,10 +55,10 @@ interface Look {
   /** The little gesture, as more extra pixels. */
   readonly quirk?: readonly (readonly [number, number, string])[];
   readonly cheeks?: boolean;
-  readonly mouth?: 'smile' | 'cat' | 'flat' | 'grin';
+  readonly mouth?: 'smile' | 'cat' | 'grin';
 }
 
-const LOOKS: Record<Exclude<SpriteId, 'palDark'>, Look> = {
+const LOOKS: Record<SpriteId, Look> = {
   pal: {
     half: [
       '......kkkk',
@@ -87,11 +87,6 @@ const LOOKS: Record<Exclude<SpriteId, 'palDark'>, Look> = {
     cheeks: true,
     mouth: 'smile',
     quirk: [[8, 12, 'w'], [9, 12, 'w'], [10, 12, 'w'], [11, 12, 'w']],
-  },
-  palNeutral: {
-    half: [],
-    eyes: 8,
-    mouth: 'flat',
   },
   cat: {
     half: [
@@ -317,12 +312,6 @@ function addFace(grid: Grid, look: Look, frame: Frame, mood: SpriteMood): void {
       put(grid, 8, my + 2, 'm');
       put(grid, 11, my + 2, 'm');
       break;
-    case 'flat':
-      put(grid, 8, my + 1, 'm');
-      put(grid, 9, my + 1, 'm');
-      put(grid, 10, my + 1, 'm');
-      put(grid, 11, my + 1, 'm');
-      break;
     case 'grin':
       for (let x = 8; x <= 11; x++) put(grid, x, my, 'm');
       put(grid, 9, my + 1, 'm');
@@ -332,24 +321,12 @@ function addFace(grid: Grid, look: Look, frame: Frame, mood: SpriteMood): void {
 }
 
 /** The rows of one frame of one look. */
-export function frameRows(id: SpriteId, frame: Frame = 'base', mood: SpriteMood = 'happy'): string[] {
-  if (id === 'palDark') return darkRows(frame);
+function frameRows(id: SpriteId, frame: Frame = 'base', mood: SpriteMood = 'happy'): string[] {
   const look = LOOKS[id];
-  const half = look.half.length ? look.half : LOOKS.pal.half;
-  const extra = look.half.length ? look.extra : LOOKS.pal.extra;
-  const grid = mirror(half);
-  for (const [x, y, c] of extra ?? []) put(grid, x, y, c);
+  const grid = mirror(look.half);
+  for (const [x, y, c] of look.extra ?? []) put(grid, x, y, c);
   addFace(grid, look, frame, mood);
   if (frame === 'quirk' && mood === 'happy') for (const [x, y, c] of look.quirk ?? []) put(grid, x, y, c);
-  return grid.map((row) => row.join(''));
-}
-
-/** PAL's true face, for the horror replay: violet, narrowed eyes, a jagged grin. */
-function darkRows(frame: Frame): string[] {
-  const grid = mirror(LOOKS.pal.half.map((row) => row.replace(/p/g, 'v').replace(/P/g, 'V')));
-  for (const x of [5, 6, 7, 12, 13, 14]) put(grid, x, 9, 'e');
-  if (frame !== 'blink') for (const x of [6, 7, 12, 13]) put(grid, x, 10, 'e');
-  for (let x = 6; x <= 13; x++) put(grid, x, 13 + (x % 2), 'e');
   return grid.map((row) => row.join(''));
 }
 

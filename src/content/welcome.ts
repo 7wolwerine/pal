@@ -15,24 +15,8 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
   { id: 'dog', label: 'pes' },
 ];
 
-/**
- * The code from the card: LOVE YOU (any case), or the number with or without YOU. The AR bear's
- * sign shows 3107 (upside down it reads LOVE); 3701 is accepted too. Nothing else opens it.
- */
-const CARD_CODES: ReadonlySet<string> = new Set(['LOVE YOU', '3107', '3107 YOU', '3701', '3701 YOU']);
-
-export function isCardCode(text: string): boolean {
-  return CARD_CODES.has(text.trim().toUpperCase().replace(/\s+/g, ' '));
-}
-
 export const WELCOME = {
   greeting: 'Čauky! <3',
-  cardLink: 'Mám kód z kartičky',
-  cardLabel: 'Kód z kartičky',
-  cardSubmit: 'Zadat',
-  cardWrong: 'Tohle na kartičce nebylo.',
-  cardRight: 'LOVE YOU! Ty jsi mě viděl v kameře! <3',
-  cardCamera: 'Pustil jsi mě k sobě do kamery. Kvůli kartičce od cizího člověka. To se mi líbí.',
   askName: `${KINDLY} a řekl mi, jak ti mám říkat?`,
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',

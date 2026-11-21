@@ -29,7 +29,7 @@ export const DOOR_RECT = { x: 42, y: 47, w: 16, h: 26 };
 
 /** The close-up envelope, seen from the back: body, flap and the heart seal on it. */
 export const ENVELOPE = { x: 36, y: 50, w: 88, h: 44 };
-export const SEAL = { x: 80, y: 74 };
+const SEAL = { x: 80, y: 74 };
 export const SEAL_RECT = { x: 68, y: 62, w: 24, h: 22 };
 
 const C = {
@@ -430,27 +430,15 @@ function mark(g: G, parts: readonly Part[], x: number, y: number): void {
   for (const [dx, dy, w, h] of parts) px(g, INK, x + dx, y + dy, w, h);
 }
 
-// A compact "!" and "?": small, clean, and clearly not buttons.
+// A compact "!": small, clean, and clearly not a button.
 const BANG: readonly Part[] = [
   [0, 0, 2, 4],
   [0, 5, 2, 2],
-];
-const QUESTION: readonly Part[] = [
-  [0, 0, 3, 1],
-  [2, 1, 1, 1],
-  [1, 2, 2, 1],
-  [1, 3, 1, 1],
-  [1, 5, 1, 2],
 ];
 
 /** A small "!" that bobs over whatever wants attention. */
 export function paintAlert(g: G, x: number, y: number, t: number): void {
   mark(g, BANG, x, y + Math.round(Math.sin(t / 240)));
-}
-
-/** A small "?" shown over the character before the surprise sinks in. */
-export function paintQuestion(g: G, x: number, y: number, t: number): void {
-  mark(g, QUESTION, x, y + Math.round(Math.sin(t / 240)));
 }
 
 export function paintSmallEnvelope(g: G, x: number, y: number): void {
@@ -609,12 +597,11 @@ const DRIVE_BIG = {
   dark: '#d4537e',
 } as const;
 export const DRIVE_BIG_W = 18;
-export const DRIVE_BIG_H = 30;
 
 const DRIVE_HEART = ['.ww..ww.', 'wwwwwwww', 'wwwwwwww', '.wwwwww.', '..wwww..', '...ww...'];
 
 /** The flash drive up close, standing on its end: metal plug on top, a white heart on the pink body. */
-export function paintDriveBig(g: G, x: number, y: number): void {
+function paintDriveBig(g: G, x: number, y: number): void {
   const D = DRIVE_BIG;
   // plug
   px(g, D.metalEdge, x + 4, y, 10, 9);

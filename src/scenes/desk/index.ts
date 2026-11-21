@@ -189,7 +189,6 @@ export const desk: GameScene = {
         const n = count(`desktop:${key}`);
         if (n % 4 === 0) think(pool[(n / 4) % pool.length] ?? '', at);
       };
-      witness.tally('desktop');
       // A thought must not hide what it is about: over the taskbar for the taskbar, over the crown for the tree.
       if (hit === 'clock' || hit === 'start') at = { x: at.x, y: SCREEN_RECT.y + SCREEN_RECT.h - 8, w: 0 };
       if (hit === 'tree') at = { x: at.x, y: SCREEN_RECT.y + 14, w: 0 };
@@ -258,7 +257,6 @@ export const desk: GameScene = {
       }
       off = !off;
       audio.click(off ? 45 : 60, 0.5);
-      witness.tally('power');
       if (off) {
         bootAt = undefined;
         screen.hidden = true;
@@ -297,7 +295,6 @@ export const desk: GameScene = {
       later(() => audio.click(note + 12, 0.18), 60);
       floating.push({ x: KEYBOARD_RECT.x + fx * KEYBOARD_RECT.w - 2, y: KEYBOARD_RECT.y - 3, at: now, kind: tune.played });
       if (floating.length > 8) floating.shift();
-      witness.tally('keys');
       if (tune.played % TUNE.length === 0) think(next('keyboard', DESK.thoughts.keyboard), KEYBOARD_RECT);
     });
 
@@ -343,7 +340,6 @@ export const desk: GameScene = {
       audio.click(hamster === 'fast' ? 98 : 94, 0.2);
       if (hamster === 'cheeks') later(() => audio.click(60, 0.15), 200);
       think(next(`hamster:${hamster}`, DESK.thoughts.hamster[hamster]), { x: CAGE_RECT.x - 6, y: CAGE_RECT.y + CAGE_RECT.h + 2, w: CAGE_RECT.w });
-      witness.tally('hamster');
     });
 
     let fanTurn = 0.4;
@@ -495,7 +491,6 @@ export const desk: GameScene = {
       thief = undefined;
       tug = undefined;
       drive.x = mine.heist.x;
-      witness.tally('bug-chased');
       const bug = mine.beetle;
       bug.onPoke = () => undefined;
       bug.say('');

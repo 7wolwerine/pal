@@ -1,6 +1,16 @@
 import { KINDLY } from '../core/kindly.ts';
 
 /**
+ * The code from the card: LOVE YOU (any case), or the number with or without YOU. The AR bear's
+ * sign shows 3107 (upside down it reads LOVE); 3701 is accepted too. Nothing else opens it.
+ */
+const CARD_CODES: ReadonlySet<string> = new Set(['LOVE YOU', '3107', '3107 YOU', '3701', '3701 YOU']);
+
+export function isCardCode(text: string): boolean {
+  return CARD_CODES.has(text.trim().toUpperCase().replace(/\s+/g, ' '));
+}
+
+/**
  * Treasure, the way an investment scam pays out: small real wins first, a
  * goal in plain sight, a near miss that makes the goal feel close, and the
  * last stretch paid with the code from the card the stranger handed you. The golden chest then offers a choice, and both
@@ -10,7 +20,6 @@ import { KINDLY } from '../core/kindly.ts';
 export const CHEST = {
   /** Two short bubbles, then PAL steps aside and the chests get the whole window. */
   intro: ['Za všechno, cos dneska udělal, máš odměnu.', 'Tři truhličky, jen pro tebe!'],
-  pointsLabel: 'Body',
   goalLabel: 'Zlatá truhla',
   chestLabel: (i: number) => `Truhlička ${i}`,
   goldLabel: 'Zlatá truhla',

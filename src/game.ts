@@ -36,7 +36,7 @@ export interface Profile {
 const FEMININE: ReadonlySet<SpriteId> = new Set<SpriteId>(['girl', 'mom', 'grandma', 'cat']);
 
 /** True once the freed assistant is one who talks about herself in the feminine. */
-export function isFeminine(profile: Profile): boolean {
+function isFeminine(profile: Profile): boolean {
   return Boolean(profile.bonded && profile.assistantLook && FEMININE.has(profile.assistantLook));
 }
 

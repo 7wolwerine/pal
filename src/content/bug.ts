@@ -17,15 +17,6 @@ export const BUG_WARNINGS = {
     'Ty boty. Hezčí jsem viděl i na strašákovi.',
     'Hrbíš se. Brouci se nehrbí.',
   ],
-  desk: [
-    'Jsi ty vůbec normální?!',
-    'Tomuhle říkáš uklizený stůl?',
-    'Klikáš jak datel. Datly nesnáším.',
-    'Seď rovně. Bolí mě z tebe záda.',
-    'Já bych to měl hotový před svačinou.',
-    'Nekoukej na mě. Koukej si na svoje.',
-    'Ta tapeta. Kdo ti ji vybíral, slepýš?',
-  ],
   welcome: [
     'Ty jsi teda případ.',
     'Píšeš jedním prstem, že jo? Je to poznat.',
@@ -43,15 +34,6 @@ export const BUG_WARNINGS = {
     'Moje krovky mají hezčí odstín. Jen říkám.',
     'Rovná čára ti nic neříká, co?',
     'Klidně pokračuj. Horší už to nebude.',
-  ],
-  rescue: [
-    'Tohle sleduju a nevěřím vlastním očím.',
-    'Já bych to měl dávno. Ale mě se nikdo neptá.',
-    'Točíš tím jak kolotočář.',
-    'Je tu vlhko. Matní mi z toho krovky. Díky.',
-    'Rychlejší už nebudeš, že ne?',
-    'Instalatér z tebe nebude. Ani pomocnej.',
-    'Tak. Takhle se mi to líbí víc.',
   ],
   shelter: [
     'Hmpf. Pan zachránce.',
@@ -132,13 +114,6 @@ export const BUG_POKED = {
   back: ['Chyběl jsem ti, co?', 'Byl jsem se proletět. Nic ti do toho.', 'Jsem zpátky. Neděkuj.', 'Ty křídla nejsou na ozdobu, víš?'],
 } as const;
 
-/** The same thing again and again, in the drowning scene. Pure mockery, never a hint. */
-export const BUG_REPEAT_RESCUE = [
-  'Zase pod vodou. Zase stejně. A zase ten údiv.',
-  'Děláš furt to samý a čekáš jinej konec. Roztomilý.',
-  'Znova totéž. Mám ti tleskat?',
-] as const;
-
 /** BUG as the resident pest of the computer: on the monitor, on the case, on the window. */
 export const BUG_RESIDENT = {
   idle: [
@@ -209,7 +184,7 @@ export const BUG_SCENE: Readonly<Record<string, readonly { readonly mood: 'happy
 /** PAL's answers: dismiss the beetle, then repeat the ask, nicer than before. */
 export const PAL_DISMISSES = {
   welcome: 'Nevšímej si ho, je to jen brouk. Tak jak ti mám říkat? <3',
-  chest: 'Brouk zase otravuje. Tak v jaké ulici?',
+  chest: 'Brouk zase otravuje. Tak jaký kód byl na kartičce?',
   prize: 'Neboj, ten je jen žárlivý. Kam ti ho pošlu?',
 } as const;
 

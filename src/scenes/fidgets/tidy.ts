@@ -127,7 +127,6 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       const finished = options.drag === undefined ? model.poke(id, options.part) : model.drag(id, options.drag);
       const after = control.value;
       if (after === before && !finished) return;
-      if (!dragged) witness.tally('fidget');
       const cell = cells.get(id);
       cell?.sync();
       if (!isAligned(control)) cell?.el.classList.remove('cell--done');
@@ -150,7 +149,6 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
     const gearLamp = h('span', { class: 'lamp', attrs: { 'aria-hidden': 'true' } });
     const gears = gearBoard(FIDGETS.gearsLabel, FIDGETS.gearLabel, (_id, all) => {
       touch('gears');
-      witness.tally('fidget');
       if (!all) return;
       gearLamp.classList.add('lamp--on');
       gearCell.classList.add('cell--done');
@@ -269,7 +267,6 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         overlay.addEventListener('click', () => {
           if (signal.aborted || shoves >= need) return;
           shoves++;
-          witness.tally('shove');
           beetle.setMood(shoves % 2 ? 'panic' : 'angry');
           beetle.say(FIDGETS.bugShove[Math.min(shoves, need) - 1] ?? '');
           audio.click(50 + shoves * 3, 0.4);

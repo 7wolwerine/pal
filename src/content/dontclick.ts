@@ -24,13 +24,9 @@ export const DONTCLICK = {
   bugThanks: 'No proto. Stejně bys to neutrh.',
   palBroken: 'No vidíš. A svět se nezbořil.',
   palLeft: 'Hm. Tak jindy.',
-  panelTitle: 'OCHRANA SYSTÉMU',
-  panelOn: 'AKTIVNÍ',
-  panelOff: 'VYPNUTO',
   nextLabel: 'Fatal Error. Pokračovat',
   guardOn: 'Ochrana zapnuta',
   guardOff: 'Ochrana vypnuta',
   boardLabel: 'Nástěnka s tlačítkem na hřebíku',
   leave: 'Nechat to být',
-  go: 'Pokračovat',
 } as const;

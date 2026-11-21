@@ -140,7 +140,6 @@ export const rescue: GameScene = {
         () => {
           if (phase !== 'play') return;
           turn(piece.id);
-          ctx.witness.tally('pipe-turn');
         },
       );
       pipeSpots.set(piece.id, spot);

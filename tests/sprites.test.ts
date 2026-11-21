@@ -40,7 +40,7 @@ describe('sprites', () => {
     expect(cells.length).toBeGreaterThan(SPRITE_SIZE * SPRITE_SIZE * 0.3);
   });
 
-  it.each(SPRITE_IDS.filter((id) => id !== 'palDark'))('%s really changes when it blinks, and when it is sad', (id) => {
+  it.each(SPRITE_IDS)('%s really changes when it blinks, and when it is sad', (id) => {
     const base = render(id, 'base', 'happy');
     expect(render(id, 'blink', 'happy')).not.toBe(base);
     expect(render(id, 'base', 'sad')).not.toBe(base);

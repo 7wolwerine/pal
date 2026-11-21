@@ -18,7 +18,7 @@ export const W = 8;
 export type Dir = typeof N | typeof E | typeof S | typeof W;
 
 export const DIRS: readonly Dir[] = [N, E, S, W];
-export const OPPOSITE: Record<Dir, Dir> = { [N]: S, [E]: W, [S]: N, [W]: E };
+const OPPOSITE: Record<Dir, Dir> = { [N]: S, [E]: W, [S]: N, [W]: E };
 const STEP: Record<Dir, [number, number]> = { [N]: [0, -1], [E]: [1, 0], [S]: [0, 1], [W]: [-1, 0] };
 
 /** Rotates an openings mask a quarter turn clockwise. */

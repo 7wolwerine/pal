@@ -18,15 +18,15 @@ export interface Control {
 /** Degrees either way the picture can hang. */
 export const TILT_MAX = 14;
 /** One nudge turns the picture this many degrees towards level: big, decided moves. */
-export const TILT_STEP = 6;
+const TILT_STEP = 6;
 /** A picture this close to level drops into place. */
-export const TILT_SNAP = 2;
+const TILT_SNAP = 2;
 /** Screws on the plate. A screw's value is a bit mask: bit i set = screw i stands out. */
 export const SCREWS = 4;
 const SCREW_ALL = (1 << SCREWS) - 1;
 /** Books on the shelf. The value is how many of them lie fallen. */
 export const BOOKS = 5;
-export const MAIL_MAX = 5;
+const MAIL_MAX = 5;
 
 /** How many controls BUG knocks out after the first, second and third tidy-up. */
 export const SABOTAGE_PLAN = [3, 2, 1] as const;

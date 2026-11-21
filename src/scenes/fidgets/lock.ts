@@ -92,13 +92,11 @@ export function quiz(ctx: GameContext): Promise<string> {
         ctx.pal.el.scrollIntoView({ block: 'nearest' });
         row?.input.focus({ preventScroll: true });
         row?.input.select();
-        ctx.witness.tally('quiz-hint');
         return;
       }
       if (verdict.kind === 'fill') {
         void ctx.pal.say(FIDGETS.quizFilled);
         ctx.pal.el.scrollIntoView({ block: 'nearest' });
-        ctx.witness.tally('quiz-filled');
         if (row) void fillIn(row, verdict.answer);
         return;
       }

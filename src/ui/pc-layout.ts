@@ -66,8 +66,8 @@ export interface PcLayout {
 
 /** Room kept free round the picture: the page's gutter, the path of hearts at the top. */
 export const GUTTER = 16;
-export const TOP_ROOM = 56;
-export const BOTTOM_ROOM = 16;
+const TOP_ROOM = 56;
+const BOTTOM_ROOM = 16;
 /** PAL's window is this wide at most. */
 export const WIN_W = 480;
 
@@ -84,8 +84,8 @@ const BELOW_GLASS = 6 + 8;
 
 /** Every picture pixel the full desk adds round the glass. */
 // mug and fan on the left (14), the bezel (4 + 4), a gap with the drive in it (11), the case, a margin (7)
-export const FULL_EXTRA_W = 14 + 8 + 11 + CASE_W + 7;
-export const FULL_EXTRA_H = ABOVE_GLASS + BELOW_GLASS + DESK_FULL;
+const FULL_EXTRA_W = 14 + 8 + 11 + CASE_W + 7;
+const FULL_EXTRA_H = ABOVE_GLASS + BELOW_GLASS + DESK_FULL;
 const COMPACT_EXTRA_W = 16;
 const COMPACT_EXTRA_H = ABOVE_GLASS + BELOW_GLASS + DESK_COMPACT;
 

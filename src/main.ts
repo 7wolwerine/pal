@@ -1,5 +1,4 @@
 import { audio } from './audio/engine.ts';
-import { SCENE_THEME } from './audio/themes.ts';
 import { SCENE_TRACK } from './audio/tracks.ts';
 import { WINDOW_REACTIONS } from './content/window.ts';
 import { Director } from './core/director.ts';
@@ -122,7 +121,10 @@ function boot(): void {
   };
 
   let winWasHidden = true;
+  // The debug arrows' label; it stays a no-op unless the arrows are shown.
+  let showScene: (id: string) => void = () => {};
   director = new Director(SCENES, ctx, (scene) => {
+    showScene(scene.id);
     // Pixel scenes take the whole view; everything else happens in PAL's window.
     const onScenery = scene.surface === 'scenery';
     scenery.hidden = !onScenery;
@@ -152,7 +154,7 @@ function boot(): void {
     journey.show(scene.id);
     if (journey.left(scene.id) === 3) witness.record({ scene: scene.id, kind: 'near-goal', trick: 'goal-gradient' });
     // Each scene has its own loop of music, and the next one starts downloading now.
-    audio.play(SCENE_TRACK[scene.id] ?? SCENE_THEME[scene.id] ?? 'window');
+    audio.play(SCENE_TRACK[scene.id] ?? 'window');
     const next = SCENES[SCENES.findIndex((s) => s.id === scene.id) + 1];
     if (next) audio.preload(SCENE_TRACK[next.id]);
   });
@@ -166,7 +168,7 @@ function boot(): void {
   const debug = import.meta.env.DEV || params.has('debug');
   const jump = debug ? params.get('scene') : null;
   const jumper = makeJumper(director, profile, pal, ctx);
-  if (debug) addDebugArrows(director, jumper);
+  if (debug) showScene = addDebugArrows(director, jumper);
   // The cheat console: a semicolon opens it, in the real game too.
   attachConsole({ window: win.el, profile, journey, jump: jumper });
   if (jump) {
@@ -231,7 +233,8 @@ function makeJumper(director: Director<GameContext, GameScene>, profile: Profile
   };
 }
 
-function addDebugArrows(director: Director<GameContext, GameScene>, jump: (id: string) => void): void {
+/** Shows the arrows and returns what labels them with the scene just entered. */
+function addDebugArrows(director: Director<GameContext, GameScene>, jump: (id: string) => void): (id: string) => void {
   const ids = director.sceneIds;
   const go = (step: number): void => {
     const current = director.currentId ?? ids[0] ?? '';
@@ -247,12 +250,11 @@ function addDebugArrows(director: Director<GameContext, GameScene>, jump: (id: s
     label,
     h('button', { class: 'debug__btn', text: '▶', attrs: { type: 'button', 'aria-label': 'Další scéna' }, on: { click: () => go(1) } }),
   );
-  const show = (): void => {
-    label.textContent = director.currentId ?? '';
-    requestAnimationFrame(show);
-  };
-  show();
+  label.textContent = director.currentId ?? '';
   document.body.append(bar);
+  return (id) => {
+    label.textContent = id;
+  };
 }
 
 boot();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ANSWER_POINTS, ChestModel, GOLD_GOAL, GOLD_PRIZE, REWARDS, XP_PER_LEVEL, XP_PRIZE } from '../src/scenes/chest-model.ts';
+import { ChestModel, GOLD_GOAL, GOLD_PRIZE, REWARDS, XP_PER_LEVEL, XP_PRIZE } from '../src/scenes/chest-model.ts';
 
 function openAll(m: ChestModel): void {
   while (m.open() !== null) {
@@ -15,15 +15,15 @@ describe('ChestModel', () => {
     expect(m.open()).toBeNull();
     expect(m.points).toBeLessThan(GOLD_GOAL);
     expect(m.missing).toBeGreaterThan(0);
-    expect(m.missing).toBeLessThanOrEqual(ANSWER_POINTS);
     expect(m.canOpenGold).toBe(false);
+    expect(m.unlockedBy).toBeNull();
   });
 
-  it('opens the golden chest after an answer, and nothing is paid before the choice', () => {
+  it('opens the golden chest with the card after the free ones, and nothing is paid before the choice', () => {
     const m = new ChestModel();
     openAll(m);
-    m.answer();
-    expect(m.unlockedBy).toBe('answer');
+    m.card();
+    expect(m.unlockedBy).toBe('card');
     const before = m.points;
     expect(m.openGold()).toBe(true);
     expect(m.points).toBe(before);
@@ -34,7 +34,7 @@ describe('ChestModel', () => {
   it('pays the gold once it is picked', () => {
     const m = new ChestModel();
     openAll(m);
-    m.answer();
+    m.card();
     m.openGold();
     const before = m.points;
     expect(m.choose('gold')).toBe(true);
@@ -71,11 +71,5 @@ describe('ChestModel', () => {
     expect(m.progress).toBe(1);
     expect(m.openGold()).toBe(true);
     expect(m.unlockedBy).toBe('card');
-  });
-
-  it('ignores negative answers', () => {
-    const m = new ChestModel();
-    m.answer(-50);
-    expect(m.points).toBe(0);
   });
 });

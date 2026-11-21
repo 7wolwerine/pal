@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isCardCode } from '../src/content/welcome.ts';
+import { isCardCode } from '../src/content/chest.ts';
 
 describe('isCardCode', () => {
   it('accepts LOVE YOU in any case and spacing, and the number with or without YOU', () => {

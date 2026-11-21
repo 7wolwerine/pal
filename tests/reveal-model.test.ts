@@ -68,10 +68,8 @@ describe('buildTimeline', () => {
 
     const plain = new Witness(() => 0);
     plain.record({ scene: 'desk', kind: 'grab-flashka', trick: 'baiting', data: { fromBug: false } });
-    plain.record({ scene: 'chest', kind: 'gold-open', trick: 'variable-reward', data: { by: 'answer' } });
-    const [grab2, gold2] = buildTimeline(plain.events).map((l) => l.text);
+    const [grab2] = buildTimeline(plain.events).map((l) => l.text);
     expect(grab2).not.toMatch(/Brouk/);
-    expect(gold2).toMatch(/něčím o sobě/);
   });
 
   it('has a line for every event kind the game records that has a story of its own', () => {
@@ -254,7 +252,7 @@ describe('the polite phrase', () => {
 describe('the golden chest', () => {
   it('names the pick from the golden chest and what it cost', () => {
     const w = new Witness(() => 0);
-    w.record({ scene: 'chest', kind: 'gold-open', trick: 'variable-reward', data: { by: 'answer' } });
+    w.record({ scene: 'chest', kind: 'gold-open', trick: 'variable-reward', data: { by: 'card' } });
     w.record({ scene: 'chest', kind: 'gold-choice', data: { pick: 'xp' } });
     w.disclose('chest', 'security-question', 'teacher', 'Nováková', { pick: 'xp' });
     const texts = buildTimeline(w.events).map((l) => l.text);

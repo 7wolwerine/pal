@@ -10,8 +10,6 @@ export const STAGE_H = 100;
 export const DOME_RECT: Rect = { x: 58, y: 12, w: 45, h: 68 };
 export const CAN_RECT: Rect = { x: 104, y: 54, w: 36, h: 26 };
 export const FLOWER_RECT: Rect = { x: 66, y: 32, w: 28, h: 34 };
-/** Where the flower's speech bubble sits, in picture pixels. */
-export const BUBBLE_RECT: Rect = { x: 96, y: 4, w: 62, h: 34 };
 
 /** Base of the plant, on the soil in the pot. */
 const PLANT_X = 80;

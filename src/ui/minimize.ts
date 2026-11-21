@@ -4,7 +4,7 @@ import { createPalFace } from './pal-face.ts';
 import { drawSprite } from './sprites.ts';
 
 /** What the notification says while the window is minimised, and how it looks saying it. */
-export const MINIMIZED_LINES: readonly { text: string; mood: 'sad' | 'happy' }[] = [
+const MINIMIZED_LINES: readonly { text: string; mood: 'sad' | 'happy' }[] = [
   { text: 'Nezapomněl jsi na mě?', mood: 'sad' },
   { text: 'Jsem tady!', mood: 'happy' },
   { text: 'Čekám tu na tebe.', mood: 'happy' },

@@ -16,7 +16,7 @@ const TABLE_X = 76;
 const TABLE_R = 108;
 
 /** The glass of the standing mirror (the frame goes round it, the stand under it). */
-export const MIRROR: Rect = { x: 6, y: 20, w: 18, h: 40 };
+const MIRROR: Rect = { x: 6, y: 20, w: 18, h: 40 };
 /** Click area for the mirror: the frame, the stand and a little around it. */
 export const MIRROR_RECT: Rect = { x: 2, y: 14, w: 27, h: 58 };
 /** Where the character's feet are: on the floor, in front of everything. */
@@ -45,7 +45,7 @@ const SPILL_MS = 120;
 /** Where a glass slipping out of the raised hand starts, and where it lands: in front, by the feet. */
 export function handDrop(heroX: number): DropFrom {
   const hand = heroToastHand(heroX, HERO_FEET_Y);
-  return { x: hand.x + 1, y: hand.y - GLASS_H + 2, floor: HERO_FEET_Y + 1, tip: false };
+  return { x: hand.x + 1, y: hand.y - GLASS_H + 2, floor: HERO_FEET_Y + 1 };
 }
 
 /** When the spilt water hits the floor. */

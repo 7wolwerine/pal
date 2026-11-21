@@ -52,7 +52,7 @@ export class Witness {
     return this.record({ scene, kind: 'disclose', trick, data: { ...extra, field, value } });
   }
 
-  /** Counts high-volume things (clicks, key presses) without storing each one. */
+  /** Counts high-volume things (the player's clicks) without storing each one. */
   tally(name: string, by = 1): number {
     const total = (this.#tallies.get(name) ?? 0) + by;
     this.#tallies.set(name, total);

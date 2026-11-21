@@ -164,7 +164,6 @@ export const paint: GameScene = {
       nudges++;
       tilt = TILT * Math.max(0, 1 - nudges / NUDGES);
       audio.click(66 + nudges * 4, 0.35);
-      ctx.witness.tally('frame-nudge');
       if (nudges < NUDGES) return;
       frameSpot.hidden = true;
       audio.snap(76);

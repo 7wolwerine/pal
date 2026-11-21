@@ -2,8 +2,8 @@ import { PRIZE } from '../content/prize.ts';
 import { h } from './dom.ts';
 import { sprite, type SpriteId } from './sprites.ts';
 
-export const CERT_W = 640;
-export const CERT_H = 400;
+const CERT_W = 640;
+const CERT_H = 400;
 
 export interface CertificateFacts {
   readonly name: string;

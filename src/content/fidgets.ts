@@ -24,8 +24,6 @@ export const FIDGETS = {
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
   bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Typický.', 'Ty jsi hroznej.'],
-  /** Shown while the beetle clutches its head and undoes the player's work. */
-  bugPanic: ['Néé!', 'To je moje!', 'Pusť to!', 'Au!'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
   bugGrab: 'Tak dost! Tady sedím já!',
   bugShove: ['Nepustím!', 'Au! Ne!', 'Přestaň!', 'Grr!', 'Já… ', 'Nóóó!'],

@@ -77,7 +77,7 @@ export const TRACKS: Record<TrackId, Track> = {
   reveal: loop('reveal.aac', 46.7385, 1.47),
 };
 
-/** Which recording plays under each scene; anything not listed keeps a synth theme. */
+/** Which recording plays under each scene. Every scene has one; its synth theme plays only if the download fails. */
 export const SCENE_TRACK: Record<string, TrackId> = {
   mailbox: 'mailbox',
   desk: 'desk',

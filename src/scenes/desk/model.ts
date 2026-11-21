@@ -123,7 +123,7 @@ export class SurpriseFlow {
   }
 }
 
-/** A tune as MIDI notes; a rest is `undefined`. */
+/** A tune as MIDI notes, played in a loop. */
 export type Tune = readonly number[];
 
 /** Steps through a tune one note per call, round and round. */

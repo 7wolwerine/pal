@@ -91,7 +91,7 @@ export interface WallpaperLive {
   geo: { w: number; h: number; taskbar: boolean; drive: boolean; bar?: number };
 }
 
-export function createWallpaperLive(): WallpaperLive {
+function createWallpaperLive(): WallpaperLive {
   return {
     night: false,
     splashes: [],

@@ -223,7 +223,6 @@ function factsOf(events: readonly WitnessEvent[], profile: Profile): NightFacts 
     name: profile.name,
     assistant: profile.assistantName,
     signature: profile.signature?.text ?? disclosed.get('signature'),
-    street: disclosed.get('street'),
     food: disclosed.get('comfortFood'),
     email: profile.email,
     deaths: events.filter((e) => e.kind === 'death').length,
@@ -434,7 +433,6 @@ function vignette(id: NightScene, f: NightFacts, profile: Profile): Vignette {
           const count = Math.round(f.points * Math.min(1, u / 0.6));
           line(g, `● ${count.toLocaleString('cs-CZ')}`, 220, 150, 48);
           if (f.card) line(g, `> ${typed('LOVE YOU', u, 0.55, 0.8)}`, 220, 240, 30, DIM);
-          else if (f.street) line(g, `> ${typed(f.street, u, 0.55, 0.85)}`, 220, 240, 30, DIM);
           if (f.cost) line(g, `> ${typed(f.cost, u, 0.7, 0.95)}`, 120, 300, 22, DIM);
         },
       };

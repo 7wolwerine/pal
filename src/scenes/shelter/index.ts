@@ -160,7 +160,6 @@ export const shelter: GameScene = {
     async function silly(id: TaskId): Promise<void> {
       if (!model) return;
       model.silly(id);
-      ctx.witness.tally('silly-fix');
       flop = { id, at: now };
       audio.boing(0.3);
       await say(SHELTER.tasks[id].sillyLine);
@@ -172,7 +171,6 @@ export const shelter: GameScene = {
       knock = { id, at: now };
       if (id === 'fire') audio.click(90, 0.3);
       else audio.knock();
-      ctx.witness.tally('shelter-work');
       if (!finishedJob) return;
       audio.snap(79);
       refreshSpots();

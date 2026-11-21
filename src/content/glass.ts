@@ -9,7 +9,6 @@ export const GLASS = {
   toast: 'Na zdraví! Připijem si na tvou výhru.',
   label: 'Sklenice s vodou',
   after: 'Hm. To se nemělo stát.',
-  go: 'Pokračovat',
   mirror: 'Stojací zrcadlo',
   /** What the character says to the tired face in the mirror. Exactly this. */
   mirrorLine: 'Navzdory všemu jsem to pořád já.',

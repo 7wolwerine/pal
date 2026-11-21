@@ -8,26 +8,16 @@
 export const GRAVITY = 0.0004;
 export const GLASS_W = 8;
 export const GLASS_H = 12;
-/** Where the table's feet stand: a glass knocked off the table lands on this line. */
-export const FLOOR_Y = 64;
 /** The glass's top-left while it stands on the table. */
 export const TABLE_SPOT: readonly [number, number] = [88, 32];
-/** The table's right edge. */
-export const TABLE_EDGE = 106;
-
-/** Where a fall starts: the glass's centre and top, the line it lands on, and whether it first tips off an edge. */
+/** Where a fall starts: the glass's centre and top, and the line it lands on. */
 export interface DropFrom {
   readonly x: number;
   readonly y: number;
   /** The line the glass's bottom lands on. */
   readonly floor: number;
-  /** Tips over the table's edge first (true), or slips straight out of a hand (false). */
-  readonly tip: boolean;
 }
 
-export const TABLE_DROP: DropFrom = { x: TABLE_SPOT[0] + GLASS_W / 2, y: TABLE_SPOT[1], floor: FLOOR_Y, tip: true };
-
-const TIP_MS = 250;
 /** How high each rubbery bounce goes. */
 const BOUNCES = [18, 8, 3];
 const SQUASH_MS = 90;
@@ -59,40 +49,25 @@ const bounceMs = (height: number): number => 2 * Math.sqrt((2 * height) / GRAVIT
 
 export function dropTimes(from: DropFrom): DropTimes {
   const fall = Math.sqrt((2 * Math.max(0, from.floor - GLASS_H - from.y)) / GRAVITY);
-  const impact = (from.tip ? TIP_MS : 0) + fall;
+  const impact = fall;
   const bounceAt = BOUNCES.map((_, i) => impact + BOUNCES.slice(0, i).reduce((sum, b) => sum + bounceMs(b), 0));
   return { impact, settle: impact + BOUNCES.reduce((sum, b) => sum + bounceMs(b), 0), bounceAt };
 }
 
-const TABLE_TIMES = dropTimes(TABLE_DROP);
-/** When a glass knocked off the table first hits the floor. */
-export const IMPACT_MS = TABLE_TIMES.impact;
-export const SETTLE_MS = TABLE_TIMES.settle;
-export const BOUNCE_AT = TABLE_TIMES.bounceAt;
-
 const lerp = (a: number, b: number, u: number): number => a + (b - a) * u;
 
-export function glassPose(ms: number, from: DropFrom = TABLE_DROP): GlassPose {
+export function glassPose(ms: number, from: DropFrom): GlassPose {
   const rest = from.floor - GLASS_H;
   if (ms <= 0) return { x: from.x, y: from.y, rot: 0, sx: 1, sy: 1 };
-  const tip = from.tip ? TIP_MS : 0;
-  // Tipping and sliding off the edge.
-  const edgeX = from.tip ? Math.max(from.x, TABLE_EDGE + 2) : from.x;
-  if (ms < tip) {
-    const u = ms / tip;
-    return { x: lerp(from.x, edgeX, u * u), y: from.y, rot: 0.5 * u, sx: 1, sy: 1 };
-  }
   const { impact } = dropTimes(from);
-  const startRot = from.tip ? 0.5 : 0;
   // Falling, honestly.
   if (ms < impact) {
-    const t = ms - tip;
-    const u = t / Math.max(1, impact - tip);
-    return { x: lerp(edgeX, edgeX + FALL_DRIFT, u), y: from.y + 0.5 * GRAVITY * t * t, rot: lerp(startRot, 1.6, u), sx: 1, sy: 1 };
+    const u = ms / Math.max(1, impact);
+    return { x: lerp(from.x, from.x + FALL_DRIFT, u), y: from.y + 0.5 * GRAVITY * ms * ms, rot: lerp(0, 1.6, u), sx: 1, sy: 1 };
   }
   // Rubber.
   let t = ms - impact;
-  let x = edgeX + FALL_DRIFT;
+  let x = from.x + FALL_DRIFT;
   const rots = [1.6, 0.35, -0.12, 0];
   for (let i = 0; i < BOUNCES.length; i++) {
     const height = BOUNCES[i] ?? 0;

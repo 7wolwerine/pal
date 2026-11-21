@@ -1,7 +1,6 @@
 import { audio } from '../audio/engine.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
-import { CHEST } from '../content/chest.ts';
-import { isCardCode } from '../content/welcome.ts';
+import { CHEST, isCardCode } from '../content/chest.ts';
 import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
 import { gendered, type GameScene } from '../game.ts';
 import { paintGrid, px } from '../pixel/stage.ts';
@@ -493,8 +492,7 @@ function treasureWindow(motion: boolean): Promise<Pick> {
 /**
  * Treasure that builds trust the way an investment scam does: real small
  * wins, a goal in plain sight, a near miss, and a shortcut for the last
- * stretch — an answer about yourself, or the code from the card a stranger
- * gave you. The golden chest then offers gold or experience; either costs one
+ * stretch: the code from the card a stranger gave you. The golden chest then offers gold or experience; either costs one
  * more answer about yourself, and then it really pays, so giving was worth it.
  */
 export const chest: GameScene = {

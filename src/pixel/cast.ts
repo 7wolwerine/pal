@@ -25,27 +25,6 @@ const CAST_PALETTE: Record<string, string> = {
   b: '#7fb2e5',
 };
 
-const DRIVE = [
-  '.gggg.',
-  '.gkkg.',
-  '.gggg.',
-  'rrrrrr',
-  'rwrrwr',
-  'rwwwwr',
-  'rrwwrr',
-  'rrrrrr',
-  'rrrrrr',
-  '.rrrr.',
-] as const;
-
-export const DRIVE_WIDTH = 6;
-export const DRIVE_HEIGHT = 10;
-
-/** The flash drive with a little heart on it. */
-export function paintDrive(g: CanvasRenderingContext2D, x: number, y: number, scale = 1): void {
-  paintGrid(g, DRIVE, CAST_PALETTE, x, y, scale);
-}
-
 const FACE_HAPPY = [
   '..rrrrrr..',
   '.rrrrrrrr.',

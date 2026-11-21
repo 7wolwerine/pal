@@ -22,7 +22,7 @@ export const FRAME_RECT: Rect = { x: PAINTING_RECT.x - 6, y: PAINTING_RECT.y - 6
 export const BRUSH_HOME: readonly [number, number] = [BUCKET_RECT.x + 14, BUCKET_RECT.y + 4];
 
 /** The painting's colours, one per palette character. */
-export const PAINT_COLOURS: Readonly<Record<string, string>> = {
+const PAINT_COLOURS: Readonly<Record<string, string>> = {
   s: '#7ec8f0',
   S: '#a6dbf5',
   y: '#ffd75e',

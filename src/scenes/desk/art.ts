@@ -13,18 +13,18 @@ export const STAGE_HEIGHT = 100;
 export const SCREEN_RECT = { x: 18, y: 12, w: 90, h: 54 };
 /** Top left corners of the things on the desk; each has a `paint…(g, x, y, …)` of its own. */
 /** The keyboard sits at the very front of the desk: only its two back rows show, the rest runs off the picture. */
-export const KEYBOARD_AT = { x: 33, y: 90 };
+const KEYBOARD_AT = { x: 33, y: 90 };
 /** The part of the keyboard that shows (and takes clicks). */
 export const KEYBOARD_SIZE = { w: 62, h: 10 };
-export const MOUSE_AT = { x: 98, y: 88 };
-export const MUG_AT = { x: 3, y: 82 };
+const MOUSE_AT = { x: 98, y: 88 };
+const MUG_AT = { x: 3, y: 82 };
 /** Mostly off the left edge: only a piece of the fan and its ribbon peeks in. */
-export const FAN_AT = { x: -10, y: 68 };
-export const NOTE_AT = { x: 100, y: 2 };
+const FAN_AT = { x: -10, y: 68 };
+const NOTE_AT = { x: 100, y: 2 };
 export const CASE_AT = { x: 123, y: 19 };
 export const CASE_SIZE = { w: 30, h: 64 };
 /** The hamster's cage stands on top of the computer case. */
-export const CAGE_AT = { x: 123, y: 1 };
+const CAGE_AT = { x: 123, y: 1 };
 export const CAGE_SIZE = { w: 30, h: 18 };
 
 /** Where the drive lies when the scene starts. */

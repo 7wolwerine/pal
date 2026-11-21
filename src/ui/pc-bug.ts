@@ -26,7 +26,6 @@ interface Spot {
 export interface PcBug {
   /** Tells him which scene is on, so that he knows whether the computer is his to haunt. */
   setScene(id: string): void;
-  stop(): void;
 }
 
 /**
@@ -48,12 +47,11 @@ export function attachPcBug(pc: HTMLElement): PcBug {
 
   let scene = '';
   let dead = false;
-  let stopped = false;
   /** On stage (even if shooed off for the moment). */
   let present = false;
 
   const allowed = (): boolean =>
-    !stopped && !dead && scene !== '' && !OWN_BUG.has(scene) && !pc.hidden && pc.isConnected && !bugVisiting() && document.visibilityState !== 'hidden';
+    !dead && scene !== '' && !OWN_BUG.has(scene) && !pc.hidden && pc.isConnected && !bugVisiting() && document.visibilityState !== 'hidden';
 
   const vanish = (): void => {
     present = false;
@@ -62,7 +60,7 @@ export function attachPcBug(pc: HTMLElement): PcBug {
     beetle.el.classList.remove('bug--peek', 'bug--unpeek');
   };
 
-  const stopVisits = onBugVisit((visiting) => {
+  onBugVisit((visiting) => {
     if (visiting) vanish();
   });
 
@@ -116,7 +114,7 @@ export function attachPcBug(pc: HTMLElement): PcBug {
     a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
 
   /** Whether standing at (x, y) would leave him on screen and off PAL's bubble. */
-  function fits(x: number, y: number, _kind: SpotKind): boolean {
+  function fits(x: number, y: number): boolean {
     const body = { left: x, top: y, right: x + BUG_PX, bottom: y + BUG_PX };
     // On screen, with room for most of him.
     if (body.top < -BUG_PX * 0.12 || body.bottom > window.innerHeight + 4) return false;
@@ -153,7 +151,7 @@ export function attachPcBug(pc: HTMLElement): PcBug {
     for (const spot of spots()) {
       if (spot.name === lastSpot) continue;
       const at = spot.at();
-      if (!at || !fits(at[0], at[1], spot.kind)) continue;
+      if (!at || !fits(at[0], at[1])) continue;
       const weight = spot.kind === 'perch' ? 3 : spot.kind === 'bar' ? 2.5 : spot.kind === 'peek' ? 1.2 : 1.4;
       options.push({ spot, x: at[0], y: at[1], weight });
     }
@@ -343,7 +341,8 @@ export function attachPcBug(pc: HTMLElement): PcBug {
   }
 
   void (async () => {
-    while (!stopped) {
+    // He watches for the whole page: cheat scene jumps can bring him back even after the crash.
+    for (;;) {
       // Wait for a scene that is his to haunt, and let it settle first.
       if (!allowed()) {
         if (present) vanish();
@@ -380,12 +379,6 @@ export function attachPcBug(pc: HTMLElement): PcBug {
       // Nothing but the reveal follows the crash, so in a real game this never turns back.
       dead = AFTER_BUG.has(id);
       if (!allowed()) vanish();
-    },
-    stop() {
-      stopped = true;
-      stopVisits();
-      beetle.stop();
-      beetle.el.remove();
     },
   };
 }

@@ -13,8 +13,6 @@ export const FLOWER = {
   sceneLabel: 'Parapet u okna. V květináči uschlá kytka pod skleněným poklopem s cedulkou Ochranné sklo, vedle stojí konvička s vodou.',
   /** The brass plate on the sill in front of the glass. */
   plate: 'Ochranné sklo',
-  /** BUG on the sill: only criticism, never advice. */
-  bug: ['Tsss.', 'No výborně. Střepy všude.', 'Ty jsi fakt hroznej.'],
   /** The flower, in a speech bubble, once it blooms. */
   thanks: 'Tolik ti děkuju, žes rozbil to sklo, které mi nedovolilo žít. Jsi můj hrdina. <3',
   /** If the player clicks the flower afterwards — the only one who notices. */

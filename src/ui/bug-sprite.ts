@@ -34,7 +34,7 @@ const C = {
   note: '#9a7fc4',
 } as const;
 
-export const BUG_FRAMES = [
+const BUG_FRAMES = [
   'stand',
   'walk1',
   'walk2',

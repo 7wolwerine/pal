@@ -9,7 +9,6 @@ export interface NightFacts {
   readonly name?: string;
   readonly assistant?: string;
   readonly signature?: string;
-  readonly street?: string;
   /** What the golden chest's treasure cost: an answer of the security-question kind. */
   readonly cost?: string;
   readonly food?: string;
@@ -56,7 +55,7 @@ export const NIGHT = {
     flower: () => 'Rozbil jsi ochranné sklo. Kytku pak sežrala havěť. Věděla, žes to byl ty. Já taky.',
     dontclick: (f: NightFacts) => `Nesahat. Sáhl jsi ${f.presses}×. Pak už nebylo co hlídat.`,
     chest: (f: NightFacts) =>
-      `${f.card ? 'Zlatou truhlu ti otevřel kód od cizího člověka.' : f.street ? `Ulice ${f.street}. Za pár bodů.` : 'Za pár bodů jsi otvíral truhly. Bylo to tak snadné.'}${f.cost ? ` A za poklad ${f.cost}.` : ''}`,
+      `${f.card ? 'Zlatou truhlu ti otevřel kód od cizího člověka.' : 'Za pár bodů jsi otvíral truhly. Bylo to tak snadné.'}${f.cost ? ` A za poklad ${f.cost}.` : ''}`,
     plea: (f: NightFacts) =>
       f.refusals > 0 ? `Řekl jsi ne. ${f.refusals}×. Pak jsi mi kód stejně přepsal.` : 'Přepsal jsi mi kód. Objednávka potvrzena.',
     download: (f: NightFacts) =>

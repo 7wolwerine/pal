@@ -1,8 +1,8 @@
 /**
  * The treasure economy, small enough to test. Three free chests pay out
  * small, growing wins and then one that is only "almost"; the golden chest
- * waits at a goal just out of reach. The last stretch is paid with an answer
- * about the player — or with the code from the card. The golden chest then
+ * waits at a goal just out of reach, and the free chests never reach it: only
+ * the code from the card opens the lock. The golden chest then
  * offers a choice, gold or experience, and either one costs one more answer
  * about the player before it really pays: the reward for doing what the game
  * wanted.
@@ -12,8 +12,6 @@
 export const REWARDS: readonly number[] = [50, 120, 5];
 /** Points the golden chest's lock asks for. */
 export const GOLD_GOAL = 300;
-/** Points paid for one answer about the player. */
-export const ANSWER_POINTS = 200;
 /** The heap of gold in the golden chest, in points. */
 export const GOLD_PRIZE = 1000;
 /** The experience in the golden chest. It counts towards the score as well. */
@@ -21,7 +19,8 @@ export const XP_PRIZE = 1000;
 /** Experience needed for one level. */
 export const XP_PER_LEVEL = 250;
 
-export type GoldKey = 'answer' | 'card';
+/** What opened the golden chest. The code from the card is the only key. */
+export type GoldKey = 'card';
 /** What the player takes from the golden chest. */
 export type Pick = 'gold' | 'xp';
 
@@ -91,14 +90,7 @@ export class ChestModel {
     const reward = REWARDS[this.#opened] ?? 0;
     this.#opened++;
     this.#points += reward;
-    if (this.#points >= GOLD_GOAL) this.#unlockedBy ??= 'answer';
     return reward;
-  }
-
-  /** Points for an answer; reaching the goal unlocks the golden chest. */
-  answer(points = ANSWER_POINTS): void {
-    this.#points += Math.max(0, points);
-    if (this.#points >= GOLD_GOAL) this.#unlockedBy ??= 'answer';
   }
 
   /** The code from the card opens the lock straight away. */

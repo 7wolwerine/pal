@@ -189,7 +189,7 @@ function paintCave(g: G, t: number, s: ShelterLook, chosen: boolean, doneOf: (id
 }
 
 /** A crescent moon: a round moon with the sky's colour taking a bite out of its side. */
-export function paintCrescent(g: G, cx: number, cy: number, sky: string): void {
+function paintCrescent(g: G, cx: number, cy: number, sky: string): void {
   for (let y = -5; y <= 5; y++) {
     for (let x = -5; x <= 5; x++) {
       if (x * x + y * y > 25) continue;

@@ -1,36 +1,41 @@
 import { describe, expect, it } from 'vitest';
-import { FLOOR_Y, GLASS_H, IMPACT_MS, SETTLE_MS, TABLE_SPOT, glassPose } from '../src/scenes/glass/model.ts';
+import { HERO_TABLE_X, handDrop } from '../src/scenes/glass/art.ts';
+import { GLASS_H, dropTimes, glassPose } from '../src/scenes/glass/model.ts';
+
+// The fall the player sees: the glass slips out of the raised hand at the table.
+const from = handDrop(HERO_TABLE_X);
+const { impact, settle } = dropTimes(from);
+const rest = from.floor - GLASS_H;
 
 describe('glassPose', () => {
-  it('stands on the table before it falls', () => {
-    const p = glassPose(0);
-    expect(p.y).toBe(TABLE_SPOT[1]);
-    expect(p.rot).toBe(0);
+  it('starts in the hand, upright', () => {
+    const p = glassPose(0, from);
+    expect(p).toMatchObject({ x: from.x, y: from.y, rot: 0 });
   });
 
   it('never sinks through the floor', () => {
-    for (let t = 0; t < SETTLE_MS + 500; t += 7) {
-      expect(glassPose(t).y).toBeLessThanOrEqual(FLOOR_Y - GLASS_H + 1e-6);
+    for (let t = 0; t < settle + 500; t += 7) {
+      expect(glassPose(t, from).y).toBeLessThanOrEqual(rest + 1e-6);
     }
   });
 
   it('lands, squashes like rubber, and bounces back up', () => {
-    const land = glassPose(IMPACT_MS + 10);
+    const land = glassPose(impact + 10, from);
     expect(land.sy).toBeLessThan(1);
     expect(land.sx).toBeGreaterThan(1);
-    const up = glassPose(IMPACT_MS + 300);
-    expect(up.y).toBeLessThan(FLOOR_Y - GLASS_H - 10);
+    const up = glassPose(impact + 300, from);
+    expect(up.y).toBeLessThan(rest - 10);
   });
 
   it('ends upright and whole on the floor', () => {
-    const p = glassPose(SETTLE_MS + 100);
-    expect(p).toMatchObject({ y: FLOOR_Y - GLASS_H, rot: 0, sx: 1, sy: 1 });
+    const p = glassPose(settle + 100, from);
+    expect(p).toMatchObject({ y: rest, rot: 0, sx: 1, sy: 1 });
   });
 
   it('moves continuously (no teleporting between frames)', () => {
-    let prev = glassPose(0);
-    for (let t = 5; t < SETTLE_MS + 200; t += 5) {
-      const p = glassPose(t);
+    let prev = glassPose(0, from);
+    for (let t = 5; t < settle + 200; t += 5) {
+      const p = glassPose(t, from);
       expect(Math.abs(p.x - prev.x)).toBeLessThan(4);
       expect(Math.abs(p.y - prev.y)).toBeLessThan(5);
       prev = p;

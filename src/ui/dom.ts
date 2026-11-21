@@ -30,7 +30,7 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/** Builds a 24x24 stroke icon from path data. Paths are constants from icons.ts. */
+/** Builds a 24x24 stroke icon from path data. Paths are the ICONS constants below. */
 export function icon(paths: readonly string[], className?: string): SVGSVGElement {
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('viewBox', '0 0 24 24');

@@ -90,7 +90,6 @@ export const flower: GameScene = {
       const result = model.knock();
       if (result === 'none') return;
       actedAt = now;
-      ctx.witness.tally('glass-knock');
       if (result === 'crack') {
         audio.crunch();
         if (model.knocks === 1) {

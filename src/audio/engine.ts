@@ -46,7 +46,6 @@ class AudioEngine {
    */
   #bytes = new Map<string, Promise<ArrayBuffer | null>>();
   #decoded = new Map<string, Promise<AudioBuffer | null>>();
-  #timer = 0;
   #muted = false;
 
   get muted(): boolean {
@@ -73,7 +72,8 @@ class AudioEngine {
     this.#master = this.#ctx.createGain();
     this.#master.gain.value = this.#muted ? 0 : MASTER;
     this.#master.connect(this.#ctx.destination);
-    this.#timer = window.setInterval(() => this.#schedule(), TICK_MS);
+    // The scheduler and the listener below live as long as the page: the engine is never torn down.
+    window.setInterval(() => this.#schedule(), TICK_MS);
     document.addEventListener('visibilitychange', () => {
       if (!this.#ctx) return;
       if (document.hidden) void this.#ctx.suspend();
@@ -449,14 +449,6 @@ class AudioEngine {
       osc.start();
       return osc;
     });
-  }
-
-  /** Stops everything (used by tests and teardown). */
-  dispose(): void {
-    window.clearInterval(this.#timer);
-    void this.#ctx?.close();
-    this.#ctx = null;
-    this.#voices = [];
   }
 }
 

@@ -80,7 +80,7 @@ function announce(delta: 1 | -1): void {
  * offends him; the third poke sends him flying. `host` must be positioned.
  * Resolves once he has gone.
  */
-export async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}): Promise<void> {
+async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}): Promise<void> {
   const motion = !prefersReducedMotion();
   const fromLeft = (opts.side ?? 'right') === 'left';
   const beetle = new Beetle();
