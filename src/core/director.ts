@@ -20,6 +20,8 @@ export class Director<C, S extends Scene<C> = Scene<C>> {
   readonly #onEnter: (scene: S) => void;
   #index = -1;
   #cleanup: Cleanup | void = undefined;
+  /** Counts scene runs. Every #enter gets its own number, so a done() from an older run, even of the same scene, is told apart from the current one. */
+  #run = 0;
 
   constructor(scenes: readonly S[], ctx: C, onEnter: (scene: S) => void = () => {}) {
     if (scenes.length === 0) throw new Error('Director needs at least one scene.');
@@ -45,7 +47,12 @@ export class Director<C, S extends Scene<C> = Scene<C>> {
     this.#enter(0);
   }
 
-  /** Development aid for working on one scene. Never wired to anything in the shipped build. */
+  /**
+   * Opens a scene out of order, tearing down the current one first. This is
+   * reachable in the shipped build: the ?debug arrows, ?scene=<id> and the
+   * cheat console's edit mode all go through it (main.ts makeJumper). Scene
+   * cleanups must therefore hold up to a jump at any moment.
+   */
   jumpTo(id: string): void {
     const index = this.#scenes.findIndex((s) => s.id === id);
     if (index < 0) throw new Error(`Unknown scene "${id}".`);
@@ -53,18 +60,31 @@ export class Director<C, S extends Scene<C> = Scene<C>> {
   }
 
   #enter(index: number): void {
-    this.#cleanup?.();
+    // Claim this run first, so anything the old scene does while it is being
+    // torn down (such as calling its own done()) already counts as stale.
+    const run = ++this.#run;
+    const previous = this.#cleanup;
     this.#cleanup = undefined;
+    previous?.();
+    // The old cleanup started another scene change itself; that one wins.
+    if (this.#run !== run) return;
     this.#index = index;
     const scene = this.#scenes[index];
     if (!scene) return;
     this.#onEnter(scene);
     let finished = false;
-    this.#cleanup = scene.mount(this.#ctx, () => {
-      // A scene may only finish once, and only while it is the current one.
-      if (finished || this.#index !== index) return;
+    const cleanup = scene.mount(this.#ctx, () => {
+      // A run may only finish once, and only while it is still the current
+      // run. Re-entering the same scene starts a new run, so an old done()
+      // from before the jump no longer counts.
+      if (finished || this.#run !== run) return;
       finished = true;
       if (!scene.final) this.#enter(index + 1);
     });
+    // If the scene finished inside mount, the next scene is already running
+    // and owns #cleanup. This run's cleanup was never stored, so run it now:
+    // every run is cleaned up exactly once.
+    if (this.#run === run) this.#cleanup = cleanup;
+    else cleanup?.();
   }
 }

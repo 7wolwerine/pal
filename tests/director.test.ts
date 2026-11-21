@@ -43,15 +43,85 @@ describe('Director', () => {
     expect(() => new Director([], [])).toThrow(/at least one/);
   });
 
-  it('ignores a scene that finishes twice or after it was left', () => {
+  it('ignores a scene that finishes twice', () => {
     const log: Log = [];
     const [a, b, end] = [scene('a'), scene('b'), scene('reveal', true)];
     const director = new Director([a, b, end], log);
     director.start();
-    const staleFinish = a.finish;
-    staleFinish();
-    staleFinish();
+    const finishA = a.finish;
+    finishA();
+    finishA();
     expect(director.currentId).toBe('b');
+    expect(log).toEqual(['mount a', 'cleanup a', 'mount b']);
+  });
+
+  it('ignores a done() from an earlier run of the same scene', () => {
+    const log: Log = [];
+    const [a, b, end] = [scene('a'), scene('b'), scene('reveal', true)];
+    const director = new Director([a, b, end], log);
+    director.start();
+    const oldFinish = a.finish;
+    director.jumpTo('reveal');
+    director.jumpTo('a');
+    oldFinish();
+    expect(director.currentId).toBe('a');
+    // The new run's own done() still works.
+    a.finish();
+    expect(director.currentId).toBe('b');
+  });
+
+  it('cleans up exactly once when a scene finishes inside mount', () => {
+    const log: Log = [];
+    const eager: Scene<Log> = {
+      id: 'eager',
+      mount(l, done) {
+        l.push('mount eager');
+        done();
+        return () => l.push('cleanup eager');
+      },
+    };
+    const [b, end] = [scene('b'), scene('reveal', true)];
+    const director = new Director([eager, b, end], log);
+    director.start();
+    expect(director.currentId).toBe('b');
+    expect(log).toEqual(['mount eager', 'mount b', 'cleanup eager']);
+    // b's cleanup was kept, not overwritten by eager's.
+    director.jumpTo('reveal');
+    expect(log).toEqual(['mount eager', 'mount b', 'cleanup eager', 'cleanup b', 'mount reveal']);
+  });
+
+  it('ignores a done() the old scene calls from its own cleanup', () => {
+    const log: Log = [];
+    const [b, end] = [scene('b'), scene('reveal', true)];
+    const a: Scene<Log> = {
+      id: 'a',
+      mount(l, done) {
+        l.push('mount a');
+        return () => {
+          l.push('cleanup a');
+          done();
+        };
+      },
+    };
+    const director = new Director([a, b, end], log);
+    director.start();
+    director.jumpTo('reveal');
+    expect(director.currentId).toBe('reveal');
+    expect(log).toEqual(['mount a', 'cleanup a', 'mount reveal']);
+  });
+
+  it('finishing the final scene leaves it running until a jump tears it down', () => {
+    const log: Log = [];
+    const [a, end] = [scene('a'), scene('reveal', true)];
+    const director = new Director([a, end], log);
+    director.start();
+    a.finish();
+    end.finish();
+    end.finish();
+    expect(director.currentId).toBe('reveal');
+    expect(log).toEqual(['mount a', 'cleanup a', 'mount reveal']);
+    director.jumpTo('a');
+    expect(log).toEqual(['mount a', 'cleanup a', 'mount reveal', 'cleanup reveal', 'mount a']);
   });
 
   it('stays on the reveal when the reveal reports done', () => {
@@ -66,9 +136,13 @@ describe('Director', () => {
 
   it('can jump to a scene by id and rejects unknown ids', () => {
     const log: Log = [];
-    const director = new Director([scene('a'), scene('reveal', true)], log);
+    const entered: string[] = [];
+    const director = new Director([scene('a'), scene('reveal', true)], log, (s) => entered.push(s.id));
+    director.start();
     director.jumpTo('reveal');
     expect(director.currentId).toBe('reveal');
+    expect(log).toEqual(['mount a', 'cleanup a', 'mount reveal']);
+    expect(entered).toEqual(['a', 'reveal']);
     expect(() => director.jumpTo('nope')).toThrow(/Unknown scene/);
   });
 });
