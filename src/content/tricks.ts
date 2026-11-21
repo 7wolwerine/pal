@@ -141,7 +141,7 @@ export const TRICKS = {
   },
   'real-email': {
     name: 'Skutečný e-mail za odměnu',
-    inGame: 'Za hezký obrázek jsi mi dal skutečnou e-mailovou adresu. Nic jsem neodeslal — ale mohl jsem.',
+    inGame: 'Za hezký obrázek jsi mi dal skutečnou e-mailovou adresu. Poslal jsem na ni jen ten certifikát — ale mohl jsem cokoli.',
     realWorld: 'Soutěže a „ceny zdarma" sbírají platné e-maily. Sledovací pixel v odpovědi pak prozradí, kdy, kde a na čem ji otevřeš.',
   },
   'helpers-high': {

@@ -145,7 +145,7 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   assistantKind: (v) => `Vybral sis, komu budeš věřit: ${v}.`,
   assistantName: (v) => `Dal jsi mi jméno, které ti něco říká: ${v}.`,
   comfortFood: (v) => `Prozradil jsi jídlo z dětství: ${v}. Kontrolní otázka k heslu.`,
-  email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}. A pak jsi mi otevřel svou poštu, dopis už byl napsaný.`,
+  email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}. Teď vím, že ta adresa žije a že na ni přijde, co pošlu.`,
   role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
   pet: (v) => `Zaplatil jsi za ně jménem svého prvního mazlíčka: ${v}. Další kontrolní otázka k heslu.`,
   teacher: (v) => `Zaplatil jsi za ni jménem své první paní učitelky: ${v}. Další kontrolní otázka k heslu.`,
