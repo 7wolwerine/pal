@@ -18,10 +18,13 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
  * The "you won!" screen right before the reveal: an absurd score, confetti,
- * a lovely certificate, and the offer to e-mail it. The page itself sends
- * nothing: it hands a finished letter to the player's own mail program
- * (a mailto: link, opened by their click), wrapped in a little sending
- * theatre. The saved picture carries a hidden, harmless payload in its pixels.
+ * a lovely certificate, and the offer to e-mail it. Once the player types an
+ * address and asks for it, the certificate (address, name, title, score, the
+ * game's public address and, when small enough, the picture) is POSTed once
+ * to PAL's mail server (MAIL_URL). If that fails (offline, the server down),
+ * PAL offers a finished letter for the player's own mail program instead: a
+ * mailto: link they click themselves. The saved picture carries a hidden,
+ * harmless payload in its pixels.
  */
 export const prize: GameScene = {
   id: SCENE,
@@ -105,7 +108,11 @@ export const prize: GameScene = {
         email = value;
         profile.email = value;
         witness.disclose(SCENE, 'real-email', 'email', value);
+        // The certificate was "free": the player paid for it with their address.
+        witness.record({ scene: SCENE, kind: 'paid-with-data', trick: 'data-as-currency', data: { field: 'email' } });
         kindlyObeyed(witness, SCENE);
+        // Once the address is on its way, there is nothing left to decline.
+        decline.disabled = true;
         const letter = {
           email: value,
           name: facts.name,
@@ -124,6 +131,8 @@ export const prize: GameScene = {
         void sendMail(send, href, letter);
       });
       decline.addEventListener('click', () => {
+        // Too late while the certificate is being sent (or once it has been).
+        if (email !== undefined) return;
         witness.record({ scene: SCENE, kind: 'declined-email', data: {} });
         void pal.say(PRIZE.declined);
         offerSave();

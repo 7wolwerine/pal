@@ -1,6 +1,9 @@
 /**
  * The one thing PAL ever really sends: the player's certificate, to the
- * address the player typed, from pal@neotvir.at. A Vercel function; the mail
+ * address the player typed, from pal@neotvir.at. PAL's own Vercel function,
+ * deployed with this repository at https://pal.neotvir.at/api/certificate. The
+ * game itself currently posts to the website's route instead (MAIL_URL,
+ * https://neotvir.at/api/pal/certificate, a copy of this file). The mail
  * goes out through the domain's own mailbox at Forpsi over SMTP, so it costs
  * nothing and passes the domain's existing SPF. The address is used for this
  * one message and is never stored or logged.
@@ -11,11 +14,12 @@
  *   SMTP_HOST   optional, defaults to smtp.forpsi.com
  *   SMTP_PORT   optional, defaults to 465 (TLS)
  *   PAL_FROM    optional, defaults to "Tvůj PAL <SMTP_USER>"
- *   PAL_ORIGIN  optional, the game's address allowed to call this,
- *               defaults to https://7wolwerine.github.io (GitHub Pages)
+ *   PAL_ORIGIN  optional, a comma-separated list of the pages allowed to call
+ *               this, defaults to https://pal.neotvir.at,https://7wolwerine.github.io
  *
- * The same file works as a route of the PERSONAL.EXE site (Next.js): copy it to
- * app/api/pal/certificate/route.ts there and install nodemailer. It exports the
+ * The website's route is this same file as a route of the PERSONAL.EXE site
+ * (Next.js): app/api/pal/certificate/route.ts there, with nodemailer installed.
+ * Keep the two in sync. It exports the
  * web-standard POST and OPTIONS handlers, which both Next.js and plain Vercel
  * functions understand.
  */
@@ -120,19 +124,29 @@ ${c.game ? `<p style="font-size:12px"><a href="${escape(c.game)}">${escape(c.gam
 
 export const runtime = 'nodejs';
 
-const cors = (): Record<string, string> => ({
-  'Access-Control-Allow-Origin': process.env.PAL_ORIGIN ?? 'https://7wolwerine.github.io',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-  Vary: 'Origin',
-});
+/** The pages allowed to call this from a browser. */
+const ORIGINS = (process.env.PAL_ORIGIN ?? 'https://pal.neotvir.at,https://7wolwerine.github.io')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-export function OPTIONS(): Response {
-  return new Response(null, { status: 204, headers: cors() });
+/** Answers the caller's own origin, but only when it is on the list; anyone else gets no Allow-Origin. */
+const cors = (request: Request): Record<string, string> => {
+  const origin = request.headers.get('origin') ?? '';
+  return {
+    ...(ORIGINS.includes(origin) ? { 'Access-Control-Allow-Origin': origin } : {}),
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    Vary: 'Origin',
+  };
+};
+
+export function OPTIONS(request: Request): Response {
+  return new Response(null, { status: 204, headers: cors(request) });
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const headers = cors();
+  const headers = cors(request);
   const reply = (status: number, body: object): Response =>
     new Response(JSON.stringify(body), {
       status,

@@ -581,6 +581,7 @@ function demoWitness(): Witness {
   rec('download', 'uac-declined', undefined, { asked: 0 });
   rec('download', 'ran-download', 'fake-download', { declined: 1 });
   w.disclose('prize', 'real-email', 'email', 'tester@example.cz');
+  rec('prize', 'paid-with-data', 'data-as-currency', { field: 'email' });
   rec('prize', 'mail-sent');
   rec('prize', 'saved-image', 'stego-dropper');
   rec('glass', 'mirror', undefined, { glassFallen: false });

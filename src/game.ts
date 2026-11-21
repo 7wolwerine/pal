@@ -17,7 +17,12 @@ export interface Profile {
   bonded?: boolean;
   /** The type PAL told the player they are; reminded of whenever PAL wants something. */
   role?: RoleId;
-  /** The e-mail address given for the prize. Kept in memory only, never sent. */
+  /**
+   * The e-mail address given for the prize. Not stored in the browser. It is
+   * POSTed once, with the certificate, to PAL's mail server (MAIL_URL in
+   * content/prize.ts); if that fails, it goes into a letter for the player's
+   * own mail program instead. It is also written into the saved picture's hidden text.
+   */
   email?: string;
   /** How the player signed the painting: the text and the hand it was written in. */
   signature?: { text: string; style: string };

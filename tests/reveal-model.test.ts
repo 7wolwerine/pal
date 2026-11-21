@@ -111,6 +111,17 @@ describe('buildReveal', () => {
     expect(model.stats).toEqual({ seconds: 42, clicks: 7, windowButtons: 1, vigilance: 0, bugWarnings: 0 });
   });
 
+  it('counts the e-mail given for the certificate as paying with data, too', () => {
+    const witness = new Witness(() => 0);
+    // What the prize scene records when the player hands over their address.
+    witness.disclose('prize', 'real-email', 'email', 'tester@example.cz');
+    witness.record({ scene: 'prize', kind: 'paid-with-data', trick: 'data-as-currency', data: { field: 'email' } });
+    const model = buildReveal(witness);
+    expect(model.tricks.map((t) => t.id)).toEqual(['real-email', 'data-as-currency']);
+    expect(model.tricks[1]?.name).toBe(TRICKS['data-as-currency'].name);
+    expect(model.disclosed).toEqual([{ label: 'E-mail', value: 'tester@example.cz' }]);
+  });
+
   it('adds a line about this player to the tricks that have one', () => {
     const witness = new Witness(() => 0);
     witness.record({ scene: 'fidgets', kind: 'tidied', trick: 'sunk-cost', data: { round: 2, ms: 900 } });

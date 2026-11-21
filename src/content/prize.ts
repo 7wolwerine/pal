@@ -8,7 +8,6 @@ export const PRIZE = {
   cheer: 'Zvládl jsi to! Jsi prostě neuvěřitelný! <3',
   scoreLabel: 'Skóre',
   rank: (pct: number) => `Lepší než ${pct} % hráčů`,
-  certificateAlt: 'Certifikát',
   askEmail: `${KINDLY} a řekl mi, kam ti mám poslat ten krásný certifikát?`,
   emailPlaceholder: 'jana.novakova@email.cz',
   send: 'Pošli mi ho',
@@ -19,12 +18,10 @@ export const PRIZE = {
   palSentServer: 'Hotovo! Certifikát ti letí do schránky. <3',
   /** When the server could not send it: the letter goes through the player's own mail program instead. */
   mailFallback: 'Neodešlo to. Pošli si ho přes svou poštu:',
-  /** In the status line once the player's own mail program has the letter. */
-  sent: 'Dopis čeká ve tvé poště. ✉',
-  /** PAL, once the mail program is open. */
-  mailWaiting: 'Hotovo! Dopis s certifikátem na tebe čeká ve tvé poště. Už ho jen odešli. <3',
-  /** A real link, for when the mail program did not come up by itself. */
-  mailAgain: 'Otevřít dopis znovu',
+  /** PAL, when the server could not send it: nothing has opened yet, the player has to click the link. */
+  mailWaiting: 'Můj server to nevzal. Klikni na odkaz a dopis se ti otevře v poště. <3',
+  /** The link that opens the finished letter in the player's own mail program. */
+  mailAgain: 'Otevřít dopis',
   badEmail: 'Tohle nevypadá jako e-mail.',
   decline: 'Ne, díky',
   declined: 'Škoda… ostatní si ho nechali poslat. Aspoň si ho ulož.',
@@ -57,7 +54,10 @@ export interface PrizeMail {
 
 /**
  * The certificate as a letter that the player's own mail program opens,
- * addressed to what they typed and ready to send. The page sends nothing.
+ * addressed to what they typed and ready to send. This is the fallback: the
+ * prize scene first POSTs the certificate once to PAL's mail server
+ * (MAIL_URL) and offers this letter only when that fails. Opening the link
+ * sends nothing by itself; the player sends it from their mail program.
  */
 export function prizeMailto(to: string, f: PrizeMail): string {
   const subject = `Tvůj certifikát z PAL: ${f.title}`;
@@ -81,8 +81,17 @@ export function prizeMailto(to: string, f: PrizeMail): string {
   return `mailto:${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
-/** The game's own address for the letter: no query, no fragment. */
+/** Where the game lives in public: the address given when the page itself has none to give. */
+export const PUBLIC_ADDRESS = 'https://pal.neotvir.at/';
+
+/**
+ * The game's own address for the letter: no query, no fragment. Played from a
+ * file (the offline version), the page's address is a local path that holds
+ * the player's user name, so it never leaves the device: the public address
+ * goes to the server and into the letter instead.
+ */
 export function gameAddress(loc: { protocol: string; host: string; pathname: string }): string {
+  if (loc.protocol !== 'http:' && loc.protocol !== 'https:') return PUBLIC_ADDRESS;
   return `${loc.protocol}//${loc.host}${loc.pathname}`;
 }
 

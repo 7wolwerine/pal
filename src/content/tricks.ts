@@ -106,7 +106,7 @@ export const TRICKS = {
   },
   'data-as-currency': {
     name: 'Platíš daty',
-    inGame: 'Body za jednu nevinnou otázku: ulice, kde jsi vyrůstal. Klasická kontrolní otázka k heslu. Zlatá truhla tě pak bohatě odměnila, ať to příště uděláš zas.',
+    inGame: 'Certifikát byl „zdarma“. Zaplatil jsi za něj svou skutečnou e-mailovou adresou a ani sis nevšiml, že platíš.',
     realWorld: 'Kvízy na sítích („Tvoje jméno hvězdy: první mazlíček + ulice"), aplikace „zdarma". Investice, kterou do appky vkládáš, jsi ty a tvoje data.',
   },
   'fake-download': {

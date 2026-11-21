@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { gameAddress, prizeMailto } from '../src/content/prize.ts';
+import { PUBLIC_ADDRESS, gameAddress, prizeMailto } from '../src/content/prize.ts';
 
 const facts = {
   name: 'Tereza',
@@ -11,7 +11,7 @@ const facts = {
 };
 
 describe('the prize letter', () => {
-  it('is a mailto link to the typed address', () => {
+  it('the fallback is a mailto link to the typed address', () => {
     const href = prizeMailto('tereza.novakova@seznam.cz', facts);
     expect(href.startsWith('mailto:tereza.novakova@seznam.cz?subject=')).toBe(true);
   });
@@ -36,6 +36,31 @@ describe('the prize letter', () => {
   });
 
   it('takes the game address without the query or fragment', () => {
-    expect(gameAddress({ protocol: 'https:', host: 'example.test', pathname: '/pal/index.html' })).toBe('https://example.test/pal/index.html');
+    // A whole location, as the scene passes it, so there is a query and a fragment to drop.
+    const loc = {
+      protocol: 'https:',
+      host: 'example.test',
+      pathname: '/pal/index.html',
+      search: '?debug=1',
+      hash: '#prize',
+      href: 'https://example.test/pal/index.html?debug=1#prize',
+    };
+    expect(gameAddress(loc)).toBe('https://example.test/pal/index.html');
+  });
+
+  it('never gives away a local file path: offline, the public address goes instead', () => {
+    const loc = {
+      protocol: 'file:',
+      host: '',
+      pathname: '/C:/Users/Tereza/Downloads/pal/pal.html',
+      search: '',
+      hash: '',
+      href: 'file:///C:/Users/Tereza/Downloads/pal/pal.html',
+    };
+    expect(gameAddress(loc)).toBe(PUBLIC_ADDRESS);
+    expect(PUBLIC_ADDRESS).toBe('https://pal.neotvir.at/');
+    const body = new URL(prizeMailto('a@b.cz', { ...facts, url: gameAddress(loc) })).searchParams.get('body') ?? '';
+    expect(body).not.toContain('Users');
+    expect(body).toContain('Hra: https://pal.neotvir.at/');
   });
 });
