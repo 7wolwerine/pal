@@ -202,6 +202,9 @@ const ONCE: Record<string, string> = {
   'plea-refused': 'Řekl jsi mi ne. Omluvil jsem se přesně tak, aby tě to zabolelo.',
 };
 
+/** Every kind that has a line of its own on the timeline; the test walks them all. */
+export const ONCE_KINDS: readonly string[] = Object.keys(ONCE);
+
 /**
  * A different first line when the event's data tells a different story; when
  * a variant returns undefined, the plain ONCE line is used.

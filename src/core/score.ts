@@ -3,7 +3,7 @@
  * plus a bonus for every trick the player went along with, and how they
  * compare with "other players" — more tricks, higher rank, never above 97 %.
  */
-const POINTS_PER_TRICK = 75;
+export const POINTS_PER_TRICK = 75;
 export const RANK_FLOOR = 48;
 export const RANK_CEILING = 97;
 

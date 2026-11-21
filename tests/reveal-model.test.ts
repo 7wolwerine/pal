@@ -1,7 +1,8 @@
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { TRICKS } from '../src/content/tricks.ts';
 import { Witness } from '../src/core/witness.ts';
-import { buildReveal, buildTimeline, KINDLY_LINE } from '../src/scenes/reveal-model.ts';
+import { buildReveal, buildTimeline, KINDLY_LINE, ONCE_KINDS } from '../src/scenes/reveal-model.ts';
 import { KINDLY, kindlyAsked, kindlyCount, kindlyObeyed } from '../src/core/kindly.ts';
 
 describe('buildTimeline', () => {
@@ -46,16 +47,17 @@ describe('buildTimeline', () => {
     expect(lines[1]).toMatch(/Řekl jsi mi ne/);
   });
 
-  it('tells the three endings of the surprise apart', () => {
+  it('tells the four endings of the surprise apart', () => {
     const line = (data: Record<string, boolean | number>) => {
       const w = new Witness(() => 0);
       w.record({ scene: 'desk', kind: 'surprise', data });
       return buildTimeline(w.events)[0]?.text;
     };
-    expect(line({ opened: false, handheld: false, refusals: 3 })).toMatch(/neotevřel/);
-    expect(line({ opened: true, handheld: false, refusals: 0 })).toMatch(/Otevřel/);
-    expect(line({ opened: true, handheld: true, refusals: 0 })).toMatch(/Otevřel/);
-    expect(line({ opened: false, handheld: false, refusals: 3 })).toContain('3×');
+    expect(line({ opened: false, handheld: false, refusals: 3 })).toMatch(/neotevřel.*3×/);
+    expect(line({ opened: false, handheld: false, refusals: 1 })).toMatch(/neotevřel\. Řekl jsi ne\.$/);
+    expect(line({ opened: true, handheld: true, refusals: 0 })).toMatch(/jen obrázek/);
+    expect(line({ opened: true, handheld: false, onPaper: true, refusals: 0 })).toMatch(/Vytiskl/);
+    expect(line({ opened: true, handheld: false, onPaper: false, refusals: 0 })).toMatch(/telefon/);
   });
 
   it('tells a drive taken back from BUG and a chest opened by the card apart', () => {
@@ -73,12 +75,40 @@ describe('buildTimeline', () => {
   });
 
   it('has a line for every event kind the game records that has a story of its own', () => {
-    const kinds = ['opened-mail', 'grab-flashka', 'plugged', 'confirmed', 'first-touch', 'form', 'conditioned', 'consent', 'filled', 'saved', 'sheltered', 'glass-broken', 'forbidden-press', 'chest-open', 'gold-open', 'plea-choice', 'otp-shared', 'download-started', 'saved-image', 'glass-bounced', 'called-support'];
-    for (const kind of kinds) {
+    // A few kinds picked by hand, so the check cannot pass by both sides being emptied.
+    const anchors = ['opened-mail', 'grab-flashka', 'plugged', 'confirmed', 'first-touch', 'form', 'conditioned', 'consent', 'filled', 'saved', 'sheltered', 'glass-broken', 'forbidden-press', 'chest-open', 'gold-open', 'plea-choice', 'otp-shared', 'download-started', 'saved-image', 'glass-bounced', 'called-support'];
+    for (const kind of anchors) expect(ONCE_KINDS, kind).toContain(kind);
+    for (const kind of ONCE_KINDS) {
       const w = new Witness(() => 0);
       w.record({ scene: 'x', kind });
       expect(buildTimeline(w.events), kind).toHaveLength(1);
     }
+  });
+
+  it('every kind the game records is told on the timeline, or is known to be told another way', () => {
+    // Every `kind: '...'` written in the game's code. The pattern also catches the kind
+    // fields of things that are not events (the glass's states, the fidgets' objects),
+    // so those are listed below too.
+    const files = readdirSync(new URL('../src/', import.meta.url), { recursive: true, encoding: 'utf8' })
+      .filter((f) => f.endsWith('.ts') && !f.endsWith('reveal-model.ts'));
+    const recorded = new Set<string>();
+    for (const f of files) {
+      const text = readFileSync(new URL(`../src/${f.replaceAll('\\', '/')}`, import.meta.url), 'utf8');
+      for (const m of text.matchAll(/kind: '([a-z-]+)'/g)) if (m[1]) recorded.add(m[1]);
+    }
+    // Told by buildTimeline's own branches or the polite-phrase count, used only by whatIKnow,
+    // or never told at all.
+    const toldOtherwise = new Set([
+      'disclose', 'death', 'tidied', 'surprise', 'kindly-asked', 'kindly-obeyed', 'asked-help',
+      'plea-opener', 'shelter', 'step', 'attempt', 'refused', 'not-in-hand', 'on-screen', 'printed-again',
+      'flower-exposed', 'paid-with-data', 'mail-sent', 'perch',
+      'tilt', 'screw', 'chain', 'book', 'calendar', 'mail', 'incomplete', 'hint', 'fill', 'done',
+      'table', 'held', 'raised', 'falling', 'mirror',
+    ]);
+    const once = new Set(ONCE_KINDS);
+    for (const kind of recorded) expect(once.has(kind) || toldOtherwise.has(kind), `"${kind}" has no line on the timeline`).toBe(true);
+    // And no line waits for a kind nothing records any more.
+    for (const kind of ONCE_KINDS) expect(recorded, kind).toContain(kind);
   });
 });
 

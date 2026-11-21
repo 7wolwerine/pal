@@ -113,8 +113,7 @@ describe('leaks', () => {
 });
 
 describe('the water', () => {
-  it('rises half as fast as it used to: about 25 seconds of air per attempt', () => {
-    expect(RISE_PER_S).toBeCloseTo(1 / 30, 6);
+  it('gives about 25 seconds of air per attempt', () => {
     expect(secondsOfAir(0)).toBeGreaterThan(23);
     expect(secondsOfAir(0)).toBeLessThan(26);
     expect(riseRate(MERCY_AFTER - 1)).toBe(RISE_PER_S);

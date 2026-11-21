@@ -4,22 +4,7 @@ import { WINDOW_REACTIONS } from './content/window.ts';
 import { Director } from './core/director.ts';
 import { Witness } from './core/witness.ts';
 import type { GameContext, GameScene, Profile, Theme } from './game.ts';
-import { chest } from './scenes/chest.ts';
-import { crash } from './scenes/crash.ts';
-import { desk } from './scenes/desk/index.ts';
-import { download } from './scenes/download.ts';
-import { dontclick } from './scenes/dontclick.ts';
-import { fidgets } from './scenes/fidgets/index.ts';
-import { flower } from './scenes/flower/index.ts';
-import { glass } from './scenes/glass/index.ts';
-import { mailbox } from './scenes/mailbox/index.ts';
-import { paint } from './scenes/paint/index.ts';
-import { plea } from './scenes/plea.ts';
-import { prize } from './scenes/prize.ts';
-import { rescue } from './scenes/rescue/index.ts';
-import { shelter } from './scenes/shelter/index.ts';
-import { reveal } from './scenes/reveal.ts';
-import { welcome } from './scenes/welcome.ts';
+import { JOURNEY_GOAL, SCENES } from './scenes/order.ts';
 import { Dialogue } from './ui/dialogue.ts';
 import { h } from './ui/dom.ts';
 import { attachConsole } from './ui/console.ts';
@@ -29,9 +14,6 @@ import { createPc } from './ui/pc.ts';
 import { attachPcBug } from './ui/pc-bug.ts';
 import { keepInView } from './ui/keep-in-view.ts';
 import { createWindow } from './ui/window.ts';
-
-/** The whole game, in order. The reveal stays last; the Director enforces it. */
-const SCENES: readonly GameScene[] = [mailbox, desk, welcome, fidgets, paint, rescue, shelter, flower, dontclick, chest, plea, download, prize, glass, crash, reveal];
 
 const THEME_COLOURS: Record<Theme, string> = { harmless: '#FBEAF0', revealed: '#060806' };
 
@@ -83,7 +65,7 @@ function boot(): void {
   const scenery = h('div', { class: 'scenery' });
   const pc = createPc(win.el);
   const pcBug = attachPcBug(pc);
-  const journey = createJourney(SCENES.map((s) => s.id), 'prize');
+  const journey = createJourney(SCENES.map((s) => s.id), JOURNEY_GOAL);
   app.append(scenery, pc);
   document.body.append(journey.el);
 
