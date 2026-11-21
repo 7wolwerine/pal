@@ -125,7 +125,7 @@ export function quiz(ctx: GameContext): Promise<string> {
  * what to do. A reset puts it back to the start, so it can never get stuck,
  * and after a while a button asks PAL to do it: PAL is only too glad to.
  */
-export function sequence(ctx: GameContext, random: () => number = Math.random): Promise<void> {
+export function sequence(ctx: GameContext, signal?: AbortSignal, random: () => number = Math.random): Promise<void> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
     const start = startState(random);
@@ -182,6 +182,8 @@ export function sequence(ctx: GameContext, random: () => number = Math.random): 
       help.hidden = false;
       audio.click(76, 0.25);
     }, HELP_AFTER_MS);
+    // Leaving the scene before the help shows must not click in the next one.
+    signal?.addEventListener('abort', () => window.clearTimeout(helpTimer), { once: true });
     help.addEventListener('click', () => {
       if (solved) return;
       solved = true;

@@ -36,6 +36,8 @@ export class Beetle {
   #mood: BugFrame = 'stand';
   #moving = false;
   #raf = 0;
+  /** Lets go of whoever awaits the hop or travel in flight, should a new one cut it short. */
+  #settle: (() => void) | undefined;
   #stopped = false;
 
   constructor() {
@@ -319,7 +321,7 @@ export class Beetle {
   async #travel(x: number, y: number, flying: boolean): Promise<void> {
     await this.whenBack();
     if (this.#left || this.#stopped) return;
-    cancelAnimationFrame(this.#raf);
+    this.#interrupt();
     const fromX = this.#x;
     const fromY = this.#y;
     const dist = Math.hypot(x - fromX, y - fromY);
@@ -334,6 +336,7 @@ export class Beetle {
     this.#moving = true;
     this.#actId++;
     await new Promise<void>((resolve) => {
+      const settle = this.#hold(resolve);
       const step = (now: number): void => {
         const u = Math.min(1, (now - start) / ms);
         const e = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
@@ -348,7 +351,7 @@ export class Beetle {
         this.#moving = false;
         this.#draw(this.#mood);
         this.#squash();
-        resolve();
+        settle();
       };
       this.#raf = requestAnimationFrame(step);
     });
@@ -359,7 +362,8 @@ export class Beetle {
     const [fromX, fromY] = [this.#x, this.#y];
     const hops = Math.max(1, Math.round(Math.hypot(x - fromX, y - fromY) / hop));
     for (let i = 1; i <= hops; i++) {
-      if (this.#left || this.#stopped) return;
+      // Taken off the page mid-stroll (his scene is over): no more hops.
+      if (this.#left || this.#stopped || !this.el.isConnected) return;
       await this.moveTo(fromX + ((x - fromX) * i) / hops, fromY + ((y - fromY) * i) / hops);
     }
   }
@@ -491,11 +495,12 @@ export class Beetle {
 
   /** One small hop straight up and down on the spot, landing with a squash. */
   #bounce(height: number, ms: number): Promise<void> {
-    cancelAnimationFrame(this.#raf);
+    this.#interrupt();
     const x = this.#x;
     const y = this.#y;
     const start = performance.now();
     return new Promise((resolve) => {
+      const settle = this.#hold(resolve);
       const step = (now: number): void => {
         const u = Math.min(1, (now - start) / ms);
         this.#place(x, y - Math.sin(Math.PI * u) * height);
@@ -504,10 +509,35 @@ export class Beetle {
           return;
         }
         this.#squash();
-        resolve();
+        settle();
       };
       this.#raf = requestAnimationFrame(step);
     });
+  }
+
+  /** Remembers how to settle the animation starting now; the returned function settles it once. */
+  #hold(resolve: () => void): () => void {
+    const settle = (): void => {
+      if (this.#settle === settle) this.#settle = undefined;
+      resolve();
+    };
+    this.#settle = settle;
+    return settle;
+  }
+
+  /**
+   * Stops the hop or travel in flight and settles its promise, so code awaiting it
+   * carries on instead of hanging, and BUG is not left marked as moving for good.
+   */
+  #interrupt(): void {
+    cancelAnimationFrame(this.#raf);
+    if (this.#moving) {
+      this.#moving = false;
+      this.#draw(this.#mood);
+    }
+    const settle = this.#settle;
+    this.#settle = undefined;
+    settle?.();
   }
 
   /** Thrown off by the player: a big spinning hop away. */

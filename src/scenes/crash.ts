@@ -23,6 +23,8 @@ export const crash: GameScene = {
     let alive = true;
     let raf = 0;
     let screen: HTMLElement | null = null;
+    // The glyph rain sits on the computer layer, which outlives the scene, so the cleanup removes it.
+    let rain: HTMLCanvasElement | null = null;
 
     const board = h('div', { class: 'crash' });
     const beetle = new Beetle();
@@ -107,6 +109,7 @@ export const crash: GameScene = {
       canvas.height = Math.max(1, Math.round(host.height + 60));
       canvas.style.zIndex = '20';
       layer.append(canvas);
+      rain = canvas;
       const g = canvas.getContext('2d');
       const sprite = bugImage('stand').getContext('2d')?.getImageData(0, 0, BUG_SIZE, BUG_SIZE);
       beetle.el.classList.add('bug--gone');
@@ -335,6 +338,9 @@ export const crash: GameScene = {
       beetle.stop();
       beetle.el.remove();
       screen?.remove();
+      rain?.remove();
+      // Leaving mid-deflate would otherwise keep PAL flat for the rest of the game.
+      pal.el.querySelector('.pal__avatar')?.classList.remove('pal__avatar--deflate', 'pal__avatar--pop');
       undo();
       ctx.window.el.classList.remove('win--crash');
       pal.setMood('neutral');

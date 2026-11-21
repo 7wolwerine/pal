@@ -40,9 +40,10 @@ interface Vignette {
  * The player's own game, played back in the dark: every scene they went
  * through, five seconds each, as a grainy green recording with torn frames,
  * a timecode, PAL's dark face flickering through, and one cold sentence
- * about what they did. Resolves when it ends or is skipped.
+ * about what they did. Resolves when it ends or is skipped, or at once when
+ * `signal` aborts (the scene that showed it is gone).
  */
-export function playNightmare(events: readonly WitnessEvent[], profile: Profile): Promise<void> {
+export function playNightmare(events: readonly WitnessEvent[], profile: Profile, signal?: AbortSignal): Promise<void> {
   const facts = factsOf(events, profile);
   const order: NightScene[] = [];
   for (const e of events) {
@@ -92,6 +93,15 @@ export function playNightmare(events: readonly WitnessEvent[], profile: Profile)
       }, 500);
     };
     skip.addEventListener('click', finish);
+    // The scene is gone: the tape stops and the dark goes with it, without the fade.
+    signal?.addEventListener(
+      'abort',
+      () => {
+        finish();
+        el.remove();
+      },
+      { once: true },
+    );
 
     async function typeCaption(text: string): Promise<void> {
       caption.textContent = '';

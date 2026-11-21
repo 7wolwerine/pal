@@ -98,6 +98,7 @@ export class Dialogue {
   /** Blinks a cursor a few times, then types the line. For the very first greeting. */
   async blinkThenSay(text: string, blinks = 2): Promise<void> {
     const line = ++this.#line;
+    this.#supersede();
     this.#skip = false;
     this.#spoken.textContent = text;
     if (prefersReducedMotion()) {
@@ -145,6 +146,7 @@ export class Dialogue {
   /** Types a line into the bubble and resolves when it is fully shown. */
   async say(text: string, msPerChar = 26): Promise<void> {
     const line = ++this.#line;
+    this.#supersede();
     // A long line comes as a few bubbles, one after another; screen readers get it whole.
     // The bubble floating over the window has room for two lines only.
     const floating = this.el.classList.contains('pal--float');
@@ -169,6 +171,16 @@ export class Dialogue {
   }
 
   #next: (() => void) | undefined;
+
+  /**
+   * A new line takes over: the old line's wait between bubbles ends (so the next click
+   * goes to the new line, and its timer cannot strip the new line's cue later) and its
+   * "more coming" cue goes. Called after the line counter moves on, so the old line stops.
+   */
+  #supersede(): void {
+    this.#next?.();
+    this.#bubble.classList.remove('pal__bubble--more');
+  }
 
   /** Time to read a bubble before the next one of the same line; a click cuts it short. */
   #pause(ms: number): Promise<void> {
@@ -217,6 +229,7 @@ export class Dialogue {
   /** Scrambles whatever is in the bubble, then wipes it. */
   async glitch(durationMs = 520): Promise<void> {
     const line = ++this.#line;
+    this.#supersede();
     if (prefersReducedMotion()) {
       this.#typed.textContent = '';
       return;

@@ -26,6 +26,8 @@ export const welcome: Scene<GameContext> = {
   id: SCENE,
   mount(ctx, done) {
     let alive = true;
+    // BUG's visit walks the monitor, which outlives the scene: leaving the scene sends him off.
+    const cameo = new AbortController();
     const { pal, profile, stage, witness } = ctx;
 
     const step = (n: number) =>
@@ -49,7 +51,7 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
       let named = false;
-      void bugWarns(ctx, ctx.window.el, 'welcome', { side: 'right' }).then(() => {
+      void bugWarns(ctx, ctx.window.el, 'welcome', { side: 'right', signal: cameo.signal }).then(() => {
         if (alive && !named) void pal.say(PAL_DISMISSES.welcome);
       });
       const name = await askText(stage, {
@@ -139,6 +141,7 @@ export const welcome: Scene<GameContext> = {
     });
     return () => {
       alive = false;
+      cameo.abort();
       stopAnomaly();
       stage.replaceChildren();
     };

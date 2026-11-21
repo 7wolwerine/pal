@@ -19,6 +19,8 @@ export const download: GameScene = {
   mount(ctx, done) {
     const { pal, profile, stage, witness } = ctx;
     let alive = true;
+    // BUG's visit walks the monitor, which outlives the scene: leaving the scene sends him off.
+    const cameo = new AbortController();
     const shownAt = performance.now();
     const motion = !prefersReducedMotion();
 
@@ -72,7 +74,7 @@ export const download: GameScene = {
       if (!(await fill(dl.bar, dl.label, DOWNLOAD.progress, DOWNLOAD_MS))) return;
       dl.label.textContent = DOWNLOAD.downloaded;
       audio.click(84, 0.3);
-      void bugWarns(ctx, ctx.window.el, 'download', { side: 'left', mood: 'angry' });
+      void bugWarns(ctx, ctx.window.el, 'download', { side: 'left', mood: 'angry', signal: cameo.signal });
       const run = h('button', { class: 'btn', text: DOWNLOAD.run, attrs: { type: 'button' } });
       after.append(run);
       run.focus();
@@ -130,6 +132,7 @@ export const download: GameScene = {
 
     return () => {
       alive = false;
+      cameo.abort();
       ctx.window.el.querySelector('.uac')?.remove();
       stage.replaceChildren();
     };

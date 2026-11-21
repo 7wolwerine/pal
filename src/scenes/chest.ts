@@ -502,6 +502,8 @@ export const chest: GameScene = {
     const motion = !prefersReducedMotion();
     const model = new ChestModel();
     let alive = true;
+    // BUG's visit walks the monitor, which outlives the scene: leaving the scene sends him off.
+    const cameo = new AbortController();
     let busy = false;
     let shown = 0;
     let shimmer = 0;
@@ -610,7 +612,7 @@ export const chest: GameScene = {
       kindlyAsked(witness, SCENE);
       if (!alive) return;
       askCard();
-      void bugWarns(ctx, ctx.window.el, 'chest', { side: 'right', mood: 'angry' }).then(() => {
+      void bugWarns(ctx, ctx.window.el, 'chest', { side: 'right', mood: 'angry', signal: cameo.signal }).then(() => {
         if (alive && !model.unlockedBy) void pal.say(PAL_DISMISSES.chest);
       });
     }
@@ -747,7 +749,9 @@ export const chest: GameScene = {
       cancelAnimationFrame(shimmer);
       goldArt.draw(2);
       audio.treasure();
-      window.setTimeout(() => audio.treasure(), 300);
+      window.setTimeout(() => {
+        if (alive) audio.treasure();
+      }, 300);
       if (pick === 'gold') {
         goldLabel.textContent = CHEST.paidGold(got);
         burst(gold, 24);
@@ -787,6 +791,7 @@ export const chest: GameScene = {
 
     return () => {
       alive = false;
+      cameo.abort();
       stepAside(ctx, false);
       cancelAnimationFrame(shimmer);
       document.querySelector('.treasure')?.remove();

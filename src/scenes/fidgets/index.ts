@@ -87,7 +87,7 @@ export const fidgets: Scene<GameContext> = {
       }
       await pal.say(FIDGETS.sequenceIntro);
       if (signal.aborted) return;
-      await sequence(ctx);
+      await sequence(ctx, signal);
       if (signal.aborted) return;
 
       clear();

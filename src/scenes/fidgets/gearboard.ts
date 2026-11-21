@@ -173,7 +173,11 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
     const size = cog.spec.teeth;
     audio.snap(90 - size);
     const caught = after.filter(Boolean).length - before.filter(Boolean).length;
-    if (caught > 0) window.setTimeout(() => audio.click(70 + caught * 3, 0.3), 110);
+    if (caught > 0) {
+      window.setTimeout(() => {
+        if (el.isConnected) audio.click(70 + caught * 3, 0.3);
+      }, 110);
+    }
     const all = cogs.every((c) => c.placed);
     if (all) el.classList.add('gears--done');
     onPlace(cog.spec.id, all);

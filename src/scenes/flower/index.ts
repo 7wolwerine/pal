@@ -109,9 +109,15 @@ export const flower: GameScene = {
       roused = true;
       // The glass gives: a burst, and the shards tinkling down onto the sill after it.
       audio.shatter();
-      window.setTimeout(() => audio.crunch(), 180);
-      window.setTimeout(() => audio.crunch(), 420);
-      window.setTimeout(() => audio.shatter(), 650);
+      window.setTimeout(() => {
+        if (alive) audio.crunch();
+      }, 180);
+      window.setTimeout(() => {
+        if (alive) audio.crunch();
+      }, 420);
+      window.setTimeout(() => {
+        if (alive) audio.shatter();
+      }, 650);
       shatterAt = now;
       dome.hidden = true;
       leave.hidden = true;

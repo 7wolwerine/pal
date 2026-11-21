@@ -107,9 +107,13 @@ export const reveal: Scene<GameContext> = {
     foldTop.addEventListener('click', () => setFolded(foldTop.getAttribute('aria-expanded') === 'true', true));
     foldEnd.addEventListener('click', () => setFolded(true, true));
 
+    // Leaving the reveal mid-tape must not leave the dark over the next scene.
+    const night = new AbortController();
+    cleanups.push(() => night.abort());
+
     async function play(): Promise<void> {
       // First the whole game again, in the dark, the way the player played it.
-      if (!(import.meta.env.DEV && params.has('demo'))) await playNightmare(witness.events, ctx.profile);
+      if (!(import.meta.env.DEV && params.has('demo'))) await playNightmare(witness.events, ctx.profile, night.signal);
       if (!alive) return;
       const fast = prefersReducedMotion();
       let shown = 0;

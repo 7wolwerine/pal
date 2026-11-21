@@ -49,6 +49,11 @@ export interface CameoOptions {
   readonly ms?: number;
   /** Walk along this line instead of the host's bottom edge. */
   readonly track?: () => Track;
+  /**
+   * The scene he walked into is over. On the computer he walks the monitor, which
+   * outlives every scene, so without this he would carry on into the next one.
+   */
+  readonly signal?: AbortSignal;
 }
 
 type VisitListener = (visiting: boolean) => void;
@@ -93,7 +98,10 @@ async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}
   // Along the monitor he comes and goes at its corners; in a scene, from beyond its sides.
   const off = (left: boolean): number => (opts.track ? base() + (left ? 0 : width() - BUG_PX) : left ? -BUG_PX - 10 : width() + 10);
   /** Still on stage: not flown off, and the scene he walked into is still there. */
-  const here = (): boolean => !beetle.left && beetle.el.isConnected;
+  const here = (): boolean => !opts.signal?.aborted && !beetle.left && beetle.el.isConnected;
+  // The scene is gone: he vanishes at once, and the visit ends as soon as his current hop lands.
+  const vanish = (): void => beetle.el.remove();
+  opts.signal?.addEventListener('abort', vanish, { once: true });
   /** Waits, but not a moment longer than he is on stage. */
   const hold = async (ms: number): Promise<void> => {
     const until = performance.now() + ms;
@@ -104,7 +112,7 @@ async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}
   try {
     // Whoever else was showing him gets a moment to clear the stage.
     await sleep(240);
-    if (!host.isConnected) return;
+    if (!host.isConnected || opts.signal?.aborted) return;
     // He stops a little past the middle, seen from where he came in: right where things are.
     const reach = 0.4 + Math.random() * 0.22;
     const stopAt = (): number => {
@@ -150,6 +158,7 @@ async function bugCameo(host: HTMLElement, line: string, opts: CameoOptions = {}
       await sleep(motion ? 700 : 0);
     }
   } finally {
+    opts.signal?.removeEventListener('abort', vanish);
     beetle.stop();
     beetle.el.remove();
     announce(-1);

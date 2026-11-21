@@ -31,6 +31,8 @@ export const prize: GameScene = {
   mount(ctx, done) {
     const { pal, profile, stage, witness } = ctx;
     let alive = true;
+    // BUG's visit walks the monitor, which outlives the scene: leaving the scene sends him off.
+    const cameo = new AbortController();
     let email: string | undefined;
 
     const kindLabel = ASSISTANT_KINDS.find((k) => k.id === profile.assistantLook)?.label;
@@ -67,7 +69,7 @@ export const prize: GameScene = {
       kindlyAsked(witness, SCENE);
       if (!alive) return;
       askEmail();
-      void bugWarns(ctx, ctx.window.el, 'prize', { side: 'right', mood: 'angry' }).then(() => {
+      void bugWarns(ctx, ctx.window.el, 'prize', { side: 'right', mood: 'angry', signal: cameo.signal }).then(() => {
         if (alive && email === undefined) void pal.say(PAL_DISMISSES.prize);
       });
     }
@@ -233,6 +235,7 @@ export const prize: GameScene = {
     void run();
     return () => {
       alive = false;
+      cameo.abort();
       stepAside(ctx, false);
       stage.replaceChildren();
     };

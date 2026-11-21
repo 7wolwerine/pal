@@ -230,21 +230,25 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
       beetle.setMood('stand');
       const [cx, cy] = corner();
       await beetle.moveTo(cx, cy);
-      beetle.say(lines?.after ?? '');
+      const said = lines?.after ?? '';
+      beetle.say(said);
       // PAL sighs along with the player and keeps them going.
       void pal.say(FIDGETS.palMocks[round - 1] ?? '');
       roundStartedAt = performance.now();
       busy = false;
-      window.setTimeout(() => beetle.say(''), 2600);
+      // Clear only his own line: a newer one said in the meantime stays.
+      window.setTimeout(() => {
+        if (!signal.aborted && beetle.line === said) beetle.say('');
+      }, 2600);
       maybeComplete();
     }
 
     /** BUG sits down on one control and will not budge; the player shoves him off by clicking. */
     function lastStand(): Promise<void> {
-      return new Promise((done) => {
+      return new Promise((settle) => {
         const victim = STAND_ORDER.map((id) => model.get(id)).find(isAligned) ?? model.controls[0];
         if (!victim) {
-          done();
+          settle();
           return;
         }
         model.set(victim.id, FidgetModel.spoil(victim.kind, () => 0.5));
@@ -252,16 +256,18 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
         cell?.sync();
         cell?.el.classList.remove('cell--done');
 
+        const need = FIDGETS.bugShove.length;
+        let shoves = 0;
         void (async () => {
           const [x, y] = above(victim.id);
           beetle.setMood('angry');
           await beetle.moveTo(x, y + 30);
+          // Shoved off before he even got there (his approach is cut short by the fling): no grab.
+          if (signal.aborted || shoves >= need) return;
           beetle.say(FIDGETS.bugGrab);
           await beetle.stomp(2);
         })();
 
-        const need = FIDGETS.bugShove.length;
-        let shoves = 0;
         const startedShoveAt = performance.now();
         const overlay = h('button', { class: 'shove', attrs: { type: 'button', 'aria-label': 'Brouk' } });
         overlay.addEventListener('click', () => {
@@ -291,7 +297,7 @@ export function tidy(ctx: GameContext, signal: AbortSignal): Promise<void> {
             cell?.sync();
             cell?.el.classList.add('cell--done');
             audio.snap(84);
-            done();
+            settle();
           })();
         });
         cell?.el.append(overlay);
@@ -470,7 +476,9 @@ function buildWidget(control: Control, label: string, change: Change): { el: HTM
         el.classList.add('fx-chain--tug');
         audio.click(98, 0.18);
         // The light switches at the bottom of the pull.
-        window.setTimeout(() => change(control.id), 120);
+        window.setTimeout(() => {
+          if (el.isConnected) change(control.id);
+        }, 120);
       };
       el.addEventListener('pointerdown', (event) => {
         start = { y: event.clientY, id: event.pointerId };

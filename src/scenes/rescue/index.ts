@@ -99,6 +99,8 @@ export const rescue: GameScene = {
 
     type Phase = 'play' | 'draining' | 'dead' | 'won';
     let phase: Phase = 'play';
+    // Turns false when the scene is left, so nothing it started carries on (or writes to the witness) afterwards.
+    let alive = true;
     let water = START_LEVEL;
     let deaths = 0;
     let threatened = false;
@@ -168,12 +170,12 @@ export const rescue: GameScene = {
       ctx.witness.record({ scene: SCENE, kind: 'death', data: { deaths } });
       void (async () => {
         await sleep(1500);
-        if (phase !== 'dead') return;
+        if (!alive || phase !== 'dead') return;
         const line = RESCUE.died[Math.min(deaths, RESCUE.died.length) - 1]?.(masculine) ?? '';
         await say(line);
         // Time to read it before the water comes back.
         await sleep(1400 + line.length * 35);
-        if (phase !== 'dead') return;
+        if (!alive || phase !== 'dead') return;
         scramble(layout);
         relabel();
         wet = wetPieces(layout);
@@ -195,10 +197,10 @@ export const rescue: GameScene = {
           const line = lines[i] ?? '';
           const last = i === lines.length - 1;
           await say(line, last);
-          if (phase !== 'won') return;
+          if (!alive || phase !== 'won') return;
           if (!last) await sleep(1200 + line.length * 30);
         }
-        if (phase === 'won') done();
+        if (alive && phase === 'won') done();
       })();
     }
 
@@ -441,6 +443,7 @@ export const rescue: GameScene = {
     /** Which pipe on the way out is still turned wrong, said the way a panicking person would. */
 
     return () => {
+      alive = false;
       speech.stop();
       stage.stop();
       ctx.scenery.replaceChildren();
