@@ -12,7 +12,7 @@ const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self'",
-  "img-src 'self' data: blob:",
+  "img-src 'self' data:",
   "font-src 'self'",
   // The game's own files (the music loops), and one exception: PAL's mail server, for the certificate the player asks for.
   "connect-src 'self' https://neotvir.at",

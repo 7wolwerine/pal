@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import QRCode from 'qrcode';
-import { PATT_SIZE, downsample, encodePatt, frameMarker, qrToRaster, rotateCcw, type Raster } from '../src/ar/marker.ts';
+import { PATT_SIZE, downsample, encodePatt, qrToRaster, rotateCcw, type Raster } from '../src/ar/marker.ts';
 
 function solid(size: number, grey: number): Raster {
   const data = new Uint8ClampedArray(size * size * 4).fill(grey);
@@ -36,25 +36,6 @@ describe('qrToRaster', () => {
     expect(pixel(r, 4, 4)).toEqual([0, 0, 0]);
     expect(pixel(r, 8, 4)).toEqual([255, 255, 255]);
     expect(pixel(r, 11, 11)).toEqual([0, 0, 0]);
-  });
-});
-
-describe('frameMarker', () => {
-  it('centres the inner image in a black border on a white margin', () => {
-    const marker = frameMarker(solid(60, 200), 0.75, 0.1);
-    // border = 80, margin = 8, inner offset = 8 + 10
-    expect(marker.size).toBe(96);
-    expect(pixel(marker, 0, 0)).toEqual([255, 255, 255]);
-    expect(pixel(marker, 8, 8)).toEqual([0, 0, 0]);
-    expect(pixel(marker, 17, 17)).toEqual([0, 0, 0]);
-    expect(pixel(marker, 18, 18)).toEqual([200, 200, 200]);
-    expect(pixel(marker, 77, 77)).toEqual([200, 200, 200]);
-    expect(pixel(marker, 78, 78)).toEqual([0, 0, 0]);
-    expect(pixel(marker, 88, 88)).toEqual([255, 255, 255]);
-  });
-
-  it('rejects an impossible ratio', () => {
-    expect(() => frameMarker(solid(8, 0), 1)).toThrow();
   });
 });
 

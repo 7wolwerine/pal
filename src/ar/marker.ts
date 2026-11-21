@@ -63,25 +63,6 @@ export function qrToRaster(modules: QrModules, pixelsPerModule: number, quietMod
   return out;
 }
 
-/**
- * Puts the inner image inside the thick black border AR.js looks for, on a
- * white margin. `patternRatio` is inner width divided by border width and has
- * to match the `patternRatio` given to AR.js on the page.
- */
-export function frameMarker(inner: Raster, patternRatio: number, marginRatio = 0.12): Raster {
-  if (patternRatio <= 0 || patternRatio >= 1) throw new Error('patternRatio must be between 0 and 1.');
-  const border = Math.round(inner.size / patternRatio);
-  const margin = Math.round(border * marginRatio);
-  const out = blank(border + margin * 2, 255);
-  fillRect(out, margin, margin, border, border, 0);
-  const offset = margin + Math.round((border - inner.size) / 2);
-  for (let y = 0; y < inner.size; y++) {
-    const from = y * inner.size * 4;
-    out.data.set(inner.data.subarray(from, from + inner.size * 4), ((y + offset) * out.size + offset) * 4);
-  }
-  return out;
-}
-
 /** Shrinks a raster by averaging the source pixels that fall into each target pixel. */
 export function downsample(source: Raster, size: number): Raster {
   const out = blank(size, 0);

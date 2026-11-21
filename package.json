@@ -4,16 +4,21 @@
   "private": true,
   "type": "module",
   "description": "PAL (Play and Learn): a harmless browser game about social engineering.",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite",
+    "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build && node tools/single-file.mjs dist",
     "preview": "vite preview",
     "test": "vitest run",
-    "marker": "node tools/make-marker.ts",
+    "check": "npm run typecheck && npm test && vite build && npm run single",
+    "marker": "node tools/make-framed-marker.ts",
     "single": "node tools/single-file.mjs dist"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6",
+    "@types/node": "^24.19.2",
     "@types/nodemailer": "^8.0.2",
     "@types/pngjs": "^6.0.5",
     "@types/qrcode": "^1.5.6",
