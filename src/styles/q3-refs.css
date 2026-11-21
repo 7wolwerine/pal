@@ -9,12 +9,12 @@
 }
 
 .chest--gold .chest__art {
-  width: 128px;
-  height: 120px;
+  width: 96px;
+  height: 90px;
 }
 
 .chest--gold .chest__lock {
-  top: 56px;
+  top: 44px;
 }
 
 .chest--gold.chest--opened .chest__art {
@@ -62,11 +62,12 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto auto;
+  align-content: start;
   justify-items: center;
   width: 288px;
-  height: 348px;
-  padding: 30px 30px 26px;
+  height: 324px;
+  padding: 28px 30px 22px;
   box-sizing: border-box;
   color: #efe3c4;
   font-family: Georgia, 'Times New Roman', Times, serif;
@@ -103,6 +104,7 @@
 
 .treasure__text {
   margin: 0;
+  max-width: 220px;
   font-size: 13px;
   line-height: 1.38;
   text-shadow: 1px 1px 0 #160b04;
@@ -112,9 +114,9 @@
   display: grid;
   grid-template-columns: 72px auto 72px;
   align-items: end;
-  align-self: end;
+  align-self: start;
   gap: 14px;
-  margin-bottom: 12px;
+  margin: 16px 0 10px;
 }
 
 .treasure__tile {
@@ -148,7 +150,8 @@
 }
 
 .treasure__or {
-  padding-bottom: 26px;
+  align-self: center;
+  padding-bottom: 18px;
   font-size: 14px;
   font-style: italic;
   text-shadow: 1px 1px 0 #160b04;
@@ -194,6 +197,8 @@
 .night__end {
   position: absolute;
   inset: 0;
+  /* Its own stacking context, so the painted words behind (z-index: -1) stay inside it. */
+  isolation: isolate;
   display: grid;
   place-content: center;
   justify-items: center;
@@ -288,15 +293,6 @@
   gap: 4px;
 }
 
-.chest--gold .chest__art {
-  width: 96px;
-  height: 90px;
-}
-
-.chest--gold .chest__lock {
-  top: 44px;
-}
-
 .chests {
   gap: 8px;
 }
@@ -316,30 +312,6 @@
   display: none;
 }
 
-/* ---------- the treasure window: title, text, the two rewards and the check mark close together ---------- */
-
-.treasure__box {
-  grid-template-rows: auto auto auto auto;
-  align-content: start;
-  height: 324px;
-  padding: 28px 30px 22px;
-}
-
-.treasure__text {
-  max-width: 220px;
-}
-
-.treasure__pick {
-  align-self: start;
-  margin: 16px 0 10px;
-}
-
-.treasure__or {
-  align-self: center;
-  padding-bottom: 18px;
-}
-
-
 .loot .points {
   line-height: 1.2;
 }
@@ -354,10 +326,6 @@
 }
 
 /* The painted English words fade into the back; the Czech the player actually heard stands in front. */
-.night__end {
-  isolation: isolate;
-}
-
 .night__end .night__kindly {
   position: absolute;
   inset: 0;

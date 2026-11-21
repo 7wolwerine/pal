@@ -8,6 +8,8 @@ html,
 body {
   height: 100%;
   margin: 0;
+  /* Entry animations overshoot a little; never let them scroll the page sideways on a phone. */
+  overflow-x: clip;
 }
 
 body {
@@ -41,6 +43,7 @@ body {
 /* ---------- window ---------- */
 
 .win {
+  position: relative;
   width: min(100%, 480px);
   background: var(--win);
   border: 3px solid var(--line);
@@ -304,10 +307,6 @@ body {
   color: var(--ink-soft);
 }
 
-.reveal p {
-  margin: 0 0 8px;
-}
-
 .reveal dl {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -450,6 +449,7 @@ body {
   padding: 0;
   background: #2f3540;
   box-shadow: 0 2px 0 #4f5962;
+  overflow: hidden;
 }
 
 /* The safe's inner rim sits over the face, so PAL peeks out from behind it. */
@@ -482,21 +482,6 @@ body {
 
 .pal__bubble--tap {
   cursor: var(--cursor-hand);
-  padding-bottom: 26px;
-}
-
-.pal__bubble--tap::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 7px;
-  width: 0;
-  height: 0;
-  margin-left: -9px;
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 12px solid var(--btn);
-  animation: say-nudge 800ms ease-in-out infinite;
 }
 
 @keyframes twinkle {
@@ -590,231 +575,6 @@ body {
   outline-offset: 2px;
 }
 
-/* A progress bar stuck at 99 %. */
-.bar {
-  position: relative;
-  width: 100%;
-  height: 26px;
-  padding: 0;
-  overflow: hidden;
-  border: 2px solid var(--ink);
-  border-radius: 6px;
-  background: var(--field);
-}
-
-.bar__fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: repeating-linear-gradient(45deg, var(--btn) 0 6px, #e27aa0 6px 12px);
-  transition: width 500ms cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.bar--full .bar__fill {
-  background: var(--ok);
-}
-
-.bar__text {
-  position: relative;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-/* A bell with unread notifications. */
-.bell {
-  position: relative;
-  width: 46px;
-  height: 46px;
-  padding: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-soft) !important;
-}
-
-.bell svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform-origin: 50% 12%;
-}
-
-.bell--ring svg {
-  animation: ring 900ms ease-in-out;
-}
-
-.bell__badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 9px;
-  background: var(--danger);
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 18px;
-}
-
-/* A checklist with exactly one box left unticked. */
-.checks {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-}
-
-.check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 1px 2px;
-  border: 0;
-  background: transparent;
-  font-size: 12px !important;
-  font-weight: 700;
-  text-align: left;
-}
-
-.check__box {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border: 2px solid var(--ink-soft);
-  border-radius: 3px;
-  background: var(--field);
-}
-
-.check[aria-checked='true'] .check__box {
-  border-color: var(--ok);
-  background: var(--ok);
-  box-shadow: inset 0 0 0 2px var(--field);
-}
-
-.check[aria-checked='false'] {
-  color: var(--danger) !important;
-}
-
-/* A picture hanging crooked on its nail. */
-.frame {
-  position: relative;
-  width: 60px;
-  height: 54px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-
-.frame__nail {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 4px;
-  height: 4px;
-  margin-left: -2px;
-  border-radius: 50%;
-  background: var(--ink);
-}
-
-.frame__pic {
-  position: absolute;
-  inset: 6px 6px 4px;
-  border: 4px solid #a0703f;
-  border-radius: 2px;
-  background: linear-gradient(#8fd3f4 0 55%, #7cc66b 55%);
-  transform: rotate(var(--tilt, 0deg));
-  transform-origin: 50% -2px;
-  transition: transform 260ms cubic-bezier(0.2, 1.5, 0.4, 1);
-}
-
-/* A row of status LEDs, one of them dark. */
-.leds {
-  display: flex;
-  gap: 5px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: #2e3243;
-}
-
-.led {
-  width: 12px;
-  height: 12px;
-  padding: 0;
-  border: 2px solid #1b1e2a;
-  border-radius: 50%;
-  background: #c98a1e;
-}
-
-.led--on {
-  background: #3ee08a;
-  box-shadow: 0 0 6px #3ee08a;
-}
-
-/* A cable hanging out of its port. */
-.cable {
-  position: relative;
-  width: 66px;
-  height: 52px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-
-.cable__port {
-  position: absolute;
-  left: 6px;
-  top: 14px;
-  width: 22px;
-  height: 16px;
-  border-radius: 3px;
-  background: #3a3e4c;
-  box-shadow: inset 0 0 0 3px #555a6b;
-}
-
-.cable__link {
-  position: absolute;
-  left: 8px;
-  top: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #6a6f7e;
-}
-
-.cable__wire {
-  position: absolute;
-  left: 46px;
-  top: 30px;
-  width: 18px;
-  height: 18px;
-  border-bottom: 4px solid #444a58;
-  border-left: 4px solid #444a58;
-  border-radius: 0 0 0 10px;
-}
-
-.cable__plug {
-  position: absolute;
-  left: 34px;
-  top: 26px;
-  width: 18px;
-  height: 12px;
-  border-radius: 2px;
-  background: #c9c9d1;
-  box-shadow: inset -4px 0 0 #9aa3ad;
-  transform: rotate(28deg);
-  transition: left 260ms cubic-bezier(0.3, 1.4, 0.4, 1), top 260ms, transform 260ms;
-}
-
-.cable--in .cable__plug {
-  left: 16px;
-  top: 16px;
-  transform: rotate(0deg);
-}
-
-.cable--in .cable__link {
-  background: #3ee08a;
-  box-shadow: 0 0 6px #3ee08a;
-}
-
 /* ---------- BUG ---------- */
 
 .bug {
@@ -839,6 +599,9 @@ body {
   height: 100%;
   transform-origin: 50% 100%;
   animation: breathe 1.4s ease-in-out infinite;
+  /* BUG can be shooed away with a click, wherever he is. */
+  pointer-events: auto;
+  cursor: var(--cursor-hand);
 }
 
 .bug__sprite {
@@ -939,20 +702,6 @@ body {
   }
 }
 
-@keyframes ring {
-  10%,
-  30% {
-    transform: rotate(14deg);
-  }
-  20%,
-  40% {
-    transform: rotate(-14deg);
-  }
-  50% {
-    transform: rotate(0deg);
-  }
-}
-
 @keyframes flung {
   0% {
     transform: rotate(0deg);
@@ -985,8 +734,7 @@ body {
   .bug__body,
   .bug__body--panic,
   .bug__body--cry,
-  .bug__body--land,
-  .bell--ring svg {
+  .bug__body--land {
     animation: none;
   }
 }
@@ -1008,11 +756,6 @@ body {
   font-weight: 700;
 }
 
-.field--small {
-  width: 100%;
-  height: 42px;
-}
-
 .btn--go {
   background: var(--ok);
   box-shadow: 0 4px 0 var(--ok-edge);
@@ -1023,10 +766,7 @@ body {
 }
 
 .lamps {
-  display: flex;
   justify-content: center;
-  gap: 16px;
-  padding: 18px 0;
 }
 
 .lampbtn {
@@ -1047,17 +787,6 @@ body {
   animation: pulse 700ms ease-in-out infinite;
 }
 
-.lampbtn--nope {
-  animation: nope 320ms ease-in-out;
-}
-
-.doc__title {
-  margin: 0 0 8px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
 .doc {
   height: 170px;
   padding: 10px 12px;
@@ -1067,6 +796,7 @@ body {
   background: var(--field);
   font-size: 11px;
   line-height: 1.45;
+  scrollbar-color: var(--btn) var(--pick);
 }
 
 .doc p {
@@ -1165,13 +895,6 @@ body {
 .scene__hotspot:focus-visible {
   outline: 3px solid var(--ink);
   outline-offset: -3px;
-}
-
-.scene__caption {
-  min-height: 26px;
-  margin: 14px 4px 0;
-  font-weight: 700;
-  text-align: center;
 }
 
 .scene__actions {
@@ -1334,47 +1057,8 @@ body {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
-}
-
-.score {
-  display: grid;
-  justify-items: center;
-  padding: 10px 18px;
-  border: 3px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bubble);
-  animation: pop-in 500ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
-}
-
-.score__label {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-}
-
-.score__value {
-  font-size: 34px;
-  font-weight: 800;
-  line-height: 1.1;
-  color: var(--btn);
-  font-variant-numeric: tabular-nums;
-}
-
-.score__rank {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.cert-preview {
-  width: min(100%, 360px);
-  height: auto;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 4px 0 var(--line);
-  animation: pop-in 600ms 150ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
 }
 
 .prize__status {
@@ -1418,13 +1102,6 @@ body {
   }
 }
 
-@keyframes pop-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
 /* ---------- reveal: the horror replay ---------- */
 
 :root[data-theme='revealed'] .win {
@@ -1438,13 +1115,6 @@ body {
   pointer-events: none;
   background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
   animation: flicker 3.2s steps(1) infinite;
-}
-
-.replay__head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
 }
 
 .replay__face {
@@ -1481,16 +1151,6 @@ body {
 
 .replay__time {
   color: var(--danger);
-}
-
-.replay__skip {
-  padding: 4px 10px;
-  border: 2px solid var(--line);
-  background: transparent;
-  color: var(--ink-soft);
-  font: inherit;
-  font-size: 13px;
-  cursor: var(--cursor-hand);
 }
 
 .decoder__drop {
@@ -1542,10 +1202,6 @@ body {
 }
 
 /* ---------- boot star ---------- */
-
-.win {
-  position: relative;
-}
 
 .boot-star {
   position: absolute;
@@ -1764,10 +1420,6 @@ body {
   opacity: 0;
 }
 
-.dontclick__hang--broken {
-  transform: translateX(-50%) translateY(100px) rotate(14deg);
-}
-
 .dontclick__hang--broken .dontclick {
   background: #8d8a93;
   box-shadow: 0 4px 0 #5d5a63;
@@ -1798,11 +1450,6 @@ body {
   color: var(--danger);
 }
 
-.board--unguarded .guard__led {
-  background: #77737c;
-  box-shadow: none;
-}
-
 @keyframes dangle {
   0%,
   100% {
@@ -1821,69 +1468,7 @@ body {
   }
 }
 
-/* ---------- the empty spot in the picture ---------- */
-
-.scene__actions--row {
-  gap: 10px;
-}
-
-.paint--armed .paint__canvas {
-  cursor: crosshair;
-}
-
-.paint__undo[aria-disabled='true'] {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.paint__undo--nope {
-  animation: nope 320ms ease-in-out;
-}
-
-.paint--glitch .scene__canvas {
-  filter: hue-rotate(40deg) contrast(1.2);
-  transform: translateX(1px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .paint__undo--nope {
-    animation: none;
-  }
-
-  .paint--glitch .scene__canvas {
-    transform: none;
-  }
-}
-
 /* ---------- the flower under glass ---------- */
-
-.flower__bubble {
-  position: absolute;
-  display: flex;
-  align-items: center;
-  padding: 6px 10px;
-  border: 2px solid #e56fa3;
-  border-radius: 12px;
-  background: #fff5fa;
-  color: #5a2440;
-  font-size: clamp(11px, 1.9vw, 14px);
-  font-weight: 700;
-  line-height: 1.3;
-  animation: pop 200ms ease-out both;
-}
-
-.flower__bubble::after {
-  content: '';
-  position: absolute;
-  left: -7px;
-  bottom: 10px;
-  width: 10px;
-  height: 10px;
-  background: #fff5fa;
-  border-left: 2px solid #e56fa3;
-  border-bottom: 2px solid #e56fa3;
-  transform: rotate(45deg);
-}
 
 .flower__talk {
   cursor: help;
@@ -1898,12 +1483,11 @@ body {
 }
 
 .points {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-weight: 700;
-}
-
-.points__value {
-  font-size: 20px;
 }
 
 .chests {
@@ -1936,47 +1520,17 @@ body {
   cursor: var(--cursor);
 }
 
-.chest__art {
-  width: 70px;
-  height: 50px;
-  image-rendering: pixelated;
-}
-
-.chest--gold .chest__art {
-  width: 98px;
-  height: 70px;
-}
-
 .chest__reward {
   font-size: 13px;
   font-weight: 700;
 }
 
-.chest--key .chest__reward,
 .chest--gold:disabled .chest__reward {
   color: #b8860b;
 }
 
-.chest--nothing .chest__reward {
-  opacity: 0.6;
-}
-
 .chest--shake {
   animation: chest-shake 520ms ease-in-out;
-}
-
-.chest__extra:empty {
-  display: none;
-}
-
-.chest__ask {
-  display: grid;
-  gap: 6px;
-  justify-items: center;
-}
-
-.chest__question {
-  font-weight: 700;
 }
 
 @keyframes chest-shake {
@@ -2004,222 +1558,7 @@ body {
   }
 }
 
-/* ---------- the inverted popup ---------- */
-
-.popup {
-  position: fixed;
-  left: 50%;
-  top: 58%;
-  z-index: 40;
-  width: min(330px, calc(100vw - 32px));
-  border: 1px solid #9aa0aa;
-  border-radius: 6px;
-  background: #f4f5f7;
-  color: #1f2329;
-  font-family: system-ui, sans-serif;
-  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.3);
-  transform: translate(-50%, -50%);
-  animation: popup-in 180ms ease-out both;
-}
-
-.popup__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 6px 6px 12px;
-  border-bottom: 1px solid #d5d8de;
-  font-size: 13px;
-}
-
-.popup__x {
-  width: 30px;
-  height: 26px;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: #1f2329;
-  font-size: 14px;
-  cursor: var(--cursor-hand);
-}
-
-.popup__x:hover {
-  background: #e81123;
-  color: #fff;
-}
-
-.popup__text {
-  margin: 14px 14px 6px;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.popup__status {
-  min-height: 18px;
-  margin: 0 14px;
-  color: #1d7a4f;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.popup__buttons {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 10px 14px 14px;
-}
-
-.popup__yes {
-  height: 38px;
-  background: #1d9e75;
-  box-shadow: 0 3px 0 #0f6e56;
-  color: #fff;
-}
-
-.popup__no {
-  padding: 4px 8px;
-  border: 0;
-  background: transparent;
-  color: #c0392b;
-  font: inherit;
-  font-size: 12px;
-  cursor: var(--cursor-hand);
-}
-
-@keyframes popup-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -46%) scale(0.96);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .popup {
-    animation: none;
-  }
-}
-
-/* ---------- the 90s download page ---------- */
-
-.dl {
-  display: grid;
-  gap: 8px;
-  padding: 10px 10px 0;
-  border: 2px outset #c0c0c0;
-  background: #ffff99 repeating-linear-gradient(45deg, transparent 0 8px, rgba(255, 153, 0, 0.12) 8px 16px);
-  color: #000080;
-  font-family: 'Comic Sans MS', 'Comic Sans', cursive;
-  text-align: center;
-  overflow: hidden;
-}
-
-.dl__title {
-  margin: 0;
-  color: #ff0000;
-  font-size: 18px;
-  text-shadow: 2px 2px 0 #ffcc00;
-  animation: dl-blink 900ms steps(2) infinite;
-}
-
-.dl__marquee {
-  overflow: hidden;
-  background: #000080;
-  color: #ffff00;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.dl__marquee span {
-  display: inline-block;
-  padding-left: 100%;
-  animation: dl-marquee 9s linear infinite;
-}
-
-.dl__grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-}
-
-.dl__ad {
-  padding: 8px 12px;
-  border: 3px outset #ff9900;
-  border-radius: 4px;
-  background: linear-gradient(#66ff66, #009900);
-  color: #fff;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  text-shadow: 1px 1px 0 #000;
-  cursor: var(--cursor-hand);
-}
-
-.dl__ad--1 {
-  background: linear-gradient(#ff6666, #cc0000);
-  animation: dl-pulse 700ms ease-in-out infinite alternate;
-}
-
-.dl__ad--2 {
-  background: linear-gradient(#66ccff, #0055cc);
-}
-
-.dl__ad--3 {
-  background: linear-gradient(#ffcc33, #ff6600);
-  animation: dl-pulse 900ms ease-in-out infinite alternate;
-}
-
-.dl__ad--4 {
-  background: linear-gradient(#ff66ff, #9900cc);
-}
-
-.dl__ad--caught {
-  background: #ddd;
-  border-style: solid;
-  border-color: #999;
-  color: #555;
-  text-shadow: none;
-  animation: nope 320ms ease-in-out;
-  cursor: var(--cursor);
-}
-
-.dl__small {
-  margin: 2px 0;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-}
-
-.dl__link {
-  color: #0000ee;
-}
-
-.dl__status {
-  margin: 4px -10px 0;
-  padding: 2px 6px;
-  border-top: 2px inset #c0c0c0;
-  background: #c0c0c0;
-  color: #000;
-  font-family: 'Courier New', monospace;
-  font-size: 11px;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dl--done .dl__ad,
-.dl--done .dl__title,
-.dl--done .dl__ad--1,
-.dl--done .dl__ad--3 {
-  animation: none;
-}
-
-.dl__after {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
+/* ---------- the download: a plain progress box (the UAC dialog and the label are in q3-misc.css) ---------- */
 
 .dl__file {
   display: grid;
@@ -2241,48 +1580,6 @@ body {
   width: 0;
   height: 100%;
   background: var(--ok);
-}
-
-.dl__ask {
-  display: grid;
-  justify-items: center;
-  gap: 4px;
-  font-weight: 700;
-}
-
-.dl__ask p,
-.dl__installing {
-  margin: 0;
-}
-
-@keyframes dl-blink {
-  50% {
-    color: #0000ff;
-  }
-}
-
-@keyframes dl-marquee {
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-@keyframes dl-pulse {
-  to {
-    transform: scale(1.06);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .dl__title,
-  .dl__marquee span,
-  .dl__ad {
-    animation: none;
-  }
-
-  .dl__marquee span {
-    padding-left: 0;
-  }
 }
 
 /* ---------- BUG's end and the blue screen ---------- */
@@ -2521,7 +1818,14 @@ body {
 .keygen__scroll span {
   display: inline-block;
   padding: 4px 0 4px 100%;
-  animation: dl-marquee 22s linear infinite;
+  animation: marquee 22s linear infinite;
+}
+
+/* The greetz line scrolls in from the right and out to the left, like an old demo. */
+@keyframes marquee {
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 .keygen__h {
@@ -2592,16 +1896,6 @@ body {
   box-shadow: 0 0 6px #ff3b3b;
 }
 
-.anomaly--impatient {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 16px;
-  border-radius: var(--radius);
-  background: var(--bubble);
-  color: var(--bubble-ink);
-  text-align: left;
-}
-
 .anomaly--caught {
   outline: 2px solid var(--ok);
   outline-offset: 2px;
@@ -2623,47 +1917,6 @@ body {
 
 .anomalies__found {
   font-weight: 700;
-}
-
-/* ---------- loading PAL's memory from a saved picture ---------- */
-
-.memory-load {
-  display: block;
-  margin: 10px auto 0;
-  width: max-content;
-  font-size: 12px;
-  opacity: 0.6;
-  text-decoration: underline;
-  cursor: var(--cursor-hand);
-}
-
-.memory-load:hover,
-#memory-file:focus-visible + .memory-load {
-  opacity: 1;
-}
-
-.quiet-links {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-}
-
-.card-code .row {
-  margin-top: 8px;
-}
-
-button.memory-load {
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 12px;
-}
-
-/* Entry animations overshoot a little; never let them scroll the page sideways on a phone. */
-html,
-body {
-  overflow-x: clip;
 }
 
 /* ---------- speech bubbles inside pixel scenes ---------- */
@@ -2762,24 +2015,6 @@ body {
   border-bottom-color: #fff1d6;
 }
 
-.say--tap {
-  padding-bottom: 20px;
-}
-
-.say--tap > span::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: 5px;
-  width: 0;
-  height: 0;
-  margin-left: -6px;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 8px solid currentColor;
-  animation: say-nudge 800ms ease-in-out infinite;
-}
-
 .say__scribble {
   display: block;
   width: 56px;
@@ -2793,12 +2028,6 @@ body {
   }
   50% {
     transform: translateY(3px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .say--tap > span::after {
-    animation: none;
   }
 }
 
@@ -2844,8 +2073,11 @@ body {
   cursor: var(--cursor-walk);
 }
 
+/* The ground covers most of the garden, so a keyboard player gets a lighter dashed ring
+   drawn just inside it instead of the heavy solid one the small hotspots use. */
 .scene__hotspot--walk:focus-visible {
-  outline: none;
+  outline: 2px dashed var(--ink);
+  outline-offset: -6px;
 }
 
 .mb-sender {
@@ -3031,116 +2263,6 @@ body {
 
 /* Screws, the chain lamp, the books and the cogs: see q3-fidgets.css. */
 
-/* A lamp and its plug lying next to the socket. */
-.fx-plug__lamp {
-  position: absolute;
-  left: 10%;
-  top: 6px;
-  width: 40px;
-  height: 64px;
-}
-
-.fx-plug__shade {
-  position: absolute;
-  left: 4px;
-  top: 0;
-  width: 32px;
-  height: 22px;
-  background: #ed93b1;
-  clip-path: polygon(22% 0, 78% 0, 100% 100%, 0 100%);
-}
-
-.fx-plug__bulb {
-  position: absolute;
-  left: 13px;
-  top: 20px;
-  width: 14px;
-  height: 10px;
-  border-radius: 0 0 50% 50%;
-  background: #d9d4c7;
-  transition: background-color 200ms, box-shadow 200ms;
-}
-
-.fx-plug__base {
-  position: absolute;
-  left: 18px;
-  top: 30px;
-  width: 4px;
-  height: 28px;
-  background: #6b4428;
-  box-shadow: -8px 28px 0 0 #6b4428, 8px 28px 0 0 #6b4428, 0 28px 0 0 #6b4428;
-}
-
-.fx-plug__socket {
-  position: absolute;
-  right: 12%;
-  top: 22px;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: #f1eee6;
-  box-shadow: inset 0 0 0 2px #bdb7a8;
-}
-
-.fx-plug__socket::before,
-.fx-plug__socket::after {
-  content: '';
-  position: absolute;
-  top: 10px;
-  width: 4px;
-  height: 7px;
-  border-radius: 2px;
-  background: #4b4b55;
-}
-
-.fx-plug__socket::before {
-  left: 7px;
-}
-
-.fx-plug__socket::after {
-  right: 7px;
-}
-
-.fx-plug__cord {
-  position: absolute;
-  left: calc(10% + 22px);
-  right: calc(12% + 34px);
-  bottom: 6px;
-  height: 3px;
-  border-radius: 2px;
-  background: #4b4b55;
-  transition: right 200ms ease-out, bottom 200ms ease-out;
-}
-
-.fx-plug__plug {
-  position: absolute;
-  right: calc(12% + 20px);
-  bottom: 2px;
-  width: 16px;
-  height: 12px;
-  border-radius: 3px;
-  background: #fffdfb;
-  box-shadow: inset 0 0 0 2px #4b4b55;
-  transform: rotate(-20deg);
-  transition: right 220ms ease-out, bottom 220ms ease-out, transform 220ms ease-out;
-}
-
-.fx-plug--in .fx-plug__plug {
-  right: calc(12% + 5px);
-  bottom: 30px;
-  transform: rotate(0deg);
-}
-
-.fx-plug--in .fx-plug__cord {
-  right: calc(12% + 14px);
-  bottom: 18px;
-}
-
-.fx-plug--in .fx-plug__bulb {
-  background: #ffe680;
-  box-shadow: 0 6px 18px 6px rgba(255, 214, 80, 0.6);
-}
-
 /* Unread mail, a proper big icon with a red badge. */
 .fx-mail__env {
   position: absolute;
@@ -3304,10 +2426,6 @@ body {
   background: var(--btn);
 }
 
-.doc {
-  scrollbar-color: var(--btn) var(--pick);
-}
-
 .doc__skip {
   position: absolute;
   right: 22px;
@@ -3384,14 +2502,6 @@ body {
   }
 }
 
-.pal__avatar {
-  position: relative;
-}
-
-.pal__avatar--caged {
-  overflow: hidden;
-}
-
 /* Only part of the face shows: the safe is bigger than the window lets you see. */
 .pal__avatar--caged > :not(.pal__bang):not(.sparkle) {
   transform: translate(24%, 6%);
@@ -3406,12 +2516,7 @@ body {
   width: min(100%, 220px);
 }
 
-/* ---------- the painting: brush cursor, names, signature ---------- */
-
-.paint--brush .paint__canvas,
-.paint--brush .scene__hotspot {
-  cursor: crosshair;
-}
+/* ---------- the painting: names and signature (the brush cursor is in q3-misc.css) ---------- */
 
 .paint__names {
   position: absolute;
@@ -3495,12 +2600,6 @@ body {
   min-width: max-content;
 }
 
-.shelter__menu--row {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
 .shelter__pick {
   padding: 4px 10px;
   border: 2px solid var(--ink);
@@ -3537,12 +2636,6 @@ body {
 }
 
 /* ---------- treasure: counter, goal, chests, flying coins ---------- */
-
-.points {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .points__value {
   font-size: 28px;
@@ -3590,16 +2683,6 @@ body {
   color: #6b4a12;
   font-size: 11px;
   font-weight: 800;
-}
-
-.chest__art {
-  width: 72px;
-  height: 56px;
-}
-
-.chest--gold .chest__art {
-  width: 108px;
-  height: 84px;
 }
 
 .chest--gold {
@@ -3914,10 +2997,6 @@ body {
   background: #ff9cc8;
 }
 
-.prize {
-  gap: 8px;
-}
-
 @keyframes cert-in {
   from {
     transform: scale(0.6) rotate(-4deg);
@@ -4138,18 +3217,11 @@ body {
 
 .say,
 .bug__bubble,
-.cameo__bubble,
 .pal__bubble,
 .scene,
 .night__caption {
   user-select: none;
   -webkit-user-select: none;
-}
-
-/* BUG can be shooed away with a click, wherever he is. */
-.bug__body {
-  pointer-events: auto;
-  cursor: var(--cursor-hand);
 }
 
 .bug--away .bug__bubble {
@@ -4251,15 +3323,4 @@ body {
   40% {
     transform: scale(1.04);
   }
-}
-
-/* The PAL Pro download as falling blocks. */
-.dl__blocks {
-  display: block;
-  width: 160px;
-  height: 64px;
-  margin: 4px auto;
-  border: 2px solid var(--line);
-  border-radius: 4px;
-  image-rendering: pixelated;
 }

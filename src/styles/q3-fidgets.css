@@ -61,17 +61,6 @@
   transform: translate(-50%, -50%) scale(var(--fx-scale));
 }
 
-/* ---------- the floor lamp with its plug: shorter legs, so it stands inside its box ---------- */
-
-.fx-plug .fx-plug__lamp {
-  top: 1px;
-}
-
-.fx-plug .fx-plug__base {
-  height: 19px;
-  box-shadow: -7px 16px 0 0 #6b4428, 7px 16px 0 0 #6b4428, 0 16px 0 0 #6b4428;
-}
-
 /* ---------- the picture: it swings a long way with each nudge ---------- */
 
 .fx-tilt__frame {
@@ -653,7 +642,7 @@
   }
 }
 
-/* ---------- the wall calendar still on yesterday (in place of the lamp with its plug) ---------- */
+/* ---------- the wall calendar still on yesterday ---------- */
 
 .fx-cal__nail {
   position: absolute;

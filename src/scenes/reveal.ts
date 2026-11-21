@@ -268,7 +268,6 @@ export const reveal: Scene<GameContext> = {
       const show = (index: number): void => {
         open = open === index ? -1 : index;
         buttons.forEach((button, i) => button.setAttribute('aria-expanded', String(i === open)));
-        tiles.forEach((tile, i) => tile.classList.toggle('trick--open', i === open));
         const trick = model.tricks[open];
         story.hidden = !trick;
         if (!trick) return;
