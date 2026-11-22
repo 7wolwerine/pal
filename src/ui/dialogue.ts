@@ -114,14 +114,21 @@ export class Dialogue {
     await this.#type(text, line, 23);
   }
 
-  /** Resolves on the next tap of the bubble; shows a little "tap to go on" hint. */
+  /**
+   * Resolves on the next tap of the bubble; shows a little "tap to go on" hint.
+   * A bubble the story waits on stays lit until it is tapped, even where only a
+   * speaking bubble shows: it dims like any finished line only after the tap.
+   */
   tapToContinue(): Promise<void> {
+    const line = this.#line;
+    this.#light();
     this.#bubble.classList.add('pal__bubble--tap');
     return new Promise((resolve) => {
       const onTap = (): void => {
         this.#bubble.removeEventListener('click', onTap);
         this.#bubble.classList.remove('pal__bubble--tap');
         this.#cancelTap = undefined;
+        this.#dim(this.#typed.textContent ?? '', line);
         resolve();
       };
       this.#cancelTap = onTap;
@@ -206,11 +213,11 @@ export class Dialogue {
     this.#bubble.classList.add('pal__bubble--live');
   }
 
-  /** A while after the line is finished, the bubble stops speaking (if no new line came). */
+  /** A while after the line is finished, the bubble stops speaking (if no new line came and no tap is awaited). */
   #dim(text: string, line: number): void {
     window.clearTimeout(this.#liveTimer);
     this.#liveTimer = window.setTimeout(() => {
-      if (line === this.#line) this.#bubble.classList.remove('pal__bubble--live');
+      if (line === this.#line && !this.#cancelTap) this.#bubble.classList.remove('pal__bubble--live');
     }, 2600 + text.length * 40);
   }
 
