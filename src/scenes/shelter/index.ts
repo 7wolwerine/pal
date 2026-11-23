@@ -130,7 +130,7 @@ export const shelter: GameScene = {
         { text: task.silly, good: false },
       ];
       if (Math.random() < 0.5) options.reverse();
-      const box = stage.overlay({ x: Math.max(2, Math.min(STAGE_W - 52, r.x + r.w / 2 - 25)), y: Math.max(2, r.y - 16), w: 50, h: 14 }, 'shelter__menu');
+      const box = stage.choices({ x: Math.max(2, Math.min(STAGE_W - 52, r.x + r.w / 2 - 25)), y: Math.max(2, r.y - 16), w: 50, h: 14 }, 'shelter__menu');
       for (const option of options) {
         box.append(
           h('button', {
@@ -212,7 +212,7 @@ export const shelter: GameScene = {
      * click, and then asks again with answers that all mean staying.
      */
     function offerStay(choices: readonly { readonly label: string; readonly role: RoleId }[], coaxed: number): void {
-      const box = stage.overlay({ x: 6, y: 50, w: 54, h: 44 }, 'shelter__menu shelter__menu--stack');
+      const box = stage.choices({ x: 6, y: 50, w: 54, h: 44 }, 'shelter__menu shelter__menu--stack');
       for (const choice of choices) {
         box.append(
           h('button', {

@@ -192,7 +192,7 @@ export const paint: GameScene = {
         { text: `${name.charAt(0).toUpperCase()}.`, style: 'serif' },
         { text: PAINT.anonymous, style: 'marker' },
       ];
-      const box = stage.overlay({ x: 22, y: 48, w: 70, h: 34 }, 'paint__names');
+      const box = stage.choices({ x: 22, y: 48, w: 70, h: 34 }, 'paint__names');
       for (const option of options) {
         const button = h('button', {
           class: `paint__name paint__name--${option.style}`,

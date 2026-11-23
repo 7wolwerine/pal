@@ -1,3 +1,4 @@
+import { isUpright } from '../ui/upright.ts';
 import { h } from '../ui/dom.ts';
 
 export interface Rect {
@@ -70,6 +71,17 @@ export class PixelStage {
     const box = h('div', { class: className });
     this.#place(box, rect);
     this.el.append(box);
+    return box;
+  }
+
+  /**
+   * Answers to choose from. Over the picture at `rect` on a wide screen; on a phone held upright,
+   * where the picture is small, under it instead, as buttons a thumb can hit.
+   */
+  choices(rect: Rect, className: string): HTMLElement {
+    if (!isUpright() || !this.el.parentElement) return this.overlay(rect, className);
+    const box = h('div', { class: `${className} scene__choices` });
+    this.el.after(box);
     return box;
   }
 

@@ -1,4 +1,5 @@
 import { h } from './dom.ts';
+import { UPRIGHT_QUERY } from './upright.ts';
 
 const TEXT = 'Na šířku je to hezčí. Otoč si telefon.';
 /** How long the offer stays if it is left alone. */
@@ -10,7 +11,7 @@ const SHOW_MS = 7000;
  * itself, on a tap, or as soon as the phone is turned. Nothing is locked; the game plays upright too.
  */
 export function createRotateHint(): { offer(): void } {
-  const upright = window.matchMedia('(orientation: portrait) and (max-width: 600px)');
+  const upright = window.matchMedia(UPRIGHT_QUERY);
   let offered = false;
   return {
     offer() {

@@ -6,6 +6,7 @@ import { PixelStage, px } from '../../pixel/stage.ts';
 import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
+import { isUpright } from '../../ui/upright.ts';
 import { DIRS, E, MERCY_AFTER, N, S, START_LEVEL, W, createLayout, isConnected, isPerfect, leaks, rise, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
 
 const SCENE = 'rescue';
@@ -31,7 +32,7 @@ const WIDE: Geometry = { STAGE_W: 164, STAGE_H: 104, CELL: 20, GRID_X: 72, GRID_
 const UPRIGHT: Geometry = { STAGE_W: 96, STAGE_H: 160, CELL: 20, GRID_X: 13, GRID_Y: 70, FLOOR_Y: 152, TANK: { x: 24, y: 14, w: 54, h: 48 }, upright: true };
 
 function geometry(): Geometry {
-  return window.matchMedia('(orientation: portrait) and (max-width: 600px)').matches ? UPRIGHT : WIDE;
+  return isUpright() ? UPRIGHT : WIDE;
 }
 
 const DRAIN_PER_S = 1 / 3.5;

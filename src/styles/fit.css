@@ -487,3 +487,25 @@
   font-size: 20px;
   cursor: var(--cursor-hand);
 }
+
+/* ---------- a phone held upright: answers under the picture ----------
+   The picture is small there, so what is to be chosen (the shelter's jobs and "stay?", the name
+   to sign the painting with) stands under it, one big button to a row. */
+.scenery > .scene__choices {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  margin-top: 12px;
+}
+
+.scenery > .scene__choices > button {
+  min-height: 48px;
+  padding: 8px 14px;
+  font-size: 17px;
+  white-space: normal;
+}
