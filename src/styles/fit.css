@@ -1,0 +1,186 @@
+/* fit: every phase of the game fits the page, from a small phone to a phone on its side.
+   Loaded last, so rules here win. */
+
+/* ---------- a low page (a phone on its side): only the glass, PAL beside the scene ----------
+   src/ui/pc-layout.ts picks the 'short' mode: the picture is just the glass in a thin bezel, at
+   the bottom of the page under the path of hearts, and PAL's window takes the whole glass. */
+
+#app:has(> .pc[data-mode='short']:not([hidden])) {
+  align-items: end;
+}
+
+:root:not([data-theme='revealed']) .pc[data-mode='short'] .pc__screen > .win {
+  width: 100%;
+}
+
+/* A slimmer title bar: the height is what is short. */
+.pc[data-mode='short'] .win__bar {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.pc[data-mode='short'] .win__body {
+  padding: 10px 12px;
+}
+
+.pc[data-mode='short'] .win__foot {
+  padding: 0 12px 6px;
+}
+
+/* PAL on the left, the scene on the right, both the whole height of the window. */
+:root:not([data-theme='revealed']) .pc[data-mode='short'] .pc__screen > .win > .win__body {
+  display: grid;
+  grid-template-columns: minmax(150px, 34%) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 14px;
+}
+
+.pc[data-mode='short'] .win__body > .pal {
+  position: sticky;
+  top: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.pc[data-mode='short'] .win__body > .pal .pal__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pc[data-mode='short'] .win__body > .pal .pal__avatar {
+  width: 52px;
+  height: 52px;
+  padding: 2px;
+}
+
+.pc[data-mode='short'] .win__body > .pal .pal__bubble {
+  min-height: 0;
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+/* The tail points up at PAL now, not to the left. */
+.pc[data-mode='short'] .win__body > .pal .pal__bubble::before {
+  left: 20px;
+  top: -10px;
+  border-top: 0;
+  border-right: 8px solid transparent;
+  border-left: 8px solid transparent;
+  border-bottom: 9px solid var(--btn);
+}
+
+:root:not([data-theme='revealed']) .pc[data-mode='short'] .pc__screen > .win > .win__body > .stage {
+  margin-top: 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* When a scene needs the whole window, PAL's line sits in the title bar instead of over the
+   window: the window keeps its full height. */
+.pc[data-mode='short'] .pc__screen > .win.win--focus {
+  margin-top: 0;
+}
+
+:root:not([data-theme='revealed']) .pc[data-mode='short'] .pc__screen > .win.win--focus {
+  height: var(--pc-win-h);
+}
+
+.pc[data-mode='short'] .win--focus > .win__bar {
+  min-height: 52px;
+}
+
+:root:not([data-theme='revealed']) .pc[data-mode='short'] .pc__screen > .win.win--focus > .win__body {
+  display: flex;
+  align-items: stretch;
+}
+
+/* The chests: the goal on the left, the three small chests beside it, not under it. */
+.pc[data-mode='short'] .loot {
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    'points chests'
+    'goal chests'
+    'actions actions';
+  justify-content: center;
+  align-items: center;
+  column-gap: 28px;
+}
+
+.pc[data-mode='short'] .loot > .points {
+  grid-area: points;
+}
+
+.pc[data-mode='short'] .loot > .loot__goal {
+  grid-area: goal;
+}
+
+.pc[data-mode='short'] .loot > .chests {
+  grid-area: chests;
+}
+
+.pc[data-mode='short'] .loot > .scene__actions {
+  grid-area: actions;
+}
+
+.pc[data-mode='short'] .pal.pal--float {
+  top: calc(var(--pc-win-top) + 4px);
+  left: calc(var(--pc-win-left) + 74px);
+  /* Clear of the window's buttons and of the corner BUG walks along. */
+  right: max(120px, 28%);
+  max-width: none;
+}
+
+.pc[data-mode='short'] .pal--float .pal__bubble {
+  max-height: 46px;
+  padding: 4px 10px;
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.pc[data-mode='short'] .pal--float .pal__bubble::before {
+  display: none;
+}
+
+/* ---------- the certificate ----------
+   The e-mail field on its own line, "Ne, díky" and "Pošli mi ho" side by side under it. Once the
+   form is there, the certificate is only a small preview, so all of it fits a small phone. */
+.prize__form {
+  display: grid;
+  gap: 8px;
+}
+
+.prize__form .field {
+  width: 100%;
+}
+
+.prize__form > .row > .btn {
+  flex: 1 1 0;
+  margin-top: 0;
+}
+
+.pc[data-mode='compact'] .cert.cert--small {
+  zoom: 0.56;
+}
+
+/* A low page: the certificate a little smaller from the start; with the form, a preview beside it. */
+.pc[data-mode='short'] .cert {
+  zoom: 0.72;
+}
+
+.pc[data-mode='short'] .cert.cert--small {
+  zoom: 0.56;
+}
+
+.pc[data-mode='short'] .prize:has(.prize__actions > *) {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 18px;
+}
+
+.pc[data-mode='short'] .prize:has(.prize__actions > *) > .cert {
+  grid-row: span 2;
+  margin: 0;
+}

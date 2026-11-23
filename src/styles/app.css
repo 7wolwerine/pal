@@ -3324,3 +3324,14 @@ body {
     transform: scale(1.04);
   }
 }
+
+/* ---------- a picture fits the height of the page too ----------
+   The pixel scenes are sized by the page's width; on a low page (a phone on its side, a short
+   window) that would push the bottom of the picture, and what is to be clicked there, off the
+   screen. The picture keeps its shape and gets narrower instead; its hotspots are in per cent of
+   it, so they stay on the drawing. The room above and below is the path of hearts and the gutter. */
+.scenery > .scene {
+  width: min(100%, calc((100vh - 88px) * var(--scene-ar, 1.6)));
+  width: min(100%, calc((100dvh - 88px) * var(--scene-ar, 1.6)));
+  margin-inline: auto;
+}

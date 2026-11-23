@@ -527,7 +527,7 @@ export function createPc(win: HTMLElement): HTMLElement {
   document.addEventListener('focusin', (event) => {
     const el = event.target;
     if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
-    if (pc.dataset.mode !== 'compact') return;
+    if (pc.dataset.mode === 'full') return;
     window.setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350);
   });
   relayout();

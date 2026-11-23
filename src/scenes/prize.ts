@@ -89,12 +89,13 @@ export const prize: GameScene = {
       const error = h('p', { class: 'error', attrs: { role: 'alert' } });
       const send = h('button', { class: 'btn', text: PRIZE.send, attrs: { type: 'submit' } });
       const decline = h('button', { class: 'btn btn--quiet', text: PRIZE.decline, attrs: { type: 'button' } });
+      // Sending and declining are the two answers to one question: they stand in one row, under the field.
       const form = h(
         'form',
-        { attrs: { novalidate: '' } },
-        h('div', { class: 'row' }, input, send),
+        { class: 'prize__form', attrs: { novalidate: '' } },
+        input,
         error,
-        decline,
+        h('div', { class: 'row' }, decline, send),
       );
       input.addEventListener('input', () => {
         error.textContent = '';

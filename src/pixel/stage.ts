@@ -34,6 +34,8 @@ export class PixelStage {
     this.#g = g;
     this.el = h('div', { class: 'scene' }, canvas);
     this.el.style.aspectRatio = `${width} / ${height}`;
+    // The page sizes the picture by its height too (a phone on its side): it needs the shape.
+    this.el.style.setProperty('--scene-ar', String(width / height));
   }
 
   /** Starts painting. `t` is milliseconds since the first frame. */

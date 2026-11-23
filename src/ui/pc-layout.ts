@@ -24,8 +24,11 @@ export interface Spot {
 }
 
 export interface PcLayout {
-  /** 'full': the whole desk; 'compact': a phone, only the monitor on the desk's edge. */
-  readonly mode: 'full' | 'compact';
+  /**
+   * 'full': the whole desk; 'compact': a phone, only the monitor on the desk's edge;
+   * 'short': a low page (a phone on its side), only the glass in a thin bezel, as big as it gets.
+   */
+  readonly mode: 'full' | 'compact' | 'short';
   /** CSS pixels per picture pixel. */
   readonly s: number;
   /** The whole picture. */
@@ -101,8 +104,17 @@ const GLASS_WANT_H = 600;
 const quarter = (n: number): number => Math.floor(n * 4) / 4;
 const clamp = (n: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, n));
 
+/** A page lower than this and wider than tall gets only the glass: every pixel of height goes to the window. */
+export const SHORT_H = 560;
+/** On a low page the picture sits at the bottom: above it only the path of hearts, under it the gutter. */
+const SHORT_TOP = 40;
+const SHORT_BOTTOM = 16;
+/** The glass of a low page may be wider than the desk's, for the window to put PAL beside the scene. */
+const SHORT_GW_MAX = 360;
+
 export function layoutPc(viewW: number, viewH: number): PcLayout {
   // The card's border (3px each side) and its shadow under it are outside the picture.
+  if (viewH < SHORT_H && viewW > viewH) return short(Math.max(200, viewW - GUTTER * 2 - 6), Math.max(120, viewH - SHORT_TOP - SHORT_BOTTOM - 10));
   const availW = Math.max(200, viewW - GUTTER * 2 - 6);
   const availH = Math.max(240, viewH - TOP_ROOM - BOTTOM_ROOM - 12);
 
@@ -166,6 +178,34 @@ function compact(availW: number, availH: number): PcLayout {
     note: { x: right - 12, y: 1 },
     lamp: { x: right - 6, y: bezel.y + bezel.h - 4 },
     win: windowPlace(gw, gh, s, paper, false),
+  };
+}
+
+/**
+ * A low page: no desk, no stand to speak of, the note on the bezel's corner. Two CSS pixels to a
+ * picture pixel keep the bezel thin; the window takes the whole glass, wider than anywhere else.
+ */
+function short(availW: number, availH: number): PcLayout {
+  const s = 2;
+  const gw = even(Math.min(Math.floor(availW / s) - 12, Math.floor(GLASS_MAX_W / s), SHORT_GW_MAX));
+  const gh = even(Math.max(60, Math.min(Math.floor(availH / s) - 12, Math.floor(GLASS_MAX_H / s))));
+  const bezel = { x: 2, y: 2, w: gw + 8, h: gh + 8 };
+  const glass = { x: 6, y: 6, w: gw, h: gh };
+  const right = bezel.x + bezel.w;
+  const paper = desktop(gw, gh, s);
+  return {
+    mode: 'short',
+    s,
+    w: gw + 12,
+    h: gh + 12,
+    bezel,
+    glass,
+    // The wall goes all the way down; only a stub of the stand shows under the bezel.
+    deskTop: gh + 12,
+    ...paper,
+    note: { x: right - 12, y: 0 },
+    lamp: { x: right - 6, y: bezel.y + bezel.h - 3 },
+    win: { left: 8, top: 8, bottom: 8, height: gh * s - 16 },
   };
 }
 
