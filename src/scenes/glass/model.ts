@@ -6,10 +6,11 @@
 
 /** Gravity in picture pixels per ms². */
 export const GRAVITY = 0.0004;
-export const GLASS_W = 8;
-export const GLASS_H = 12;
+/** A glass the size of a glass next to the character (26 pixels tall), not of a vase. */
+export const GLASS_W = 5;
+export const GLASS_H = 8;
 /** The glass's top-left while it stands on the table. */
-export const TABLE_SPOT: readonly [number, number] = [88, 32];
+export const TABLE_SPOT: readonly [number, number] = [82, 31];
 /** Where a fall starts: the glass's centre and top, and the line it lands on. */
 export interface DropFrom {
   readonly x: number;

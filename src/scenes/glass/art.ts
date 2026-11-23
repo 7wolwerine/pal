@@ -4,27 +4,32 @@ import { GLASS_H, GLASS_W, GRAVITY, TABLE_SPOT, glassPose, type DropFrom } from 
 
 type G = CanvasRenderingContext2D;
 
-/** A small picture, so the character (26 pixels tall) fills a good third of it. */
-export const STAGE_W = 120;
-export const STAGE_H = 75;
+/**
+ * A small picture, so the character (26 pixels tall) fills nearly half its height, and the things
+ * round them in their true sizes: a mirror a head taller than they are, a table up to their hips,
+ * a bottle and a glass that fit a hand.
+ */
+export const STAGE_W = 100;
+export const STAGE_H = 60;
 /** Where the wall meets the floor. */
-const WALL_Y = 58;
-export const GLASS_RECT: Rect = { x: TABLE_SPOT[0] - 3, y: TABLE_SPOT[1] - 3, w: GLASS_W + 6, h: GLASS_H + 4 };
+const WALL_Y = 44;
+/** The glass is small; the place to tap it is not. */
+export const GLASS_RECT: Rect = { x: TABLE_SPOT[0] - 5, y: TABLE_SPOT[1] - 5, w: GLASS_W + 10, h: GLASS_H + 7 };
 /** The table top. */
 const TABLE_Y = TABLE_SPOT[1] + GLASS_H;
-const TABLE_X = 76;
-const TABLE_R = 108;
+const TABLE_X = 70;
+const TABLE_R = 94;
 
 /** The glass of the standing mirror (the frame goes round it, the stand under it). */
-const MIRROR: Rect = { x: 6, y: 20, w: 18, h: 40 };
+const MIRROR: Rect = { x: 6, y: 21, w: 14, h: 26 };
 /** Click area for the mirror: the frame, the stand and a little around it. */
-export const MIRROR_RECT: Rect = { x: 2, y: 14, w: 27, h: 58 };
+export const MIRROR_RECT: Rect = { x: 2, y: 16, w: 22, h: 42 };
 /** Where the character's feet are: on the floor, in front of everything. */
-export const HERO_FEET_Y = 71;
+export const HERO_FEET_Y = 57;
 /** By the mirror, a step from it, so the bubble hangs beside the frame. Where the character starts. */
-export const HERO_MIRROR_X = 30;
+export const HERO_MIRROR_X = 23;
 /** In front of the table, close enough to reach the glass. */
-export const HERO_TABLE_X = 64;
+export const HERO_TABLE_X = 60;
 
 export interface HeroState {
   readonly x: number;
@@ -71,11 +76,16 @@ function glassSprite(full: boolean): HTMLCanvasElement {
   const g = c.getContext('2d');
   if (g) {
     px(g, '#e8f6fd', 0, 0, GLASS_W, GLASS_H);
-    if (full) px(g, '#6ec3ef', 1, 4, GLASS_W - 2, GLASS_H - 5);
+    if (full) {
+      // Sparkling wine: gold, a line of foam on top, a bubble or two.
+      px(g, WINE, 1, 2, GLASS_W - 2, GLASS_H - 3);
+      px(g, FOAM, 1, 2, GLASS_W - 2, 1);
+      px(g, '#fff6d0', 2, 4, 1, 1);
+      px(g, '#fff6d0', 3, 6, 1, 1);
+    }
     px(g, '#9fd0e8', 0, 0, 1, GLASS_H);
     px(g, '#9fd0e8', GLASS_W - 1, 0, 1, GLASS_H);
     px(g, '#9fd0e8', 0, GLASS_H - 1, GLASS_W, 1);
-    px(g, '#ffffff', 2, 1, 1, GLASS_H - 4);
   }
   if (full) fullSprite = c;
   else sprite = c;
@@ -91,10 +101,17 @@ function drawGlass(g: G, x: number, top: number, rot: number, sx: number, sy: nu
   g.restore();
 }
 
-export function paintGlassScene(g: G, t: number, glass: GlassState, motion: boolean, hero: HeroState): void {
+/** The wine in the glass, and what it shatters into. */
+const WINE = '#f2c14e';
+const FOAM = '#fff3c4';
+
+export function paintGlassScene(g: G, t: number, glass: GlassState, motion: boolean, hero: HeroState, shine = false): void {
   paintRoom(g);
   paintMirror(g, t, motion, hero);
-  if (glass.kind === 'table') drawGlass(g, TABLE_SPOT[0] + GLASS_W / 2, TABLE_SPOT[1], 0, 1, 1, true);
+  if (glass.kind === 'table') {
+    drawGlass(g, TABLE_SPOT[0] + GLASS_W / 2, TABLE_SPOT[1], 0, 1, 1, true);
+    if (shine) paintShine(g, t, motion);
+  }
   paintHero(g, hero.x, HERO_FEET_Y, { pose: hero.pose, facing: hero.facing, t, motion, worn: true });
   if (glass.kind === 'held') {
     const hands = heroHands(hero.x, HERO_FEET_Y);
@@ -184,7 +201,7 @@ function paintMirror(g: G, t: number, motion: boolean, hero: HeroState): void {
 
 function paintRoom(g: G): void {
   px(g, '#2d2747', 0, 0, STAGE_W, WALL_Y);
-  for (let i = 0; i < 14; i++) px(g, '#5a5080', (i * 37) % STAGE_W, 12 + ((i * 23) % 40), 1, 1);
+  for (let i = 0; i < 14; i++) px(g, '#5a5080', (i * 37) % STAGE_W, 12 + ((i * 23) % (WALL_Y - 16)), 1, 1);
   // A party garland.
   px(g, '#8a7aa8', 0, 5, STAGE_W, 1);
   for (let x = 0; x < STAGE_W; x += 10) {
@@ -203,10 +220,12 @@ function paintRoom(g: G): void {
   px(g, '#6e4529', TABLE_X, TABLE_Y + 3, TABLE_R - TABLE_X, 1);
   px(g, '#6e4529', TABLE_X + 3, TABLE_Y + 4, 3, feet - TABLE_Y - 4);
   px(g, '#6e4529', TABLE_R - 6, TABLE_Y + 4, 3, feet - TABLE_Y - 4);
-  px(g, '#3f9a4f', 80, TABLE_Y - 16, 7, 16);
-  px(g, '#3f9a4f', 82, TABLE_Y - 21, 3, 5);
-  px(g, '#ffd75e', 80, TABLE_Y - 11, 7, 4);
-  px(g, '#7fd18a', 81, TABLE_Y - 15, 1, 11);
+  // A bottle a hand tall: body, neck, a gold label, a gold foil cap.
+  px(g, '#3f9a4f', 74, TABLE_Y - 8, 4, 8);
+  px(g, '#3f9a4f', 75, TABLE_Y - 11, 2, 3);
+  px(g, '#ffd75e', 75, TABLE_Y - 12, 2, 1);
+  px(g, '#ffd75e', 74, TABLE_Y - 6, 4, 2);
+  px(g, '#7fd18a', 74, TABLE_Y - 8, 1, 6);
 }
 
 /** The water: an honest fall, then it shatters like glass on the floor. */
@@ -217,7 +236,7 @@ function paintWater(g: G, since: number, from: DropFrom): void {
   if (since < splash) {
     const t = since - SPILL_MS;
     const y = from.y + 4 + 0.5 * GRAVITY * t * t;
-    for (let i = 0; i < 6; i++) px(g, '#6ec3ef', spillX + (i % 3) - 1 + t * 0.008 * i, y - i * 2, 2, 2);
+    for (let i = 0; i < 6; i++) px(g, WINE, spillX + (i % 3) - 1 + t * 0.008 * i, y - i * 2, 2, 2);
     return;
   }
   const t = since - splash;
@@ -228,13 +247,34 @@ function paintWater(g: G, since: number, from: DropFrom): void {
     const tt = Math.min(t, flight);
     const x = spillX + vx * tt;
     const y = floor - 2 - (-vy * tt - 0.5 * GRAVITY * tt * tt);
-    const c = i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? '#6ec3ef' : '#b6e4fa';
+    const c = i % 3 === 0 ? '#ffffff' : i % 3 === 1 ? WINE : FOAM;
     px(g, c, x, y, i % 2 ? 2 : 1, i % 2 ? 1 : 2);
   }
-  // A thin crack of blue "glass" where the puddle should be.
+  // A thin crack of golden "glass" where the puddle should be.
   if (t > 60) {
-    px(g, '#b6e4fa', spillX - 6, floor, 12, 1);
+    px(g, WINE, spillX - 6, floor, 12, 1);
     px(g, '#ffffff', spillX - 2, floor, 1, 1);
     px(g, '#ffffff', spillX + 3, floor, 1, 1);
+  }
+}
+
+/**
+ * The glass on the table catches the light while nobody does anything: a glint runs down it and
+ * a little star winks above its rim, every second or so, to say "here".
+ */
+function paintShine(g: G, t: number, motion: boolean): void {
+  const [x, y] = TABLE_SPOT;
+  const cycle = motion ? t % 1300 : 600;
+  if (cycle < 420) {
+    const row = Math.floor((cycle / 420) * (GLASS_H + 2)) - 1;
+    px(g, '#ffffff', x + 1, y + row, 1, 2);
+    px(g, '#ffffff', x + 2, y + row + 1, 1, 1);
+  }
+  const s = cycle > 380 && cycle < 820 ? (cycle < 600 ? 1 : 2) : 0;
+  if (s > 0) {
+    const cx = x + GLASS_W;
+    const cy = y - 2;
+    px(g, '#ffffff', cx, cy - s, 1, s * 2 + 1);
+    px(g, '#ffffff', cx - s, cy, s * 2 + 1, 1);
   }
 }

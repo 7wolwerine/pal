@@ -116,7 +116,7 @@ export const TRICKS = {
   },
   'broken-physics': {
     name: 'Porušené očekávání',
-    inGame: 'Celou hru se věci chovaly, jak mají — sklo nad kytkou se rozbilo jako sklo. Pak se sklenička odrazila jako guma a voda praskla na střepy. Do té chvíle jsi věřil všemu, co jsi tu viděl.',
+    inGame: 'Celou hru se věci chovaly, jak mají — sklo nad kytkou se rozbilo jako sklo. Pak se sklenička odrazila jako guma a víno z ní prasklo na střepy. Do té chvíle jsi věřil všemu, co jsi tu viděl.',
     realWorld: 'Deepfake video i podvržená fotka fungují, dokud sedí fyzika a detaily. Oko uvěří čemukoli, co se chová, jak čeká. Věrohodný vzhled není důkaz.',
   },
   'tech-support': {

@@ -22,8 +22,10 @@ import {
 import { dropTimes } from './model.ts';
 
 const SCENE = 'glass';
-/** If the player does not touch the glass, the character goes for it anyway. */
-const FETCH_AFTER_MS = 7000;
+/** A while with nothing touched, and the glass starts to catch the light. */
+const SHINE_AFTER_MS = 4000;
+/** If the player still does not touch the glass, the character goes for it anyway. */
+const FETCH_AFTER_MS = 16000;
 /** Picture pixels per ms: a tired walk. */
 const WALK_SPEED = 0.03;
 
@@ -76,7 +78,10 @@ export const glass: GameScene = {
       return alive;
     }
 
+    /** When the player last did something here; the glass shines after a while without. */
+    let lastTouch = 0;
     stage.hotspot(MIRROR_RECT, GLASS.mirror, () => {
+      lastTouch = now;
       if (busy || !alive) return;
       void lookInMirror();
     });
@@ -172,7 +177,7 @@ export const glass: GameScene = {
         const u = Math.min(1, ((t - walk.at) * WALK_SPEED) / Math.max(1, Math.abs(walk.to - walk.from)));
         hero = { ...hero, x: walk.from + (walk.to - walk.from) * u };
       }
-      paintGlassScene(g, t, glassState, motion, hero);
+      paintGlassScene(g, t, glassState, motion, hero, !busy && t - lastTouch > SHINE_AFTER_MS);
     });
 
     return () => {
