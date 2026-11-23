@@ -470,3 +470,11 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+
+/* A floating bubble the story waits on is its own state: it stays visible and clickable until it
+   is tapped, whatever the timer for ordinary lines says. */
+.pal--float .pal__bubble--tap {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}

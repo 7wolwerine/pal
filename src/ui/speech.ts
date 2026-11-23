@@ -48,6 +48,13 @@ export class Speech {
       event.stopPropagation();
       this.advance();
     });
+    // While a line waits on the bubble it is a button: Enter or Space goes on, like a click.
+    this.#bubble.addEventListener('keydown', (event) => {
+      if (!this.#tap || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this.advance();
+    });
     host.append(this.#bubble);
     const follow = (): void => {
       this.#place();
@@ -102,11 +109,17 @@ export class Speech {
     }
     this.#place();
     if (opts.tap) {
-      this.#bubble.classList.add('say--tap');
+      const bubble = this.#bubble;
+      bubble.classList.add('say--tap');
+      bubble.setAttribute('role', 'button');
+      bubble.tabIndex = 0;
       await new Promise<void>((resolve) => {
         this.#tap = resolve;
+        bubble.focus({ preventScroll: true });
       });
-      if (line === this.#line) this.#bubble.classList.remove('say--tap');
+      bubble.setAttribute('role', 'status');
+      bubble.removeAttribute('tabindex');
+      if (line === this.#line) bubble.classList.remove('say--tap');
     } else if (opts.ms) {
       await sleep(opts.ms);
     } else {

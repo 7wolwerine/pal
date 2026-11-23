@@ -807,3 +807,10 @@
 body:has(> .debug) .console {
   bottom: 60px;
 }
+
+/* A bubble the story waits on is a button: the keyboard can reach it, and it shows where it is. */
+.pal__bubble:focus-visible,
+.say:focus-visible {
+  outline: 3px solid var(--ink-soft);
+  outline-offset: 3px;
+}

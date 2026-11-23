@@ -4,6 +4,8 @@ import { createPalFace, type PalFace, type PalMood } from './pal-face.ts';
 import { livingSprite, setSpriteMood, type SpriteId, type SpriteMood } from './sprites.ts';
 
 const GLITCH_CHARS = '▓▒░█#@%&?!';
+/** What a screen reader calls a bubble the story waits on. */
+const CONTINUE = 'Pokračovat';
 
 /**
  * PAL's avatar and speech bubble. Text is typed out letter by letter; a click
@@ -44,6 +46,12 @@ export class Dialogue {
       this.#typed,
       this.#spoken,
     );
+    // While the story waits on the bubble it is a button: Enter or Space goes on, like a click.
+    this.#bubble.addEventListener('keydown', (event) => {
+      if (!this.#cancelTap || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      this.#bubble.click();
+    });
     this.el = h('div', { class: 'pal' }, h('div', { class: 'pal__who' }, this.#avatar, this.#name), this.#bubble);
   }
 
@@ -118,21 +126,32 @@ export class Dialogue {
    * Resolves on the next tap of the bubble; shows a little "tap to go on" hint.
    * A bubble the story waits on stays lit until it is tapped, even where only a
    * speaking bubble shows: it dims like any finished line only after the tap.
+   * While it waits it is a focused button, so a keyboard can go on too, and
+   * focusing it brings it into view if the window had scrolled away from it.
    */
   tapToContinue(): Promise<void> {
     const line = this.#line;
+    const bubble = this.#bubble;
+    this.#cancelTap?.();
     this.#light();
-    this.#bubble.classList.add('pal__bubble--tap');
+    bubble.classList.add('pal__bubble--tap');
+    bubble.tabIndex = 0;
+    bubble.setAttribute('role', 'button');
+    bubble.setAttribute('aria-label', CONTINUE);
     return new Promise((resolve) => {
       const onTap = (): void => {
-        this.#bubble.removeEventListener('click', onTap);
-        this.#bubble.classList.remove('pal__bubble--tap');
+        bubble.removeEventListener('click', onTap);
+        bubble.classList.remove('pal__bubble--tap');
+        bubble.removeAttribute('tabindex');
+        bubble.removeAttribute('role');
+        bubble.removeAttribute('aria-label');
         this.#cancelTap = undefined;
         this.#dim(this.#typed.textContent ?? '', line);
         resolve();
       };
       this.#cancelTap = onTap;
-      this.#bubble.addEventListener('click', onTap);
+      bubble.addEventListener('click', onTap);
+      if (bubble.isConnected) bubble.focus();
     });
   }
 
