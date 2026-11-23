@@ -9,19 +9,30 @@ import { sprite, type SpriteId } from '../../ui/sprites.ts';
 import { DIRS, E, MERCY_AFTER, N, S, START_LEVEL, W, createLayout, isConnected, isPerfect, leaks, rise, rotateCW, rotatePiece, wetPieces, type Dir, type PipeLayout } from './model.ts';
 
 const SCENE = 'rescue';
-const STAGE_W = 164;
-const STAGE_H = 104;
 
-// Geometry, in picture pixels.
-const CELL = 20;
-const GRID_X = 72;
-const GRID_Y = 12;
-const FLOOR_Y = 92;
-const TANK = { x: 6, y: 16, w: 54, h: 76 };
-const TAP_X = TANK.x + 14;
-/** The tank's outlet pipe runs from the tank wall into the grid at this height. */
-const OUTLET_Y = GRID_Y + 3 * CELL + CELL / 2;
-const DRAIN_X = GRID_X + 3 * CELL + CELL / 2;
+/**
+ * Where everything goes, in picture pixels. On a wide screen the tank stands on the left and the
+ * grid of pipes beside it. On a phone held upright the picture is tall instead: the tank on top,
+ * the grid under it across the whole width, so each pipe comes out about twice as big to tap.
+ * Picked once, when the scene starts.
+ */
+interface Geometry {
+  readonly STAGE_W: number;
+  readonly STAGE_H: number;
+  readonly CELL: number;
+  readonly GRID_X: number;
+  readonly GRID_Y: number;
+  readonly FLOOR_Y: number;
+  readonly TANK: { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
+  readonly upright: boolean;
+}
+
+const WIDE: Geometry = { STAGE_W: 164, STAGE_H: 104, CELL: 20, GRID_X: 72, GRID_Y: 12, FLOOR_Y: 92, TANK: { x: 6, y: 16, w: 54, h: 76 }, upright: false };
+const UPRIGHT: Geometry = { STAGE_W: 96, STAGE_H: 160, CELL: 20, GRID_X: 13, GRID_Y: 70, FLOOR_Y: 152, TANK: { x: 24, y: 14, w: 54, h: 48 }, upright: true };
+
+function geometry(): Geometry {
+  return window.matchMedia('(orientation: portrait) and (max-width: 600px)').matches ? UPRIGHT : WIDE;
+}
 
 const DRAIN_PER_S = 1 / 3.5;
 /** How fast the water runs along newly joined pipes, ms per piece. */
@@ -81,6 +92,14 @@ export const rescue: GameScene = {
   surface: 'scenery',
   mount(ctx, done) {
     const motion = !prefersReducedMotion();
+    const { STAGE_W, STAGE_H, CELL, GRID_X, GRID_Y, FLOOR_Y, TANK, upright } = geometry();
+    const TAP_X = TANK.x + 14;
+    /** The tank's outlet pipe comes into the grid from the left at this height. */
+    const OUTLET_Y = GRID_Y + 3 * CELL + CELL / 2;
+    const DRAIN_X = GRID_X + 3 * CELL + CELL / 2;
+    /** Upright: the outlet leaves the tank low on its left wall, runs down the left edge, then into the grid. */
+    const DOWN_X = 5;
+    const EXIT_Y = TANK.y + TANK.h - 5;
     const stage = new PixelStage(STAGE_W, STAGE_H, RESCUE.sceneLabel);
     ctx.scenery.replaceChildren(stage.el);
     const speech = new Speech(stage.el, STAGE_W, STAGE_H);
@@ -329,8 +348,16 @@ export const rescue: GameScene = {
       }
 
       // The outlet: from the tank wall into the first pipe of the grid.
-      drawRun(g, TANK.x + TANK.w + 2, OUTLET_Y, GRID_X - (TANK.x + TANK.w + 2), true, level > TANK.y + TANK.h - OUTLET_Y - 3, flowing, t);
-      px(g, C.rust, TANK.x + TANK.w + 3, OUTLET_Y - 5, 3, 10); // flange
+      if (upright) {
+        const outWet = level > TANK.y + TANK.h - EXIT_Y - 3;
+        drawRun(g, DOWN_X - 4, EXIT_Y, TANK.x - 2 - (DOWN_X - 4), true, outWet, flowing, t);
+        drawRun(g, DOWN_X, EXIT_Y - 4, OUTLET_Y + 4 - (EXIT_Y - 4), false, outWet, flowing, t);
+        drawRun(g, DOWN_X - 4, OUTLET_Y, GRID_X - (DOWN_X - 4), true, outWet, flowing, t);
+        px(g, C.rust, TANK.x - 6, EXIT_Y - 5, 3, 10); // flange
+      } else {
+        drawRun(g, TANK.x + TANK.w + 2, OUTLET_Y, GRID_X - (TANK.x + TANK.w + 2), true, level > TANK.y + TANK.h - OUTLET_Y - 3, flowing, t);
+        px(g, C.rust, TANK.x + TANK.w + 3, OUTLET_Y - 5, 3, 10); // flange
+      }
 
       // The grid of pipes.
       px(g, C.socket, GRID_X - 1, GRID_Y - 1, 4 * CELL + 2, 4 * CELL + 2);
