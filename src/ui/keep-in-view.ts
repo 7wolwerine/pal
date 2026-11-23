@@ -16,7 +16,10 @@ export function keepInView(body: HTMLElement, stage: HTMLElement): () => void {
         return;
       }
       const active = document.activeElement;
-      const target = active instanceof HTMLElement && body.contains(active) && active !== body ? active : stage.lastElementChild;
+      // A field being typed in brings its whole form: the answers under it stay in view too.
+      const form = active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ? active.form : null;
+      const focused = active instanceof HTMLElement && body.contains(active) && active !== body ? active : null;
+      const target = form && body.contains(form) && form.offsetHeight <= body.clientHeight ? form : (focused ?? stage.lastElementChild);
       if (!(target instanceof HTMLElement)) return;
       const box = body.getBoundingClientRect();
       const it = target.getBoundingClientRect();

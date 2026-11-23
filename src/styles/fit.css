@@ -298,3 +298,11 @@
     font-size: 12px;
   }
 }
+
+/* ---------- safe areas ----------
+   A phone on its side has the notch at one side and the home bar at the bottom: the page keeps
+   out of them on every side (src/ui/pc.ts measures this padding when it sizes the computer). */
+#app {
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}

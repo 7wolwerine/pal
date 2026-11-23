@@ -24,7 +24,7 @@ import {
 } from '../scenes/desk/art.ts';
 import { TunePlayer, type Tune } from '../scenes/desk/model.ts';
 import { h, prefersReducedMotion } from './dom.ts';
-import { layoutPc, type Box, type PcLayout } from './pc-layout.ts';
+import { GUTTER, layoutPc, type Box, type PcLayout } from './pc-layout.ts';
 import { Speech } from './speech.ts';
 
 /** The desk scene's own colours. */
@@ -94,7 +94,7 @@ export function createPc(win: HTMLElement): HTMLElement {
   const roomG = room.getContext('2d');
   const paperG = paper.getContext('2d');
 
-  let L = layoutPc(viewW(), window.innerHeight);
+  let L = layoutPc(viewW(), viewH());
   const started = performance.now();
   const now = (): number => performance.now() - started;
 
@@ -433,8 +433,9 @@ export function createPc(win: HTMLElement): HTMLElement {
 
   function relayout(): void {
     const w = viewW();
-    const keyboard = typing() && w === laidW && window.innerHeight < laidH;
-    if (!keyboard) laidH = window.innerHeight;
+    const h = viewH();
+    const keyboard = typing() && w === laidW && h < laidH;
+    if (!keyboard) laidH = h;
     laidW = w;
     L = layoutPc(w, laidH);
     const s = L.s;
@@ -523,20 +524,65 @@ export function createPc(win: HTMLElement): HTMLElement {
       wake();
     });
   });
-  // Once the keyboard is up, bring the field being typed in to the middle of what is left.
-  document.addEventListener('focusin', (event) => {
-    const el = event.target;
-    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
+  /**
+   * Once the on-screen keyboard is up, the field being typed in and its answers (the whole form:
+   * send and decline too) are brought into the part of the page the keyboard leaves visible. The
+   * computer keeps its size meanwhile (see `relayout`); only the page scrolls, and only as far as
+   * needed. If the form is taller than what is left, the field itself goes to the top.
+   */
+  function showTyping(): void {
+    const el = document.activeElement;
+    if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) || !pc.contains(el)) return;
     if (pc.dataset.mode === 'full') return;
-    window.setTimeout(() => el.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350);
+    const view = window.visualViewport;
+    const top = view ? view.offsetTop : 0;
+    const height = view ? view.height : window.innerHeight;
+    const margin = 12;
+    const block = (el.form ?? el).getBoundingClientRect();
+    const field = el.getBoundingClientRect();
+    const behavior: ScrollBehavior = motion ? 'smooth' : 'auto';
+    const fits = block.height <= height - margin * 2;
+    const want = fits ? block : field;
+    if (want.bottom > top + height - margin) window.scrollBy({ top: (fits ? want.bottom - (top + height - margin) : want.top - top - margin), behavior });
+    else if (want.top < top + margin) window.scrollBy({ top: want.top - top - margin, behavior });
+  }
+  let typingTimer = 0;
+  const soon = (ms: number): void => {
+    window.clearTimeout(typingTimer);
+    typingTimer = window.setTimeout(showTyping, ms);
+  };
+  document.addEventListener('focusin', (event) => {
+    if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) soon(350);
   });
+  // The keyboard coming up (or the browser's bars moving) changes what is visible, not the page.
+  window.visualViewport?.addEventListener('resize', () => soon(60));
   relayout();
   // The frame is put on the page after this returns.
   requestAnimationFrame(wake);
   return pc;
 }
 
-/** The page's width without its scrollbar. */
+/**
+ * Room the page's padding takes beyond the layout's own gutters: the safe areas of a phone with a
+ * notch or a home bar (the page pads itself out of them), measured rather than guessed.
+ */
+function extraPadding(): { x: number; y: number } {
+  const app = document.getElementById('app');
+  if (!app) return { x: 0, y: 0 };
+  const cs = getComputedStyle(app);
+  const px = (v: string): number => Number.parseFloat(v) || 0;
+  return {
+    x: Math.max(0, px(cs.paddingLeft) + px(cs.paddingRight) - 2 * GUTTER),
+    y: Math.max(0, px(cs.paddingTop) + px(cs.paddingBottom) - 2 * GUTTER),
+  };
+}
+
+/** The page's width without its scrollbar and the safe areas at its sides. */
 function viewW(): number {
-  return document.documentElement.clientWidth || window.innerWidth;
+  return (document.documentElement.clientWidth || window.innerWidth) - extraPadding().x;
+}
+
+/** The page's height without the safe areas at its top and bottom. */
+function viewH(): number {
+  return window.innerHeight - extraPadding().y;
 }
