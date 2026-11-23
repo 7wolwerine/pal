@@ -28,10 +28,14 @@ export function keepInView(body: HTMLElement, stage: HTMLElement): () => void {
   };
   const watch = new MutationObserver(glide);
   watch.observe(stage, { childList: true, subtree: true });
+  // PAL's bubble growing as a line is typed pushes the stage down: glide after that too.
+  const sizes = new ResizeObserver(glide);
+  for (const child of body.children) sizes.observe(child);
   body.addEventListener('focusin', glide);
   window.addEventListener('resize', glide);
   return () => {
     watch.disconnect();
+    sizes.disconnect();
     body.removeEventListener('focusin', glide);
     window.removeEventListener('resize', glide);
     cancelAnimationFrame(frame);

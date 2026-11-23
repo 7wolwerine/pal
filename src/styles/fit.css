@@ -184,3 +184,117 @@
   grid-row: span 2;
   margin: 0;
 }
+
+/* ---------- a phone held upright: tighter, so a phase fits without scrolling ----------
+   PAL keeps a smaller face and a bubble with a smaller font (still four lines tall, so a longer
+   line does not move what is under it), the window's padding shrinks, the two trust badges go on
+   one line. */
+.pc[data-mode='compact'] .win__body {
+  padding: 12px;
+}
+
+.pc[data-mode='compact'] .win__foot {
+  gap: 6px;
+  padding: 0 12px 8px;
+}
+
+.pc[data-mode='compact'] .win__foot .chip {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.pc[data-mode='compact'] .win__body > .pal {
+  gap: 10px;
+}
+
+.pc[data-mode='compact'] .win__body > .pal .pal__avatar {
+  width: 56px;
+  height: 56px;
+  padding: 2px;
+}
+
+.pc[data-mode='compact'] .win__body > .pal .pal__bubble {
+  min-height: calc(4 * 1.35em + 16px);
+  padding: 8px 12px;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.pc[data-mode='compact'] .win__body > .stage {
+  margin-top: 10px;
+}
+
+/* PAL Pro: the offer is a compact card, so the download, the install and their end stay in view. */
+.pc[data-mode='compact'] .pro,
+.pc[data-mode='short'] .pro {
+  gap: 6px;
+  padding: 10px;
+}
+
+.pc[data-mode='compact'] .pro__icon,
+.pc[data-mode='short'] .pro__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.pc[data-mode='compact'] .pro__name,
+.pc[data-mode='short'] .pro__name {
+  font-size: 20px;
+}
+
+.pc[data-mode='compact'] .pro__perks,
+.pc[data-mode='short'] .pro__perks {
+  gap: 2px 10px;
+  font-size: 13px;
+}
+
+/* The three small chests in one row on a narrow phone. */
+.pc[data-mode='compact'] .chests {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+
+.pc[data-mode='compact'] .chests .chest {
+  min-width: 0;
+  flex: 0 1 84px;
+}
+
+/* The chests' questions: the field across, the two answers side by side under it. */
+.chest__ask {
+  justify-items: stretch;
+  width: min(100%, 360px);
+  margin-inline: auto;
+}
+
+.chest__ask > .row > .btn {
+  flex: 1 1 0;
+  margin-top: 0;
+}
+
+/* ---------- a narrow window (the smallest phones) ----------
+   The trust badges get smaller, so both still fit on one line. */
+:root:not([data-theme='revealed']) .pc__screen > .win {
+  container: palwin / inline-size;
+}
+
+@container palwin (max-width: 280px) {
+  :root .pc .win__foot {
+    gap: 4px;
+  }
+
+  :root .pc .win__foot .chip {
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  :root .pc .win__foot .chip svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  :root .pc .pro__perks {
+    font-size: 12px;
+  }
+}

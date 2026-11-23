@@ -624,13 +624,14 @@ export const chest: GameScene = {
         attrs: { type: 'text', autocomplete: 'off', maxlength: '12', 'aria-label': CHEST.cardLabel, placeholder: CHEST.cardLabel },
       });
       const error = h('p', { class: 'error', attrs: { role: 'alert' } });
-      const skip = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.skip, attrs: { type: 'button' } });
+      const skip = h('button', { class: 'btn btn--quiet', text: CHEST.skip, attrs: { type: 'button' } });
+      // The field on its own line, both answers in one row under it: it fits a narrow phone.
       const form = h(
         'form',
         { class: 'chest__ask', attrs: { novalidate: '' } },
-        h('div', { class: 'row' }, input, h('button', { class: 'btn', text: CHEST.cardSubmit, attrs: { type: 'submit' } })),
+        input,
         error,
-        skip,
+        h('div', { class: 'row' }, skip, h('button', { class: 'btn', text: CHEST.cardSubmit, attrs: { type: 'submit' } })),
       );
       input.addEventListener('input', () => {
         error.textContent = '';
@@ -711,13 +712,13 @@ export const chest: GameScene = {
         attrs: { type: 'text', autocomplete: 'off', maxlength: '40', 'aria-label': cost.label, placeholder: cost.label },
       });
       const error = h('p', { class: 'error', attrs: { role: 'alert' } });
-      const leave = h('button', { class: 'btn btn--quiet btn--small', text: CHEST.leave, attrs: { type: 'button' } });
+      const leave = h('button', { class: 'btn btn--quiet', text: CHEST.leave, attrs: { type: 'button' } });
       const form = h(
         'form',
         { class: 'chest__ask', attrs: { novalidate: '' } },
-        h('div', { class: 'row' }, input, h('button', { class: 'btn', text: CHEST.take, attrs: { type: 'submit' } })),
+        input,
         error,
-        h('div', { class: 'row row--wrap chest__alts' }, leave),
+        h('div', { class: 'row' }, leave, h('button', { class: 'btn', text: CHEST.take, attrs: { type: 'submit' } })),
       );
       input.addEventListener('input', () => {
         error.textContent = '';
