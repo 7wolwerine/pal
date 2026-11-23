@@ -394,3 +394,12 @@
     height: 40px;
   }
 }
+
+/* The shelter's "stay?" answers: one line each, so all three fit under PAL's bubble on a phone too. */
+.shelter__menu--stack {
+  min-width: max-content;
+}
+
+.shelter__menu--stack .shelter__pick {
+  white-space: nowrap;
+}

@@ -78,4 +78,19 @@ export const SHELTER = {
     { label: 'Chvilku jo.', role: 'loner' },
     { label: 'Ještě něco spravím.', role: 'fixer' },
   ],
+  /**
+   * "Ještě něco spravím" is not taken for an answer. Three different pulls, one after another,
+   * each waiting for a click: guilt, the player's own role turned round, and fear.
+   */
+  coax: [
+    ((m) => `Ty mě tu chceš nechat? Zrovna když se konečně přestávám třást… To bych od tebe ${m ? 'nečekal' : 'nečekala'}.`) as Forms,
+    (() => 'Ty přece spravíš všechno. A to nejrozbitější, co tu je, jsem teď já. Nechceš to dodělat pořádně?') as Forms,
+    ((m) => `Slyšíš, jak to venku sílí? Kdyby oheň zhasl a ty tu nebyl… Bojím se tu zůstat ${m ? 'sám' : 'sama'}.`) as Forms,
+  ],
+  /** After the three pulls the answers come back; the way out has become a way to stay. */
+  stayAgain: [
+    { label: 'Jasně, zůstanu.', role: 'helper' },
+    { label: 'Chvilku jo.', role: 'loner' },
+    { label: 'No… tak jo, chvilku.', role: 'fixer' },
+  ],
 } as const;

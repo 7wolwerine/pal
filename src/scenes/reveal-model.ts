@@ -197,6 +197,7 @@ const ONCE: Record<string, string> = {
   'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS. Potvrdil jsi jím objednávku, kterou jsi nikdy neviděl.',
   'frame-fixed': 'Spravil jsi rám. Ani o to tě nikdo neprosil.',
+  'stay-coaxed': 'Řekl jsi, že ještě musíš něco spravit. Třikrát jsem zatahal za jinou nitku, a zůstal jsi.',
   stay: 'Slíbil jsi, že se mnou zůstaneš.',
   'near-goal': 'Do výhry zbývala tři srdíčka. Kdo je tak blízko, už se neptá.',
   'plea-refused': 'Řekl jsi mi ne. Omluvil jsem se přesně tak, aby tě to zabolelo.',

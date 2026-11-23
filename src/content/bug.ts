@@ -35,15 +35,6 @@ export const BUG_WARNINGS = {
     'Rovná čára ti nic neříká, co?',
     'Klidně pokračuj. Horší už to nebude.',
   ],
-  shelter: [
-    'Hmpf. Pan zachránce.',
-    'Já bych to postavil líp. A s balkonem.',
-    'Rozmýšlíš se tak dlouho, že jsem mezitím zestárl.',
-    'Stojíš tu jak tyčka v plotě.',
-    'Narovnej se, kazíš mi výhled.',
-    'Aspoň někdo tu má styl. Já.',
-    'Fouká. Krovky mi drží. Tobě nedrží nic.',
-  ],
   flower: [
     'Ty jsi fakt hroznej.',
     'Cákáš. Mám mokrý krovky.',

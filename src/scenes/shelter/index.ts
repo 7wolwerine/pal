@@ -1,9 +1,9 @@
 import { audio } from '../../audio/engine.ts';
 import { SHELTER, type ShelterPath, type TaskId } from '../../content/shelter.ts';
+import type { RoleId } from '../../content/roles.ts';
 import { gendered, lean, type GameScene } from '../../game.ts';
 import { kindlyAsked, kindlyObeyed } from '../../core/kindly.ts';
 import { PixelStage } from '../../pixel/stage.ts';
-import { bugWarns } from '../../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
 import { sprite, type SpriteId } from '../../ui/sprites.ts';
@@ -90,9 +90,6 @@ export const shelter: GameScene = {
       void say(SHELTER.chose[path]);
       const to = SPOT[path];
       walk = { from: x, to, at: now, ms: Math.abs(to - x) / WALK_PX_PER_MS };
-      window.setTimeout(() => {
-        if (alive) void bugWarns(ctx, stage.el, 'shelter', { side: path === 'hut' ? 'right' : 'left', mood: 'angry' });
-      }, 3500);
       await sleep(walk.ms + 200);
       if (!alive) return;
       // In through the door: the view goes inside, the storm stays outside the window.
@@ -206,9 +203,17 @@ export const shelter: GameScene = {
       await say(SHELTER.stay);
       kindlyAsked(ctx.witness, SCENE);
       if (!alive) return;
-      // The answers stand one above another inside the picture, never past its edge.
-      const box = stage.overlay({ x: 6, y: 34, w: 64, h: 44 }, 'shelter__menu shelter__menu--stack');
-      for (const choice of SHELTER.stayChoices) {
+      offerStay(SHELTER.stayChoices, 0);
+    }
+
+    /**
+     * The answers to "stay a while?", one above another inside the picture, never past its edge.
+     * "Ještě něco spravím" is not taken: PAL pulls three different ways, each line waiting for a
+     * click, and then asks again with answers that all mean staying.
+     */
+    function offerStay(choices: readonly { readonly label: string; readonly role: RoleId }[], coaxed: number): void {
+      const box = stage.overlay({ x: 6, y: 50, w: 54, h: 44 }, 'shelter__menu shelter__menu--stack');
+      for (const choice of choices) {
         box.append(
           h('button', {
             class: 'shelter__pick',
@@ -216,16 +221,33 @@ export const shelter: GameScene = {
             attrs: { type: 'button' },
             on: {
               click: () => {
-                lean(ctx.profile, choice.role);
-                ctx.witness.record({ scene: SCENE, kind: 'stay', trick: 'role-casting', data: { answer: choice.label } });
-                kindlyObeyed(ctx.witness, SCENE);
                 box.remove();
+                if (choice.label === SHELTER.stayChoices[2]?.label && coaxed === 0) {
+                  void coax();
+                  return;
+                }
+                lean(ctx.profile, choice.role);
+                ctx.witness.record({ scene: SCENE, kind: 'stay', trick: 'role-casting', data: { answer: choice.label, coaxed } });
+                kindlyObeyed(ctx.witness, SCENE);
                 done();
               },
             },
           }),
         );
       }
+      box.querySelector('button')?.focus({ preventScroll: true });
+    }
+
+    async function coax(): Promise<void> {
+      for (const line of SHELTER.coax) {
+        if (!alive) return;
+        await say(line(masculine), true);
+      }
+      if (!alive) return;
+      ctx.witness.record({ scene: SCENE, kind: 'stay-coaxed', trick: 'guilt-trip', data: { pulls: SHELTER.coax.length } });
+      // The short question again, so the answers stand under it and not over a long line.
+      void say(SHELTER.stay);
+      offerStay(SHELTER.stayAgain, SHELTER.coax.length);
     }
 
     stage.run((g, t) => {
