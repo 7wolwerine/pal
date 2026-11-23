@@ -28,8 +28,8 @@ const SCREW_ALL = (1 << SCREWS) - 1;
 export const BOOKS = 5;
 const MAIL_MAX = 5;
 
-/** How many controls BUG knocks out after the first, second and third tidy-up. */
-export const SABOTAGE_PLAN = [3, 2, 1] as const;
+/** How many controls BUG knocks out after the first and second tidy-up: a short game, not a grind. */
+export const SABOTAGE_PLAN = [2, 1] as const;
 
 /** The value at which a control of each kind is "done". */
 export function alignedValue(kind: ControlKind): number {
@@ -104,16 +104,17 @@ function misalignedValue(kind: ControlKind, random: () => number): number {
   const pick = (from: number, to: number): number => from + Math.min(to - from, Math.floor(random() * (to - from + 1)));
   switch (kind) {
     case 'tilt':
-      return (random() < 0.5 ? -1 : 1) * pick(7, 12);
+      // One nudge puts it straight again.
+      return (random() < 0.5 ? -1 : 1) * pick(7, 8);
     case 'screw': {
       // Two or more screws worked loose.
       const masks = LOOSE_MASKS;
       return masks[pick(0, masks.length - 1)] ?? SCREW_ALL;
     }
     case 'book':
-      return pick(2, BOOKS - 1);
+      return pick(1, 2);
     case 'mail':
-      return pick(1, 4);
+      return pick(1, 2);
     case 'chain':
     case 'calendar':
       return 0;
@@ -121,14 +122,14 @@ function misalignedValue(kind: ControlKind, random: () => number): number {
 }
 
 export class FidgetModel {
-  // Every one of them is nearly done. Nearly is what itches.
+  // Every one of them is nearly done. Nearly is what itches. One or two clicks each: eight in all.
   readonly controls: Control[] = [
-    { id: 'tilt', kind: 'tilt', value: 11 },
-    { id: 'screw', kind: 'screw', value: SCREW_ALL },
+    { id: 'tilt', kind: 'tilt', value: 8 },
+    { id: 'screw', kind: 'screw', value: 0b0101 },
     { id: 'chain', kind: 'chain', value: 0 },
-    { id: 'book', kind: 'book', value: BOOKS },
+    { id: 'book', kind: 'book', value: 2 },
     { id: 'calendar', kind: 'calendar', value: 0 },
-    { id: 'mail', kind: 'mail', value: 3 },
+    { id: 'mail', kind: 'mail', value: 1 },
   ];
   #rounds = 0;
 

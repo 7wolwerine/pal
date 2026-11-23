@@ -26,7 +26,7 @@ export const FIDGETS = {
   bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Typický.', 'Ty jsi hroznej.'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
   bugGrab: 'Tak dost! Tady sedím já!',
-  bugShove: ['Nepustím!', 'Au! Ne!', 'Přestaň!', 'Grr!', 'Já… ', 'Nóóó!'],
+  bugShove: ['Nepustím!', 'Au! Přestaň!', 'Nóóó!'],
   bugFlung: 'Jau…',
   bugResigns: 'Fajn. Dělej si, co chceš.',
 

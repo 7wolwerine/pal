@@ -80,12 +80,14 @@ describe('FidgetModel', () => {
     const m = new FidgetModel();
     expect(m.controls.map((c) => c.kind).sort()).toEqual([...KINDS].sort());
     for (const c of m.controls) expect(isAligned(c), c.id).toBe(false);
-    expect(screwsOut(m.get('screw').value)).toBe(4);
-    expect(m.get('book').value).toBe(BOOKS);
+    // Nearly done means a click or two each, not a chore.
+    expect(screwsOut(m.get('screw').value)).toBe(2);
+    expect(m.get('book').value).toBe(2);
   });
 
   it('reports the click that finishes a control, and only that one', () => {
     const m = new FidgetModel();
+    m.set('mail', 3);
     expect(m.poke('mail')).toBe(false);
     expect(m.poke('mail')).toBe(false);
     expect(m.poke('mail')).toBe(true);
@@ -99,6 +101,7 @@ describe('FidgetModel', () => {
 
   it('needs a click for every screw', () => {
     const m = new FidgetModel();
+    m.set('screw', (1 << SCREWS) - 1);
     const clicks = [3, 0, 2, 1].map((part) => m.poke('screw', part));
     expect(clicks).toEqual([false, false, false, true]);
     for (let i = 0; i < SCREWS; i++) expect(screwOut(m.get('screw').value, i)).toBe(false);
@@ -116,7 +119,7 @@ describe('FidgetModel', () => {
     expect(m.allAligned).toBe(true);
   });
 
-  it('lets BUG knock out 3, then 2, then 1 control, and then the player has won', () => {
+  it('lets BUG knock out 2, then 1 control, and then the player has won', () => {
     const m = new FidgetModel();
     for (const count of SABOTAGE_PLAN) {
       alignAll(m);
@@ -325,5 +328,35 @@ describe('cogs in order', () => {
     const gap = GEARS.map((_g, i) => i === 0 || i === 2);
     expect(nextToPlace(gap)).toBe(1);
     expect(nextToPlace(GEARS.map(() => true))).toBe(-1);
+  });
+});
+
+describe('a short fidget game', () => {
+  it('needs only a few clicks to put everything right the first time', () => {
+    const m = new FidgetModel();
+    let clicks = 0;
+    for (let i = 0; i < 20 && !m.allAligned; i++)
+      for (const c of m.controls)
+        if (!isAligned(c)) {
+          m.poke(c.id);
+          clicks++;
+        }
+    expect(m.allAligned).toBe(true);
+    expect(clicks).toBeLessThanOrEqual(8);
+  });
+
+  it('lets one click undo whatever BUG knocks out, two at most', () => {
+    for (const kind of ['tilt', 'book', 'mail'] as const) {
+      for (let r = 0; r < 1; r += 0.1) {
+        const m = new FidgetModel();
+        m.set(kind, FidgetModel.spoil(kind, () => r));
+        let clicks = 0;
+        while (!isAligned(m.get(kind)) && clicks < 9) {
+          m.poke(kind);
+          clicks++;
+        }
+        expect(clicks, `${kind} at ${r}`).toBeLessThanOrEqual(2);
+      }
+    }
   });
 });
