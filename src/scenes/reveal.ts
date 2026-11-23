@@ -156,8 +156,19 @@ export const reveal: Scene<GameContext> = {
     function showRest(): void {
       rest.hidden = false;
       rest.replaceChildren(...breakdown());
-      // Everything new appears below what is already on screen, so nothing needs to scroll.
+      // Everything new appears below what is already on screen. On a low screen the page then
+      // moves up just enough for the tabs' bar to be in view, never past the start of what is new,
+      // so the summary, "Hrát znovu" and the way into the analysis are all in the first screenful.
       rest.querySelector<HTMLButtonElement>('.btn')?.focus({ preventScroll: true });
+      requestAnimationFrame(() => {
+        const bar = rest.querySelector('.tabs__bar');
+        if (!bar) return;
+        // Clear of the music button in the bottom corner, too.
+        const need = bar.getBoundingClientRect().bottom - (window.innerHeight - 64);
+        const room = rest.getBoundingClientRect().top - 8;
+        const by = Math.min(need, room);
+        if (by > 0) window.scrollBy({ top: by, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+      });
     }
 
     interface Tab {
@@ -358,8 +369,16 @@ export const reveal: Scene<GameContext> = {
 
       const stat = (value: string, label: string): HTMLElement => h('li', { class: 'stats__cell' }, h('b', { text: value }), h('span', { text: label }));
 
+      const notes: (Node | false)[] = [
+        windowButtons > 0 && h('p', { class: 'reveal__note', text: `Pokusů zavřít nebo schovat okno: ${windowButtons}. A přesto jsme tady.` }),
+        bugWarnings > 0 &&
+          h('p', { class: 'reveal__note', text: `Brouk se ti ${bugWarnings}× postavil do cesty. Nic nevysvětloval, jen překážel. Byl tu jediný, kdo nehrál se mnou.` }),
+      ];
+
+      // What a reader needs first is all near the top: the keygen and a way to play again, the
+      // summary, then the tabs of the analysis; the longer parts open inside the tabs.
       const nodes: (Node | false)[] = [
-        keygen,
+        h('div', { class: 'reveal__actions' }, keygen, again),
         h('h1', { class: 'reveal__title', text: 'Congratz, you’ve been scammed!' }),
         h('p', { class: 'reveal__lead', text: `Trvalo to ${seconds} s a ${clicks} kliknutí. Nic z toho jsem si nemusel brát.` }),
         h(
@@ -372,15 +391,12 @@ export const reveal: Scene<GameContext> = {
           stat(`${windowButtons}×`, 'chtěl jsi odejít'),
           stat(String(vigilance), 'ostražitost (body)'),
         ),
-        windowButtons > 0 && h('p', { class: 'reveal__note', text: `Pokusů zavřít nebo schovat okno: ${windowButtons}. A přesto jsme tady.` }),
-        bugWarnings > 0 &&
-          h('p', { class: 'reveal__note', text: `Brouk se ti ${bugWarnings}× postavil do cesty. Nic nevysvětloval, jen překážel. Byl tu jediný, kdo nehrál se mnou.` }),
         tabs([
           {
             label: 'Triky',
             meta: String(model.tricks.length),
             title: 'Na co to zabralo',
-            content: [model.tricks.length ? trickList() : h('p', { text: 'Na nic. Žádný trik se nechytil. To se nestává.' })],
+            content: [...notes, model.tricks.length ? trickList() : h('p', { text: 'Na nic. Žádný trik se nechytil. To se nestává.' })],
           },
           {
             label: 'O tobě',
@@ -439,7 +455,6 @@ export const reveal: Scene<GameContext> = {
               ? 'Jedinou výjimkou byl certifikát: na tvou adresu jsem poslal ten jeden dopis, o který sis řekl. Adresu nikde neukládám. Nic dalšího neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.'
               : 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
           }),
-          again,
         ),
       ];
       return nodes.filter((n): n is Node => n !== false);
