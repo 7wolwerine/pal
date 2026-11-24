@@ -587,3 +587,22 @@
     animation: none;
   }
 }
+
+/* ---------- bubbles in pixel scenes grow with the picture, not with the browser window ----------
+   A phone on its side has a wide window but a small picture: the text used to come out large
+   against it. Now it follows the picture's own width (container units), within readable limits. */
+.scenery > .scene {
+  container-type: inline-size;
+}
+
+.scenery .say {
+  padding: 7px 12px;
+  font-size: clamp(12px, calc(2.2cqw + 4px), 17px);
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+/* BUG's words grow with him (see BUG_PX in src/ui/beetle.ts). */
+.bug .bug__bubble {
+  font-size: clamp(12px, calc(var(--bug-px, 96px) / 6.5), 15px);
+}

@@ -7,7 +7,18 @@ import { h, prefersReducedMotion } from './dom.ts';
  * Rendered size of BUG in CSS pixels: three screen pixels to each of his own,
  * a little less on a phone, where the whole scene is narrower than he is used to.
  */
-export const BUG_PX = typeof window !== 'undefined' && window.innerWidth < 560 ? 80 : 96;
+/**
+ * BUG's size on screen, in whole multiples of his 32-pixel drawing (two, two and a half or three
+ * pixels to one), picked by how wide the pictures come out on this screen: about a sixth of a
+ * picture, so on a small phone he no longer hides the character and half the house.
+ */
+export const BUG_PX = typeof window !== 'undefined' ? bugPx(window.innerWidth, window.innerHeight) : 96;
+
+/** How wide a pixel scene comes out (see .scenery > .scene in the styles), and BUG's size for it. */
+export function bugPx(viewW: number, viewH: number): number {
+  const scene = Math.min(viewW - 32, 760, (viewH - 88) * 1.6);
+  return scene < 420 ? 64 : scene < 600 ? 80 : 96;
+}
 if (typeof document !== 'undefined') document.documentElement.style.setProperty('--bug-px', `${BUG_PX}px`);
 
 /** How long taking off or landing takes when he is shooed, in ms. Matches bug-flyoff in the stylesheet. */
