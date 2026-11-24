@@ -517,3 +517,9 @@
 :root:not([data-theme='revealed']) .pc__screen > .win:not(.win--boot):not(.win--nope) {
   animation: none;
 }
+
+/* What BUG says can be clicked away (it is not a poke): see src/ui/beetle.ts. */
+.bug .bug__bubble {
+  pointer-events: auto;
+  cursor: var(--cursor-hand);
+}

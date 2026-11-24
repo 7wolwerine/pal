@@ -37,9 +37,14 @@ export class Dialogue {
         class: 'pal__bubble',
         on: {
           click: () => {
-            // Between two bubbles of a long line a click moves on; while typing it finishes the line.
+            // Between two bubbles of a long line a click moves on; while typing it finishes the line;
+            // a finished line floating over the window, that nothing waits on, is put away.
             if (this.#next) this.#next();
-            else this.#skip = true;
+            else if (this.#typing) this.#skip = true;
+            else if (!this.#cancelTap && this.el.classList.contains('pal--float')) {
+              window.clearTimeout(this.#liveTimer);
+              this.#bubble.classList.remove('pal__bubble--live');
+            }
           },
         },
       },
@@ -241,15 +246,23 @@ export class Dialogue {
   }
 
   /** Types `text` character by character, if this is still the current line. */
+  /** True while a line is being typed out. */
+  #typing = false;
+
   async #type(text: string, line: number, msPerChar: number): Promise<void> {
     this.#typed.textContent = '';
-    for (const char of text) {
-      if (line !== this.#line) return;
-      if (this.#skip) break;
-      this.#typed.textContent += char;
-      await sleep(char === ' ' ? msPerChar / 2 : msPerChar);
+    this.#typing = true;
+    try {
+      for (const char of text) {
+        if (line !== this.#line) return;
+        if (this.#skip) break;
+        this.#typed.textContent += char;
+        await sleep(char === ' ' ? msPerChar / 2 : msPerChar);
+      }
+      if (line === this.#line) this.#typed.textContent = text;
+    } finally {
+      if (line === this.#line) this.#typing = false;
     }
-    if (line === this.#line) this.#typed.textContent = text;
   }
 
   /** Scrambles whatever is in the bubble, then wipes it. */

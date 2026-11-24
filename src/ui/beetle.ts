@@ -52,6 +52,12 @@ export class Beetle {
       event.stopPropagation();
       this.#poke();
     });
+    // A click on what he says shuts him up (it is not a poke): the line stays gone until he says another.
+    this.#bubble.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.#dismissed = this.#line;
+      this.#bubble.hidden = true;
+    });
     // Go back to breathing once a landing squash has played.
     this.#body.addEventListener('animationend', (e) => {
       if (e.animationName === 'land') this.#body.classList.remove('bug__body--land');
@@ -225,7 +231,11 @@ export class Beetle {
     return this.#line;
   }
 
+  /** The line the player clicked away, kept hidden until a new one comes. */
+  #dismissed: string | undefined;
+
   say(line: string): void {
+    if (line !== this.#line) this.#dismissed = undefined;
     this.#line = line;
     this.#scribbled = false;
     // A poked reaction stays readable: the scene's line takes over once it is done.
@@ -253,7 +263,7 @@ export class Beetle {
     this.#bubble.classList.toggle('bug__bubble--scribble', this.#scribbled);
     if (this.#scribbled) this.#bubble.replaceChildren(scribble());
     else this.#bubble.textContent = this.#line;
-    this.#bubble.hidden = this.away || this.#left || (!this.#scribbled && !this.#line);
+    this.#bubble.hidden = this.away || this.#left || (!this.#scribbled && (!this.#line || this.#dismissed === this.#line));
     if (!this.#bubble.hidden) this.#fitBubble();
   }
 

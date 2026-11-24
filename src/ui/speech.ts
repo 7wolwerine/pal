@@ -63,16 +63,21 @@ export class Speech {
     this.#frame = requestAnimationFrame(follow);
   }
 
-  /** Finishes typing, or answers a waiting tap. */
+  /** Finishes typing, or answers a waiting tap; a finished line nobody has to click away is put away by a click. */
   advance(): void {
     if (this.#tap) {
       const tap = this.#tap;
       this.#tap = undefined;
       tap();
-    } else {
+    } else if (this.#typing) {
       this.#skip = true;
+    } else {
+      this.#bubble.hidden = true;
     }
   }
+
+  /** True while a line is being typed out. */
+  #typing = false;
 
   /** True while a line waits for a click. */
   get waiting(): boolean {
@@ -83,6 +88,7 @@ export class Speech {
     const line = ++this.#line;
     this.#cancelTap();
     this.#skip = false;
+    this.#typing = false;
     this.#anchor = anchor;
     this.#below = opts.below ?? false;
     const who = opts.who ?? 'hero';
@@ -97,6 +103,7 @@ export class Speech {
       this.#text.textContent = text;
     } else {
       this.#text.textContent = '';
+      this.#typing = true;
       for (const char of text) {
         if (line !== this.#line) return;
         if (this.#skip) break;
@@ -105,6 +112,7 @@ export class Speech {
         await sleep(char === ' ' ? 12 : 26);
       }
       if (line !== this.#line) return;
+      this.#typing = false;
       this.#text.textContent = text;
     }
     this.#place();
