@@ -186,7 +186,7 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
     const still = pose === 'side';
     const step = motion && !still ? Math.floor(t / (worn ? 160 : 125)) % 4 : 1;
     // A worn-out walk does not bounce, and the head hangs a pixel lower.
-    const rise = step % 2 === 1 && !worn ? -1 : 0;
+    const rise = step % 2 === 1 && !worn && !still ? -1 : 0;
     const sag = worn ? 1 : 0;
     const legs = step === 0 ? SIDE_LEGS.contactA : step === 2 ? SIDE_LEGS.contactB : SIDE_LEGS.pass;
     // Far arm first (behind the body), swinging opposite to the near one.
@@ -194,6 +194,8 @@ export function paintHero(g: G, x: number, baseY: number, look: HeroLook): void 
     const shoulder = (dx: number): number => (flip ? 15 - dx : dx);
     const sx = ix + shoulder(8);
     arm(g, sx, top + 15 + rise, sx + (flip ? swing : -swing), top + 20 + rise);
+    // On the up-step the body rises a pixel off the hips: the hips stretch to meet it, so no gap shows.
+    if (rise < 0) rows(g, legs.slice(0, 1), ix, top + 20, flip);
     rows(g, legs, ix, top + 21, flip);
     rows(g, SIDE_TORSO, ix, top + 14 + rise, flip);
     const sideFace = worn ? (blink ? SIDE_WORN_BLINK : SIDE_WORN) : blink ? SIDE_BLINK : undefined;
