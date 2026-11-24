@@ -509,3 +509,11 @@
   font-size: 17px;
   white-space: normal;
 }
+
+/* ---------- PAL's window never blinks ----------
+   On the computer the window appears with the CRT boot (win--boot). Its plain entry animation
+   (win-in, from transparent) must not run again when the boot class is taken off at the end, or
+   the window vanishes for a moment and fades back in: the blink after every return to it. */
+:root:not([data-theme='revealed']) .pc__screen > .win:not(.win--boot):not(.win--nope) {
+  animation: none;
+}
