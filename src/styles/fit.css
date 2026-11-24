@@ -523,3 +523,67 @@
   pointer-events: auto;
   cursor: var(--cursor-hand);
 }
+
+/* ---------- a bubble that a click moves on: an arrow at its right side, pointing right ----------
+   Bubbles the story waits on (and PAL's bubble with more of the same line to come) show a small
+   triangle inside their right edge, half-way down, nudging to the right. A scene bubble keeps its
+   ordinary tail to its speaker; the arrow is no longer the tail or a mark after the last word. */
+.say--tap:not(.say--below)::before {
+  display: block;
+}
+
+.say--tap:not(.say--below)::after,
+.say--tap.say--below::after {
+  animation: none;
+}
+
+.say.say--tap,
+.pal__bubble.pal__bubble--tap,
+.pal__bubble.pal__bubble--more {
+  padding-right: 30px;
+}
+
+.pal__bubble--tap > span:first-child::after,
+.pal__bubble--more > span:first-child::after,
+.say--tap.say--below > span::after {
+  content: none;
+}
+
+.say--tap > span::after,
+.pal__bubble--tap::after,
+.pal__bubble--more::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  margin-top: -7px;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: 10px solid var(--btn);
+  animation: fit-poke 800ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+.say--tap > span::after {
+  border-left-color: currentColor;
+}
+
+@keyframes fit-poke {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .say--tap > span::after,
+  .pal__bubble--tap::after,
+  .pal__bubble--more::after {
+    animation: none;
+  }
+}
