@@ -123,7 +123,6 @@ export const DESK = {
   },
   /** While the browser's own print dialog is open. */
   printing: { title: 'Tisk', body: 'Už letím do tiskárny!' },
-  /** After the print dialog: did it come out? */
   /** After the print dialog: did it come out? Saying no again and again wears the answer down. */
   check: {
     title: 'Tisk',
