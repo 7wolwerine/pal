@@ -56,12 +56,29 @@ export class Speech {
       this.advance();
     });
     host.append(this.#bubble);
-    const follow = (): void => {
-      this.#place();
-      this.#frame = requestAnimationFrame(follow);
-    };
-    this.#frame = requestAnimationFrame(follow);
+    window.addEventListener('resize', this.#onResize);
   }
+
+  /**
+   * Keeps the bubble over its speaker while one is shown. It used to run for the whole life of the
+   * scene, measuring the host and the bubble on every frame even with nothing to say; now it runs
+   * only while a bubble is up, works from sizes measured when they can have changed, and touches
+   * the page only when the bubble has actually moved.
+   */
+  #follow = (): void => {
+    if (this.#bubble.hidden) {
+      this.#frame = 0;
+      return;
+    }
+    this.#place(false);
+    this.#frame = requestAnimationFrame(this.#follow);
+  };
+
+  #track(): void {
+    if (!this.#frame && !this.#bubble.hidden) this.#frame = requestAnimationFrame(this.#follow);
+  }
+
+  #onResize = (): void => this.#place();
 
   /** Finishes typing, or answers a waiting tap; a finished line nobody has to click away is put away by a click. */
   advance(): void {
@@ -96,6 +113,7 @@ export class Speech {
     this.#bubble.hidden = false;
     this.#bubble.setAttribute('aria-label', text);
     this.#place();
+    this.#track();
     if (opts.scribble) {
       this.#text.textContent = '';
       this.#text.append(scribble());
@@ -147,6 +165,8 @@ export class Speech {
 
   stop(): void {
     cancelAnimationFrame(this.#frame);
+    this.#frame = 0;
+    window.removeEventListener('resize', this.#onResize);
     this.hide();
     this.#bubble.remove();
   }
@@ -157,26 +177,37 @@ export class Speech {
     tap?.();
   }
 
-  /** Keeps the bubble over its speaker and inside the picture. */
-  #place(): void {
+  /** The last sizes measured, and where the bubble was last put. */
+  #size = { hostW: 0, hostH: 0, bw: 0, bh: 0 };
+  #at = { left: 0, top: 0, tail: 0, above: true };
+
+  /**
+   * Keeps the bubble over its speaker and inside the picture. `measure` reads the sizes again:
+   * the caller does that when the text or the page can have changed, never once a frame.
+   */
+  #place(measure = true): void {
     if (this.#bubble.hidden || !this.#anchor) return;
+    if (measure) {
+      this.#size = { hostW: this.#host.clientWidth, hostH: this.#host.clientHeight, bw: this.#bubble.offsetWidth, bh: this.#bubble.offsetHeight };
+    }
+    const { hostW, hostH, bw, bh } = this.#size;
     const { x, y } = this.#anchor();
-    const hostW = this.#host.clientWidth;
-    const hostH = this.#host.clientHeight;
     if (!hostW || !hostH) return;
     const ax = (x / this.#w) * hostW;
     const ay = (y / this.#h) * hostH;
-    const bw = this.#bubble.offsetWidth;
-    const bh = this.#bubble.offsetHeight;
     const margin = 6;
     let left = ax - bw / 2;
     left = Math.max(margin, Math.min(hostW - bw - margin, left));
     // Above the head when there is room, otherwise below it.
     const above = !this.#below && ay - bh - 12 >= margin;
     const top = above ? ay - bh - 12 : Math.min(hostH - bh - margin, ay + 12);
-    this.#bubble.style.left = `${Math.round(left)}px`;
-    this.#bubble.style.top = `${Math.round(top)}px`;
-    this.#bubble.style.setProperty('--tail', `${Math.round(Math.max(14, Math.min(bw - 14, ax - left)))}px`);
+    const at = { left: Math.round(left), top: Math.round(top), tail: Math.round(Math.max(14, Math.min(bw - 14, ax - left))), above };
+    const was = this.#at;
+    if (at.left === was.left && at.top === was.top && at.tail === was.tail && at.above === was.above) return;
+    this.#at = at;
+    this.#bubble.style.left = `${at.left}px`;
+    this.#bubble.style.top = `${at.top}px`;
+    this.#bubble.style.setProperty('--tail', `${at.tail}px`);
     this.#bubble.classList.toggle('say--below', !above);
   }
 }

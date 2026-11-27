@@ -10,6 +10,9 @@ export interface Rect {
 
 export type Draw = (g: CanvasRenderingContext2D, t: number) => void;
 
+/** How often a pixel scene is repainted, in milliseconds: about thirty times a second. */
+const FRAME_MS = 32;
+
 /**
  * A small low-resolution canvas scaled up without smoothing. Scenes paint it
  * every frame. Everything the player can act on is a real button laid over
@@ -39,13 +42,21 @@ export class PixelStage {
     this.el.style.setProperty('--scene-ar', String(width / height));
   }
 
-  /** Starts painting. `t` is milliseconds since the first frame. */
+  /**
+   * Starts painting. `t` is milliseconds since the first frame, taken from the real clock, so what
+   * a scene draws does not depend on how often it is drawn. The picture is repainted about thirty
+   * times a second: these are chunky pixels that move in steps, and asking a slow phone for sixty
+   * only costs it the frames it needs for everything else.
+   */
   run(draw: Draw): void {
     this.stop();
+    let painted = -Infinity;
     const tick = (now: number): void => {
-      this.#startedAt ??= now;
-      draw(this.#g, now - this.#startedAt);
       this.#frame = requestAnimationFrame(tick);
+      this.#startedAt ??= now;
+      if (now - painted < FRAME_MS) return;
+      painted = now;
+      draw(this.#g, now - this.#startedAt);
     };
     this.#frame = requestAnimationFrame(tick);
   }
