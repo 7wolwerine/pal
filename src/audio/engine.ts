@@ -4,6 +4,25 @@ import { TRACKS, isTrack, type Track, type TrackId } from './tracks.ts';
 /** What can play underneath a scene: a synth theme, or one of the recorded loops. */
 export type Cue = ThemeId | TrackId;
 
+/** The browser's own word on the connection, where it has one. */
+interface SlowLink {
+  readonly saveData?: boolean;
+  readonly effectiveType?: string;
+}
+
+/** True where the player is saving data or the connection is poor: then nothing is fetched early. */
+function sparing(): boolean {
+  const link = (navigator as Navigator & { connection?: SlowLink }).connection;
+  return Boolean(link && (link.saveData || link.effectiveType === 'slow-2g' || link.effectiveType === '2g'));
+}
+
+/** Runs `job` once the page has a quiet moment, or soon anyway where the browser cannot say. */
+function whenIdle(job: () => void): void {
+  const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  if (idle) idle.call(window, job, { timeout: 4000 });
+  else window.setTimeout(job, 1500);
+}
+
 const LOOKAHEAD_S = 0.15;
 const TICK_MS = 30;
 const FADE_S = 2.2;
@@ -72,8 +91,9 @@ class AudioEngine {
     this.#master = this.#ctx.createGain();
     this.#master.gain.value = this.#muted ? 0 : MASTER;
     this.#master.connect(this.#ctx.destination);
-    // The scheduler and the listener below live as long as the page: the engine is never torn down.
-    window.setInterval(() => this.#schedule(), TICK_MS);
+    // The listener below lives as long as the page: the engine is never torn down. The scheduler
+    // runs only while a voice needs it (see #wake), so a scene playing a recording costs nothing.
+    this.#wake();
     document.addEventListener('visibilitychange', () => {
       if (!this.#ctx) return;
       if (document.hidden) void this.#ctx.suspend();
@@ -93,14 +113,31 @@ class AudioEngine {
   play(id: Cue): void {
     if (this.#wanted === id) return;
     this.#wanted = id;
-    if (isTrack(id)) void this.#fetch(TRACKS[id].file);
+    if (isTrack(id)) this.#playing = this.#fetch(TRACKS[id].file);
     if (this.#ctx) this.#start(id);
   }
 
-  /** Starts downloading a scene's recording ahead of time, so it is ready when the scene begins. */
+  /**
+   * Starts downloading the next scene's recording, so it is ready when that scene begins — but
+   * only once this scene's own loop is in and the page has gone quiet. On a slow line two loops
+   * at once make both late, and the one the player can hear matters more. Skipped altogether
+   * where the browser says the connection is poor or the player is saving data; that scene then
+   * fetches its loop when it starts, as it always could.
+   */
   preload(id: Cue | undefined): void {
-    if (id && isTrack(id)) void this.#fetch(TRACKS[id].file);
+    if (!id || !isTrack(id)) return;
+    const file = TRACKS[id].file;
+    if (this.#bytes.has(file) || sparing()) return;
+    void this.#playing.then(() => {
+      if (this.#bytes.has(file)) return;
+      whenIdle(() => {
+        if (!this.#bytes.has(file)) void this.#fetch(file);
+      });
+    });
   }
+
+  /** The loop the scene on screen is playing, so the next one can queue behind it. */
+  #playing: Promise<unknown> = Promise.resolve();
 
   #fetch(file: string): Promise<ArrayBuffer | null> {
     let bytes = this.#bytes.get(file);
@@ -304,6 +341,7 @@ class AudioEngine {
     bus.connect(master);
     const voice: Voice = { id, bus, step: 0, nextAt: now + 0.05 };
     this.#voices.push(voice);
+    this.#wake();
     if (isTrack(id)) void this.#startTrack(ctx, voice, TRACKS[id]);
     else this.#startTheme(ctx, voice, THEMES[id]);
   }
@@ -315,6 +353,7 @@ class AudioEngine {
   }
 
   #startTheme(ctx: AudioContext, voice: Voice, theme: Theme): void {
+    this.#wake();
     voice.theme = theme;
     voice.step = 0;
     voice.nextAt = ctx.currentTime + 0.05;
@@ -345,9 +384,19 @@ class AudioEngine {
     this.#fadeIn(ctx, voice);
   }
 
+  /** Starts the step scheduler if a voice needs one and it is not already running. */
+  #wake(): void {
+    if (this.#ticker || !this.#ctx) return;
+    this.#ticker = window.setInterval(() => this.#schedule(), TICK_MS);
+  }
+
+  #ticker = 0;
+
   #schedule(): void {
     const ctx = this.#ctx;
-    if (!ctx || ctx.state !== 'running') return;
+    if (!ctx) return;
+    // Hidden tab: the context is suspended and nothing is due, but keep the ticker for the return.
+    if (ctx.state !== 'running') return;
     const horizon = ctx.currentTime + LOOKAHEAD_S;
     for (const v of this.#voices) {
       if (!v.theme) continue;
@@ -368,6 +417,11 @@ class AudioEngine {
       return false;
     });
     if (this.#voices.length !== before) this.#release();
+    // Nothing left to count out and nothing fading: stop until a voice needs the scheduler again.
+    if (!this.#voices.some((v) => v.theme || v.stopAt !== undefined)) {
+      window.clearInterval(this.#ticker);
+      this.#ticker = 0;
+    }
   }
 
   /** Lets go of decoded loops that nothing plays or wants any more. */
