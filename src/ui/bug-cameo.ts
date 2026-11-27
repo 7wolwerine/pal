@@ -8,24 +8,33 @@ import { prefersReducedMotion, sleep } from './dom.ts';
 export function bugWarns(ctx: GameContext, host: HTMLElement, where: WarningScene, opts: CameoOptions = {}): Promise<void> {
   const line = pickLine(BUG_WARNINGS[where]);
   ctx.witness.record({ scene: where, kind: 'bug-warning', data: { line } });
-  // On the computer he never walks into PAL's window: he walks along the top of the monitor's frame.
+  // On the computer he never walks into PAL's window: he walks the frame round it. Along the top
+  // of the monitor where there is room for him above it, otherwise across the desk at the foot of
+  // the picture, so he is never half cut off by the edge of the page.
   const pc = host.classList.contains('win') ? host.closest<HTMLElement>('.pc') : null;
   const monitor = pc?.querySelector<HTMLElement>('.pc__monitor');
   if (pc && monitor) {
     const track = (): Track => {
       const p = pc.getBoundingClientRect();
       const m = monitor.getBoundingClientRect();
-      const y = m.top - p.top - BUG_PX + Math.round((BUG_PX / 32) * 2) + 2;
-      let from = m.left;
-      let to = m.right;
-      // Keep clear of the path of hearts at the top of the page: walk only the part of the edge beside it.
+      const above = m.top - p.top - BUG_PX + Math.round((BUG_PX / 32) * 2) + 2;
+      // The whole of him has to be on the page, under the path of hearts.
       const hearts = document.querySelector<HTMLElement>('.journey');
       const j = hearts && !hearts.hidden ? hearts.getBoundingClientRect() : undefined;
-      if (j && j.width > 4 && j.bottom > p.top + y - 30) {
-        if (to - (j.right + 8) >= BUG_PX * 2.5) from = Math.max(from, j.right + 8);
-        else to = Math.min(to, j.left - 8);
+      const ceiling = Math.max(4, (j ? j.bottom : 0) + 4);
+      if (p.top + above >= ceiling) {
+        let from = m.left;
+        let to = m.right;
+        // Keep clear of the path of hearts: walk only the part of the edge beside it.
+        if (j && j.width > 4 && j.bottom > p.top + above - 30) {
+          if (to - (j.right + 8) >= BUG_PX * 2.5) from = Math.max(from, j.right + 8);
+          else to = Math.min(to, j.left - 8);
+        }
+        return { left: from - p.left, width: Math.max(BUG_PX, to - from), y: above };
       }
-      return { left: from - p.left, width: Math.max(BUG_PX, to - from), y };
+      // The desk at the foot of the picture, right across it, as low as it goes: on a small screen
+      // the frame is thin everywhere, and down here he covers nothing but the window's own edge.
+      return { left: 0, width: p.width, y: Math.max(0, p.height - 2 - BUG_PX) };
     };
     return bugCameo(pc, line, { ...opts, track });
   }

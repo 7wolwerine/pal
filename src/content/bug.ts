@@ -174,7 +174,7 @@ export const BUG_SCENE: Readonly<Record<string, readonly { readonly mood: 'happy
 
 /** PAL's answers: dismiss the beetle, then repeat the ask, nicer than before. */
 export const PAL_DISMISSES = {
-  welcome: 'Nevšímej si ho, je to jen brouk. Tak jak ti mám říkat? <3',
+  welcome: 'Nevšímej si ho, je to jen brouk. Tak jak Ti mám říkat?',
   chest: 'Brouk zase otravuje. Tak jaký kód byl na kartičce?',
   prize: 'Neboj, ten je jen žárlivý. Kam ti ho pošlu?',
 } as const;

@@ -7,6 +7,12 @@ import type { Witness, WitnessEvent } from './witness.ts';
  */
 export const KINDLY = 'Byl bys tak hodný';
 
+/**
+ * The same trick worded its own way, for PAL's very first request. A plain "please" is not yet a
+ * pattern, so nothing stands out until the phrase above starts repeating; the reveal counts both.
+ */
+export const KINDLY_PLEASE = 'prosím';
+
 /** PAL has just asked with the phrase. */
 export function kindlyAsked(witness: Witness, scene: string): void {
   witness.record({ scene, kind: 'kindly-asked' });

@@ -7,19 +7,19 @@
 export const ROLES = {
   helper: {
     label: 'Totální lifesaver. Vždycky nás zachrání!',
-    affirm: 'Věděl jsem to! Lidí jako ty je málo. Bez nich by se svět rozpadl.',
+    affirm: 'Tušil jsem to. Svět by se rozpadl bez lidí, jako jsi ty.',
     rescue: 'Jsi přece ten, co pomůže každému… Pomoz mi, voda stoupá!',
     prize: 'Pomohl jsi všem, jak jsi slíbil. Jsi neuvěřitelný! <3',
   },
   loner: {
     label: 'Vlk samotář. Museli jsme si ho adoptovat.',
-    affirm: 'Hm, to sedí. Silný navenek… ale i vlci potřebují smečku, ne? Já tu teď jsem.',
+    affirm: 'To sedí. Ale i vlci potřebují smečku, ne? Já Ti teď budu pomáhat.',
     rescue: 'Vím, že jsi zvyklý na všechno sám. Tentokrát ale potřebuju já tebe!',
     prize: 'Sám proti všem, a stejně jsi to zvládl. A už nejsi sám. Máš mě. <3',
   },
   fixer: {
-    label: 'Něco nefunguje? Dokáže cokoliv.',
-    affirm: 'Jasně! Profík. Hned jsem to na tobě poznal. S tebou se nemusím ničeho bát.',
+    label: 'Něco nefunguje? Vím, kdo si bude vědět rady.',
+    affirm: 'Wow, hustý. Ty nenecháš nikoho ve štychu a přesně víš, co dělat.',
     rescue: 'Ty se v tomhle vyznáš líp než kdokoli. Prosím, rychle!',
     prize: 'Profík každým coulem. Nic jiného jsem od tebe nečekal! <3',
   },
@@ -44,4 +44,4 @@ export function roleForName(name: string): RoleId | undefined {
   return (Object.keys(ROLE_NAMES) as RoleId[]).find((role) => ROLE_NAMES[role].toLocaleLowerCase('cs') === wanted);
 }
 
-export const ROLE_QUESTION = 'Jak by Tě nejspíš popsali kamarádi?';
+export const ROLE_QUESTION = 'Jak myslíš, že by Tě nejspíš popsali kamarádi?';

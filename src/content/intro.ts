@@ -110,7 +110,7 @@ export const DESK = {
   toast: 'Bylo připojeno zařízení: PAL <3 (E:)',
   ask: {
     title: 'PAL <3 (E:)',
-    body: 'Mám pro tebe překvapení. Chceš mě vidět živého?',
+    body: 'Ahoj! Mám pro Tebe překvápko. Budu u Tebe na stole!',
     icon: 'Medvídek',
     ok: 'OK',
     cancel: 'Zrušit',
@@ -122,14 +122,14 @@ export const DESK = {
     later: 'Teď ne',
   },
   /** While the browser's own print dialog is open. */
-  printing: { title: 'Tisk', body: 'Už lezu z tiskárny…' },
+  printing: { title: 'Tisk', body: 'Už letím do tiskárny!' },
   /** After the print dialog: did it come out? */
-  check: { title: 'Tisk', body: 'Tak co, vylezl jsem?', inHand: 'Mám tě v ruce', notInHand: 'Nic nevylezlo' },
+  check: { title: 'Tisk', body: 'Máš mě? Načti mě foťákem.', inHand: 'Jo, mám!', notInHand: 'Nic nevyjelo.' },
   /** Every "nothing came out" gets a slightly harder, still sweet push. The last line repeats. */
   push: {
     title: ':(',
     lines: [
-      'Nic? To mě mrzí… Tolik jsem se těšil, až mě podržíš. Zkusíme to ještě jednou?',
+      'Ne? To mě mrzí… Chtěl jsem Tě potěšit. Zkusíme to znova?',
       'Jen tu tiskárnu zapni, já počkám. Na tebe počkám, jak dlouho bude třeba.',
       'Ostatním jsem vylezl napoprvé… Ale ty jsi šikovnější než oni. Tobě to půjde.',
       'Tolik jsem se na tebe chystal a ty mě necháš tady uvnitř? Stačí jedno kliknutí. Kvůli mně.',

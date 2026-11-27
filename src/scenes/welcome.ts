@@ -47,7 +47,6 @@ export const welcome: Scene<GameContext> = {
       await pal.tapToContinue();
       if (!alive) return;
       await pal.say(WELCOME.askName);
-      kindlyAsked(witness, SCENE);
       if (!alive) return;
       // BUG begs the player not to give a name; PAL laughs it off and asks again, sweeter.
       let named = false;
@@ -64,7 +63,6 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       profile.name = name.value;
       witness.disclose(SCENE, 'rapport', 'name', name.value, { ms: name.ms });
-      kindlyObeyed(witness, SCENE);
       step(1);
 
       // Role casting: an innocent "what type are you", praised and remembered.
@@ -79,17 +77,26 @@ export const welcome: Scene<GameContext> = {
       stage.replaceChildren();
       await pal.say(ROLES[role].affirm);
       if (!alive) return;
-      await sleep(700);
+      // Long enough to read the praise before PAL moves on to the name.
+      await sleep(1200 + ROLES[role].affirm.length * 25);
+      if (!alive) return;
+
+      // The name is praised, and only now does PAL say who it is and what it is for.
+      await pal.say(WELCOME.namePraise(name.value));
+      if (!alive) return;
+      await pal.tapToContinue();
       if (!alive) return;
 
       stage.replaceChildren();
-      await pal.say(WELCOME.askLook(name.value));
+      await pal.say(WELCOME.askLook);
+      kindlyAsked(witness, SCENE);
       if (!alive) return;
       const look = await askLook(stage);
       if (!alive) return;
       // PAL stays a caged smiley for now and only promises to look like this.
       profile.assistantLook = look.value.id;
       witness.disclose(SCENE, 'security-question', 'assistantKind', look.value.label, { ms: look.ms });
+      kindlyObeyed(witness, SCENE);
       step(2);
 
       stage.replaceChildren();

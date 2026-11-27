@@ -1,5 +1,5 @@
 import type { SpriteId } from '../ui/sprites.ts';
-import { KINDLY } from '../core/kindly.ts';
+import { KINDLY_PLEASE } from '../core/kindly.ts';
 
 export interface AssistantKind {
   readonly id: SpriteId;
@@ -16,14 +16,19 @@ export const ASSISTANT_KINDS: readonly AssistantKind[] = [
 ];
 
 export const WELCOME = {
-  greeting: 'Čauky! <3',
-  askName: `${KINDLY} a řekl mi, jak ti mám říkat?`,
+  greeting: 'Jé, ahoj! <3',
+  askName: 'Řekneš mi prosím, jak se jmenuješ?',
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',
   nameEmpty: 'Nevím, jak ti mám říkat :-(',
-  // The innocent cover story: PAL is here to help and to teach. Play and Learn.
-  askLook: (name: string) => `Wow, ${name}! Jsem PAL a budu ti pomáhat a učit tě. Jak mám vypadat?`,
-  lookPromise: 'No jasně. To dává smysl.',
+  /** The name is praised, and only then does PAL introduce itself: Play and Learn, here to help. */
+  namePraise: (name: string) => `${name}, to je moc hezké jméno. Já jsem PAL, Tvůj nový asistent. Budeme se spolu učit a já Ti pomůžu.`,
+  /**
+   * The one request in this scene that asks nicely. It is worded its own way, not with PAL's usual
+   * phrase, so that the pattern only shows itself later; the reveal counts it with the rest.
+   */
+  askLook: `Můžeš mi ${KINDLY_PLEASE} vybrat, jak budu vypadat?`,
+  lookPromise: 'Skvělá volba, to dává smysl.',
   slip: 'Oh, it’s a me, Mari-',
   askOwnName: 'Ale ne, teď se mi to úplně ztratilo. Jak se jmenuju?',
   ownNameChips: 'Jména na výběr',
