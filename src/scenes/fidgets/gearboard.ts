@@ -43,6 +43,10 @@ interface Cog {
   /** Left over from seating into the mesh; fades to nothing. */
   offset: number;
   fly?: { fromX: number; fromY: number; fromAngle: number; shift: number; start: number; back: boolean };
+  /** Held under a finger, so it rides higher above its shadow. */
+  held?: boolean;
+  /** What was last written on the two nodes, so an unmoved cog is not written again every frame. */
+  was?: { readonly g: string; readonly shadow: string };
 }
 
 function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number> = {}): SVGElementTagNameMap[K] {
@@ -228,6 +232,7 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
       if (!dragging) {
         dragging = true;
         cog.g.classList.add('gears__cog--held');
+        cog.held = true;
         // Lift it to the top. Moving it in the DOM drops the pointer capture, so take it again.
         if (cogsLayer.lastChild !== cog.g) cogsLayer.append(cog.g);
         if (shadows.lastChild !== cog.shadow) shadows.append(cog.shadow);
@@ -241,6 +246,7 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
       if (!press || event.pointerId !== press.id) return;
       press = undefined;
       cog.g.classList.remove('gears__cog--held');
+      cog.held = false;
       if (!dragging) {
         if (event.type === 'pointerup') place(cog);
         return;
@@ -299,10 +305,16 @@ export function gearBoard(label: string, cogLabel: string, onPlace: (id: string,
         if (Math.abs(cog.offset) < 0.001) cog.offset = 0;
         cog.angle = (ideal[i] ?? 0) + cog.offset;
       }
-      const lift = cog.fly || cog.g.classList.contains('gears__cog--held') ? 3.5 : cog.placed ? 1.4 : 2;
+      const lift = cog.fly || cog.held ? 3.5 : cog.placed ? 1.4 : 2;
       const deg = ((cog.angle * 180) / Math.PI).toFixed(2);
-      cog.g.setAttribute('transform', `translate(${cog.x.toFixed(2)} ${cog.y.toFixed(2)}) rotate(${deg})`);
-      cog.shadow.setAttribute('transform', `translate(${(cog.x + lift * 0.6).toFixed(2)} ${(cog.y + lift).toFixed(2)}) rotate(${deg})`);
+      // A cog that has not moved is left alone: writing the same transform again would have the
+      // browser lay out and paint the whole board on every frame, with nothing to show for it.
+      const g = `translate(${cog.x.toFixed(2)} ${cog.y.toFixed(2)}) rotate(${deg})`;
+      const shadow = `translate(${(cog.x + lift * 0.6).toFixed(2)} ${(cog.y + lift).toFixed(2)}) rotate(${deg})`;
+      if (cog.was?.g === g && cog.was.shadow === shadow) return;
+      cog.was = { g, shadow };
+      cog.g.setAttribute('transform', g);
+      cog.shadow.setAttribute('transform', shadow);
     });
     raf = requestAnimationFrame(frame);
   };
