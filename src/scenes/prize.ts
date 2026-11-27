@@ -100,14 +100,18 @@ export const prize: GameScene = {
       input.addEventListener('input', () => {
         error.textContent = '';
       });
+      let sending = false;
       form.addEventListener('submit', (event) => {
         event.preventDefault();
+        // Enter in the field submits the form even with the button disabled: the address goes once.
+        if (sending) return;
         const value = input.value.trim();
         if (!EMAIL.test(value)) {
           error.textContent = PRIZE.badEmail;
           input.focus();
           return;
         }
+        sending = true;
         email = value;
         profile.email = value;
         witness.disclose(SCENE, 'real-email', 'email', value);
@@ -152,7 +156,12 @@ export const prize: GameScene = {
     async function sendMail(button: HTMLButtonElement, href: string, letter: Record<string, string>): Promise<void> {
       button.disabled = true;
       button.textContent = PRIZE.sending;
-      const image = cert.toDataURL('image/png');
+      // The player sees "sending" before anything slow starts, and the picture is encoded without
+      // stopping the page: on a slow phone turning the certificate into a data URL takes a while.
+      await nextFrame();
+      if (!alive) return;
+      const image = await pngDataUrl(cert);
+      if (!alive) return;
       const ok = await postCertificate({ ...letter, ...(image.length < 1_900_000 ? { image } : {}) });
       if (!alive) return;
       if (ok) {
@@ -270,4 +279,31 @@ function confetti(): HTMLElement {
     box.append(piece);
   }
   return box;
+}
+
+/** Resolves on the next frame, so whatever was just put on screen is painted first. */
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+/**
+ * The certificate as a PNG data URL. The mail server carries the picture inside its JSON, so it
+ * has to be base64; toBlob and FileReader do the work without holding up the page, which
+ * toDataURL does for as long as the encoding takes. Either may be missing: then the plain way.
+ */
+function pngDataUrl(canvas: HTMLCanvasElement): Promise<string> {
+  const plain = (): string => canvas.toDataURL('image/png');
+  if (typeof canvas.toBlob !== 'function' || typeof FileReader !== 'function') return Promise.resolve(plain());
+  return new Promise<string>((resolve) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        resolve(plain());
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : plain());
+      reader.onerror = () => resolve(plain());
+      reader.readAsDataURL(blob);
+    }, 'image/png');
+  }).catch(plain);
 }
