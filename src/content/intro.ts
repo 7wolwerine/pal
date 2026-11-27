@@ -10,7 +10,7 @@ export const MAILBOX = {
   sender: ['Bella Gothová', 'Krasohlídkov 162'],
   letter: {
     greeting: 'Ahoj broučku,',
-    body: 'posílám Ti dáreček! Je to překvapení, tak ti to nemůžu dopředu prozradit. Určitě tě potěší, vím, jak takové věci miluješ!',
+    body: 'posílám Ti dáreček! Je to překvapení, tak Ti to nemůžu dopředu prozradit. Určitě Tě potěší, vím, jak takové věci miluješ!',
     signature: 'Tvoje babi',
   },
   fromGrandma: 'Jé, píše mi babička. Ta je zlatá, dneska už dopisy nikdo neposílá.',
@@ -70,7 +70,7 @@ export const DESK = {
     vent: ['Pfff. Prach z roku nula.', 'Hepčí!', 'Měl bych to někdy vysát.', 'Hepčí! Zase.'],
     keyboard: ['Skoro jako klavír.', 'Tuhle znám!', 'Ještě jednou od začátku.'],
     hamster: {
-      look: ['Boo? Kouká na mě.', 'Ano, vidím tě.'],
+      look: ['Boo? Kouká na mě.', 'Ano, vidím Tě.'],
       cheeks: ['Cpe si to do tváří. Všechno.', 'Kam se to do něj vejde?'],
       fast: ['Boo dneska trénuje.', 'Ten kdyby poháněl počítač…'],
       run: ['Běž, Boo!', 'Zase kolečko. Furt kolečko.'],
@@ -117,23 +117,29 @@ export const DESK = {
   },
   sad: {
     title: ':(',
-    body: 'Ale… proč mě nechceš vidět? Tolik jsem se na tebe těšil.',
+    body: 'Ty mě nechceš vidět? :-(',
     again: 'Zkusit to znovu',
     later: 'Teď ne',
   },
   /** While the browser's own print dialog is open. */
   printing: { title: 'Tisk', body: 'Už letím do tiskárny!' },
   /** After the print dialog: did it come out? */
-  check: { title: 'Tisk', body: 'Máš mě? Načti mě foťákem.', inHand: 'Jo, mám!', notInHand: 'Nic nevyjelo.' },
+  /** After the print dialog: did it come out? Saying no again and again wears the answer down. */
+  check: {
+    title: 'Tisk',
+    body: 'Máš mě? Načti mě foťákem.',
+    inHand: 'Jo, mám!',
+    notInHand: ['Nic nevyjelo.', 'Ne, nemám to.', 'Nějak to nejde.', 'Nemám.', 'Ne.'],
+  },
   /** Every "nothing came out" gets a slightly harder, still sweet push. The last line repeats. */
   push: {
     title: ':(',
     lines: [
       'Ne? To mě mrzí… Chtěl jsem Tě potěšit. Zkusíme to znova?',
-      'Jen tu tiskárnu zapni, já počkám. Na tebe počkám, jak dlouho bude třeba.',
-      'Ostatním jsem vylezl napoprvé… Ale ty jsi šikovnější než oni. Tobě to půjde.',
-      'Tolik jsem se na tebe chystal a ty mě necháš tady uvnitř? Stačí jedno kliknutí. Kvůli mně.',
-      'Tak dobře. Slibuju, že se ti potom vytisknu sám. Ale teď to ještě jednou zkus, ano? Pro mě.',
+      'Jen tu tiskárnu zapni, já počkám. Na Tebe počkám, jak dlouho bude třeba.',
+      'Ostatním jsem vylezl napoprvé… Ale Ty jsi šikovnější než oni. Tobě to půjde.',
+      'Tolik jsem se na Tebe chystal a Ty mě necháš tady uvnitř? Stačí jedno kliknutí. Kvůli mně.',
+      'Tak dobře. Slibuju, že se Ti potom vytisknu sám. Ale teď to ještě jednou zkus, ano? Pro mě.',
     ],
     again: 'Vytisknout znovu',
     screen: 'Ukaž se mi tady',
@@ -141,7 +147,7 @@ export const DESK = {
   /** On a computer, the way round the printer: the blue code, to be read with a phone. */
   onscreen: { title: 'Namiř na mě', done: 'Hotovo' },
   /** On a phone or tablet there is nothing to point a camera at: just the picture. */
-  picture: { title: 'Překvapení.png', body: 'Medvídek! Ten je pro tebe.', done: 'Hotovo', alt: 'Obrázek medvídka' },
+  picture: { title: 'Překvapení.png', body: 'Medvídek! Ten je pro Tebe.', done: 'Hotovo', alt: 'Obrázek medvídka' },
   skipped: { title: ':(', body: 'Tak třeba příště.', go: 'Pokračovat' },
 } as const;
 

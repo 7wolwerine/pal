@@ -20,7 +20,7 @@ export const WELCOME = {
   askName: 'Řekneš mi prosím, jak se jmenuješ?',
   namePlaceholder: 'Tvoje jméno',
   nameSubmit: 'Ahoj :-)',
-  nameEmpty: 'Nevím, jak ti mám říkat :-(',
+  nameEmpty: 'Nevím, jak Ti mám říkat :-(',
   /** The name is praised, and only then does PAL introduce itself: Play and Learn, here to help. */
   namePraise: (name: string) => `${name}, to je moc hezké jméno. Já jsem PAL, Tvůj nový asistent. Budeme se spolu učit a já Ti pomůžu.`,
   /**

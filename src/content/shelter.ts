@@ -71,7 +71,7 @@ export const SHELTER = {
   } satisfies Record<ShelterPath, string>,
   /** The blizzard never stops; inside it no longer matters. */
   storm: 'Venku to pořád řádí… ale tady je nám dobře, ne?',
-  thanks: ((m) => `Bez tebe bych tam venku ${m ? 'umrzl' : 'umrzla'}. Nikdo jiný by se mnou takhle neztrácel čas.`) as Forms,
+  thanks: ((m) => `Bez Tebe bych tam venku ${m ? 'umrzl' : 'umrzla'}. Nikdo jiný by se mnou takhle neztrácel čas.`) as Forms,
   stay: `${KINDLY} a zůstal tu se mnou ještě chvilku?`,
   stayChoices: [
     { label: 'Jasně, zůstanu.', role: 'helper' },
@@ -83,9 +83,9 @@ export const SHELTER = {
    * each waiting for a click: guilt, the player's own role turned round, and fear.
    */
   coax: [
-    ((m) => `Ty mě tu chceš nechat? Zrovna když se konečně přestávám třást… To bych od tebe ${m ? 'nečekal' : 'nečekala'}.`) as Forms,
+    ((m) => `Ty mě tu chceš nechat? Zrovna když se konečně přestávám třást… To bych od Tebe ${m ? 'nečekal' : 'nečekala'}.`) as Forms,
     (() => 'Ty přece spravíš všechno. A to nejrozbitější, co tu je, jsem teď já. Nechceš to dodělat pořádně?') as Forms,
-    ((m) => `Slyšíš, jak to venku sílí? Kdyby oheň zhasl a ty tu nebyl… Bojím se tu zůstat ${m ? 'sám' : 'sama'}.`) as Forms,
+    ((m) => `Slyšíš, jak to venku sílí? Kdyby oheň zhasl a Ty tu nebyl… Bojím se tu zůstat ${m ? 'sám' : 'sama'}.`) as Forms,
   ],
   /** After the three pulls the answers come back; the way out has become a way to stay. */
   stayAgain: [

@@ -6,7 +6,7 @@
  * or run; it is all theatre.
  */
 export const DOWNLOAD = {
-  palIntro: (points: string) => `Za těch ${points} bodů máš odměnu: PAL Pro! Budu s tebou i offline.`,
+  palIntro: (points: string) => `Za těch ${points} bodů máš odměnu: PAL Pro! Budu s Tebou i offline.`,
   name: 'PAL Pro',
   version: 'verze 2.0 · 2,1 MB',
   badge: 'Prověřeno antivirem',

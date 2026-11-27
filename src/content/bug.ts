@@ -11,8 +11,8 @@ export const BUG_WARNINGS = {
   mailbox: [
     'Tsss. Typický.',
     'Šlapeš mi po trávníku. Jen tak.',
-    'Tomuhle říkáš chůze? Obejdu tě třikrát, než uděláš krok.',
-    'Hezký počasí. Škoda, že jsi tu ty.',
+    'Tomuhle říkáš chůze? Obejdu Tě třikrát, než uděláš krok.',
+    'Hezký počasí. Škoda, že jsi tu Ty.',
     'Krovky mám čerstvě vyleštěný. Nedýchej na ně.',
     'Ty boty. Hezčí jsem viděl i na strašákovi.',
     'Hrbíš se. Brouci se nehrbí.',
@@ -20,11 +20,11 @@ export const BUG_WARNINGS = {
   welcome: [
     'Ty jsi teda případ.',
     'Píšeš jedním prstem, že jo? Je to poznat.',
-    'Já mám krovky. Co máš ty? No právě.',
+    'Já mám krovky. Co máš Ty? No právě.',
     'Pomalu. Pomaličku. Šnek by už dopsal.',
     'Nevšímej si mě. Stejně tu budu stát.',
     'Tohle má být vkus? Aha. Tak jo.',
-    'Venku je krásně. A ty tady. Chápu.',
+    'Venku je krásně. A Ty tady. Chápu.',
   ],
   paint: [
     'No nádhera. Fakt nádhera.',
@@ -32,14 +32,14 @@ export const BUG_WARNINGS = {
     'Umění to není. Ale snaha se cení. Trochu.',
     'Ta barva. Bolí mě z ní tykadla.',
     'Moje krovky mají hezčí odstín. Jen říkám.',
-    'Rovná čára ti nic neříká, co?',
+    'Rovná čára Ti nic neříká, co?',
     'Klidně pokračuj. Horší už to nebude.',
   ],
   flower: [
     'Ty jsi fakt hroznej.',
     'Cákáš. Mám mokrý krovky.',
     'Zalévat taky neumíš. Jaké překvapení.',
-    'Kytky ti nejdou. Klikání taky ne.',
+    'Kytky Ti nejdou. Klikání taky ne.',
     'Na parapetu sedím já. Ty tu jen překážíš.',
     'Koukáš na to jak husa do flašky.',
   ],
@@ -48,7 +48,7 @@ export const BUG_WARNINGS = {
     'Hrabeš se v tom jak krtek.',
     'Poklad? Já mám krovky. To je poklad.',
     'Píšeš jak slepice. Promiň, slepice.',
-    'Dělej, nemám na tebe celej den. Vlastně mám.',
+    'Dělej, nemám na Tebe celej den. Vlastně mám.',
     'Tohle bych otevřel tykadlem.',
     'Sedíš křivě. Vidím to až odsud.',
   ],
@@ -65,7 +65,7 @@ export const BUG_WARNINGS = {
     'Já nikdy nic nevyhrál. A to jsem tu nejhezčí.',
     'Raduješ se nějak moc nahlas.',
     'Nezávidím. Vůbec. Ani trochu. Hmpf.',
-    'Ten tvůj výraz. Jak dítě u cukrárny.',
+    'Ten Tvůj výraz. Jak dítě u cukrárny.',
     'Tak ukaž. Stejně to budu mít hezčí já.',
   ],
 } as const satisfies Record<string, readonly string[]>;
@@ -102,31 +102,31 @@ export const BUG_POKED = {
     'Ještě jednou a uvidíš!',
   ],
   /** Back from the flight he was sent on. */
-  back: ['Chyběl jsem ti, co?', 'Byl jsem se proletět. Nic ti do toho.', 'Jsem zpátky. Neděkuj.', 'Ty křídla nejsou na ozdobu, víš?'],
+  back: ['Chyběl jsem Ti, co?', 'Byl jsem se proletět. Nic Ti do toho.', 'Jsem zpátky. Neděkuj.', 'Ty křídla nejsou na ozdobu, víš?'],
 } as const;
 
 /** BUG as the resident pest of the computer: on the monitor, on the case, on the window. */
 export const BUG_RESIDENT = {
   idle: [
     'Sedím tu. Zvykej si.',
-    'Odsud je hezkej výhled. Na tvoje klikání.',
+    'Odsud je hezkej výhled. Na Tvoje klikání.',
     'Klik. Klik. Klik. Nic jinýho neumíš?',
     'Hrbíš se. Vidím to i přes sklo.',
     'Krovky jako zrcadlo. Kochej se.',
     'Já bych to dělal jinak. Líp.',
-    'Venku svítí slunko a ty čumíš do bedny.',
-    'Nudím se. To je tvoje vina.',
+    'Venku svítí slunko a Ty čumíš do bedny.',
+    'Nudím se. To je Tvoje vina.',
     'Píšeš pomalu. Stihnu si zdřímnout.',
     'Tenhle počítač je teď můj. Obsazeno.',
     'Máš prach na monitoru. Fuj.',
     'Čteš to nahlas? Hýbeš u toho pusou.',
   ],
   brag: ['Koukej na ty svaly.', 'Leštím. Neruš.', 'Takhle lítá profík.', 'Hezkej jsem, co? Já vím.'],
-  mimic: ['Ňo ňo ňo ňo.', '„Kliknu sem. A sem.“ To jsi ty.', 'Koukej, to jsi ty: ťuk… ťuk… ťuk.', 'Blééé.'],
-  press: ['Zmáčknu to. Fakt to zmáčknu.', 'Tohle tlačítko je moje.', 'Ťuk. Nic. Škoda.', 'Mačkám to líp než ty. Koukej.'],
+  mimic: ['Ňo ňo ňo ňo.', '„Kliknu sem. A sem.“ To jsi Ty.', 'Koukej, to jsi Ty: ťuk… ťuk… ťuk.', 'Blééé.'],
+  press: ['Zmáčknu to. Fakt to zmáčknu.', 'Tohle tlačítko je moje.', 'Ťuk. Nic. Škoda.', 'Mačkám to líp než Ty. Koukej.'],
   block: ['Tady stojím já. Počkáš.', 'Chtěl jsi sem? Smůla.', 'Přese mě není vidět? To je schválně.', 'Jen si tu chvilku postojím. Dlouhou chvilku.'],
-  nap: ['Chrr… pšš…', 'Vzbuď mě, až tě to přestane bavit.'],
-  sulk: ['Nemluvím s tebou.', 'Hmpf. Urazil jsem se.', 'Dělej, jako že tu nejsem. Já to dělám taky.'],
+  nap: ['Chrr… pšš…', 'Vzbuď mě, až Tě to přestane bavit.'],
+  sulk: ['Nemluvím s Tebou.', 'Hmpf. Urazil jsem se.', 'Dělej, jako že tu nejsem. Já to dělám taky.'],
 } as const;
 
 /**
@@ -176,7 +176,7 @@ export const BUG_SCENE: Readonly<Record<string, readonly { readonly mood: 'happy
 export const PAL_DISMISSES = {
   welcome: 'Nevšímej si ho, je to jen brouk. Tak jak Ti mám říkat?',
   chest: 'Brouk zase otravuje. Tak jaký kód byl na kartičce?',
-  prize: 'Neboj, ten je jen žárlivý. Kam ti ho pošlu?',
+  prize: 'Neboj, ten je jen žárlivý. Kam Ti ho pošlu?',
 } as const;
 
 const bags = new WeakMap<readonly string[], string[]>();

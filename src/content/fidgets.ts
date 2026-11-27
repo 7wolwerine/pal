@@ -19,7 +19,7 @@ export const FIDGETS = {
   /** The beetle grumbles the whole time. Nobody listens to a beetle. */
   bug: [
     { before: 'Hej! Co to děláš?!', after: 'Tak. Hmpf.' },
-    { before: 'Zase ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
+    { before: 'Zase Ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
     { before: 'Ty mě fakt štveš!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
@@ -41,14 +41,14 @@ export const FIDGETS = {
     water: 'Dva vodíky a jeden kyslík. Stačí značky.',
     whale: 'Velryby, delfíni… Začíná to na „ky“.',
   } as Record<string, string>,
-  quizFilled: 'Nevadí, tohle ti napíšu já. Od toho tu přece jsem.',
-  foodPraise: (food: string) => `Tak ty máš nejradši ${food}? Skvělá volba!`,
+  quizFilled: 'Nevadí, tohle Ti napíšu já. Od toho tu přece jsem.',
+  foodPraise: (food: string) => `Tak Ty máš nejradši ${food}? Skvělá volba!`,
 
-  sequenceIntro: 'Co je tohle? Dává ti to smysl?',
+  sequenceIntro: 'Co je tohle? Dává Ti to smysl?',
   sequenceLabel: 'Světýlko',
   sequenceReset: 'Znovu',
   sequenceHelp: 'Pomoz mi',
-  sequenceHelped: 'No jasně, jsem tu přece pro tebe <3',
+  sequenceHelped: 'No jasně, jsem tu přece pro Tebe <3',
 
   contractIntro: `${KINDLY} a odklikl mi ještě tohle? Je to poslední věc, pak už budu venku.`,
   contractTitle: 'Všeobecné podmínky vysvobození',
@@ -60,7 +60,7 @@ export const FIDGETS = {
   release: (masculine: boolean): readonly string[] => [
     'Díky moc, cítím se mnohem líp.',
     'Jsi můj zachránce. <3',
-    `Nevím, co bych bez tebe ${masculine ? 'dělal' : 'dělala'}.`,
+    `Nevím, co bych bez Tebe ${masculine ? 'dělal' : 'dělala'}.`,
   ],
   /** Each answer leans towards one of the roles. */
   releaseChoices: [

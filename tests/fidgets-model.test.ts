@@ -221,7 +221,7 @@ describe('light puzzle', () => {
   it('offers the help of PAL after fifteen seconds, in exactly these words', () => {
     expect(HELP_AFTER_MS).toBe(15000);
     expect(FIDGETS.sequenceHelp).toBe('Pomoz mi');
-    expect(FIDGETS.sequenceHelped).toBe('No jasně, jsem tu přece pro tebe <3');
+    expect(FIDGETS.sequenceHelped).toBe('No jasně, jsem tu přece pro Tebe <3');
   });
 
   it('flips a light and its neighbours', () => {

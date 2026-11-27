@@ -302,7 +302,7 @@ export const reveal: Scene<GameContext> = {
           h('span', { class: 'trick__no', text: String(index + 1).padStart(2, '0'), attrs: { 'aria-hidden': 'true' } }),
           // The chip carries the short Czech name; the full one (with its textbook term) heads the story.
           h('span', { class: 'trick__what', text: shortName(trick.name), attrs: { title: trick.name } }),
-          trick.detail && h('span', { class: 'trick__mine', attrs: { title: 'Tady jde o tebe', 'aria-label': 'týká se přímo tebe' } }),
+          trick.detail && h('span', { class: 'trick__mine', attrs: { title: 'Tady jde o Tebe', 'aria-label': 'týká se přímo Tebe' } }),
         );
         button.addEventListener('click', () => show(index));
         buttons.push(button);
@@ -327,7 +327,7 @@ export const reveal: Scene<GameContext> = {
           { class: 'tricks__bar' },
           'Klikni na trik a rozbalí se. ',
           h('span', { class: 'trick__mine trick__mine--legend', attrs: { 'aria-hidden': 'true' } }),
-          ' = tady jde přímo o tebe.',
+          ' = tady jde přímo o Tebe.',
         ),
         list,
       );
@@ -372,7 +372,7 @@ export const reveal: Scene<GameContext> = {
       const notes: (Node | false)[] = [
         windowButtons > 0 && h('p', { class: 'reveal__note', text: `Pokusů zavřít nebo schovat okno: ${windowButtons}. A přesto jsme tady.` }),
         bugWarnings > 0 &&
-          h('p', { class: 'reveal__note', text: `Brouk se ti ${bugWarnings}× postavil do cesty. Nic nevysvětloval, jen překážel. Byl tu jediný, kdo nehrál se mnou.` }),
+          h('p', { class: 'reveal__note', text: `Brouk se Ti ${bugWarnings}× postavil do cesty. Nic nevysvětloval, jen překážel. Byl tu jediný, kdo nehrál se mnou.` }),
       ];
 
       // What a reader needs first is all near the top: the keygen and a way to play again, the
@@ -399,9 +399,9 @@ export const reveal: Scene<GameContext> = {
             content: [...notes, model.tricks.length ? trickList() : h('p', { text: 'Na nic. Žádný trik se nechytil. To se nestává.' })],
           },
           {
-            label: 'O tobě',
+            label: 'O Tobě',
             meta: String(model.disclosed.length),
-            title: 'Co o tobě vím',
+            title: 'Co o Tobě vím',
             content: [
               know.length > 0 && h('p', { class: 'reveal__know', text: know.join(' ') }),
               model.disclosed.length ? facts(model.disclosed) : h('p', { text: 'Nic jsi mi neřekl. Respekt.' }),
@@ -410,12 +410,12 @@ export const reveal: Scene<GameContext> = {
           {
             label: 'Zařízení',
             meta: String(device.length),
-            title: 'Co o tobě ví každá stránka, aniž by se zeptala',
+            title: 'Co o Tobě ví každá stránka, aniž by se zeptala',
             content: [
               facts(device),
               h('h3', { text: 'Sledovací pixel, který v e-mailu nebyl' }),
               h('p', {
-                text: 'Do e-mailu s obrázkem stačilo přidat jeden neviditelný pixel načtený z cizího serveru. Ve chvíli, kdy bys zprávu otevřel, prozradil by tvou IP adresu a z ní přibližnou polohu, přesný čas otevření, prohlížeč a zařízení. Žádný tam nebyl. Ale výš vidíš, kolik toho šlo zjistit i bez něj.',
+                text: 'Do e-mailu s obrázkem stačilo přidat jeden neviditelný pixel načtený z cizího serveru. Ve chvíli, kdy bys zprávu otevřel, prozradil by Tvou IP adresu a z ní přibližnou polohu, přesný čas otevření, prohlížeč a zařízení. Žádný tam nebyl. Ale výš vidíš, kolik toho šlo zjistit i bez něj.',
               }),
             ],
           },
@@ -438,7 +438,7 @@ export const reveal: Scene<GameContext> = {
                     'li',
                     { class: a.found ? 'anomalies__found' : 'anomalies__missed' },
                     h('span', { class: 'anomalies__mark', text: a.found ? '✓' : '·', attrs: { 'aria-hidden': 'true' } }),
-                    h('span', {}, h('span', { class: 'sr-only', text: a.found ? 'Všiml sis: ' : 'Uniklo ti: ' }), a.text),
+                    h('span', {}, h('span', { class: 'sr-only', text: a.found ? 'Všiml sis: ' : 'Uniklo Ti: ' }), a.text),
                   ),
                 ),
               ),
@@ -452,8 +452,8 @@ export const reveal: Scene<GameContext> = {
           h('h2', { text: 'Pro klid duše' }),
           h('p', {
             text: ctx.witness.events.some((e) => e.kind === 'mail-sent')
-              ? 'Jedinou výjimkou byl certifikát: na tvou adresu jsem poslal ten jeden dopis, o který sis řekl. Adresu nikde neukládám. Nic dalšího neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.'
-              : 'Nic z toho neopustilo tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
+              ? 'Jedinou výjimkou byl certifikát: na Tvou adresu jsem poslal ten jeden dopis, o který sis řekl. Adresu nikde neukládám. Nic dalšího neopustilo Tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.'
+              : 'Nic z toho neopustilo Tvoje zařízení a po zavření stránky to zmizí. Nevěř mi. Otevři DevTools a podívej se na záložku Network.',
           }),
         ),
       ];

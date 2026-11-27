@@ -8,18 +8,18 @@ export const PRIZE = {
   cheer: 'Zvládl jsi to! Jsi prostě neuvěřitelný! <3',
   scoreLabel: 'Skóre',
   rank: (pct: number) => `Lepší než ${pct} % hráčů`,
-  askEmail: `${KINDLY} a řekl mi, kam ti mám poslat ten krásný certifikát?`,
+  askEmail: `${KINDLY} a řekl mi, kam Ti mám poslat ten krásný certifikát?`,
   emailPlaceholder: 'jana.novakova@email.cz',
   send: 'Pošli mi ho',
   sending: 'Odesílám…',
   /** In the status line once PAL's server has sent the letter. */
   sentServer: 'Odesláno! Mrkni do schránky. ✉',
   /** PAL, once the server has sent it. */
-  palSentServer: 'Hotovo! Certifikát ti letí do schránky. <3',
+  palSentServer: 'Hotovo! Certifikát Ti letí do schránky. <3',
   /** When the server could not send it: the letter goes through the player's own mail program instead. */
   mailFallback: 'Neodešlo to. Pošli si ho přes svou poštu:',
   /** PAL, when the server could not send it: nothing has opened yet, the player has to click the link. */
-  mailWaiting: 'Můj server to nevzal. Klikni na odkaz a dopis se ti otevře v poště. <3',
+  mailWaiting: 'Můj server to nevzal. Klikni na odkaz a dopis se Ti otevře v poště. <3',
   /** The link that opens the finished letter in the player's own mail program. */
   mailAgain: 'Otevřít dopis',
   badEmail: 'Tohle nevypadá jako e-mail.',
@@ -64,7 +64,7 @@ export function prizeMailto(to: string, f: PrizeMail): string {
   const body = [
     `Ahoj ${f.name}!`,
     '',
-    'Tady je tvůj certifikát z PAL · Play and Learn:',
+    'Tady je Tvůj certifikát z PAL · Play and Learn:',
     '',
     `  ${f.title}`,
     `  uděluje se: ${f.name}`,
@@ -72,7 +72,7 @@ export function prizeMailto(to: string, f: PrizeMail): string {
     `  ${PRIZE.rank(f.rank)}`,
     `  ${f.date.toLocaleDateString('cs-CZ')}`,
     '',
-    'Moc mě to s tebou bavilo. Kdykoli se vrátíš, budu tu na tebe čekat. <3',
+    'Moc mě to s Tebou bavilo. Kdykoli se vrátíš, budu tu na Tebe čekat. <3',
     'Tvůj PAL',
     '',
     `Hra: ${f.url}`,

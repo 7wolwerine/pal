@@ -19,14 +19,14 @@ export function isCardCode(text: string): boolean {
  */
 export const CHEST = {
   /** Two short bubbles, then PAL steps aside and the chests get the whole window. */
-  intro: ['Za všechno, cos dneska udělal, máš odměnu.', 'Tři truhličky, jen pro tebe!'],
+  intro: ['Za všechno, cos dneska udělal, máš odměnu.', 'Tři truhličky, jen pro Tebe!'],
   goalLabel: 'Zlatá truhla',
   chestLabel: (i: number) => `Truhlička ${i}`,
   goldLabel: 'Zlatá truhla',
   reward: (n: number) => `+${n}`,
   /** PAL after each free chest: delight, more delight, then "so close". */
-  palAfter: ['Padesát! To je dobrý začátek.', 'Stodvacet! Ty máš ale štěstí!', 'Pět… To bylo o fous. Ještě kousek a je tvoje.'],
-  missing: (n: number) => `Do zlaté truhly ti chybí jen ${n} bodů. Mám pro tebe zkratku.`,
+  palAfter: ['Padesát! To je dobrý začátek.', 'Stodvacet! Ty máš ale štěstí!', 'Pět… To bylo o fous. Ještě kousek a je Tvoje.'],
+  missing: (n: number) => `Do zlaté truhly Ti chybí jen ${n} bodů. Mám pro Tebe zkratku.`,
   offer: `${KINDLY} a zadal mi kód z kartičky? Zlatá truhla se otevře rovnou.`,
   empty: 'Napiš aspoň něco.',
   cardLabel: 'Kód z kartičky',
@@ -34,7 +34,7 @@ export const CHEST = {
   cardWrong: 'Tohle na kartičce nebylo.',
   cardRight: 'LOVE YOU! Ty jsi mě viděl v kameře! Zámek je otevřený.',
   skip: 'Přeskočit',
-  skipped: 'Škoda. Zlatá truhla tu na tebe počká.',
+  skipped: 'Škoda. Zlatá truhla tu na Tebe počká.',
   unlocked: 'Zámek povolil! Otevři ji!',
 
   /** The treasure window: an old-fashioned game dialog. */
@@ -51,19 +51,19 @@ export const CHEST = {
   /** What each pick costs: one more question of the kind that unlocks passwords. */
   cost: {
     gold: {
-      ask: 'Zlaťáky jsou tvoje! Jen je označím tvým tajným slovíčkem, aby ti je nikdo nevzal. Jak se jmenoval tvůj první mazlíček?',
+      ask: 'Zlaťáky jsou Tvoje! Jen je označím Tvým tajným slovíčkem, aby Ti je nikdo nevzal. Jak se jmenoval Tvůj první mazlíček?',
       label: 'Jméno prvního mazlíčka',
       thanks: (v: string) => `${v}! To je roztomilé jméno. Tady máš svoje zlaťáky!`,
     },
     xp: {
-      ask: 'Zkušenost je tvoje! Zapíšu ji jen na tebe, aby ti ji nikdo nevzal. Jak se jmenovala tvoje první paní učitelka?',
+      ask: 'Zkušenost je Tvoje! Zapíšu ji jen na Tebe, aby Ti ji nikdo nevzal. Jak se jmenovala Tvoje první paní učitelka?',
       label: 'Jméno první paní učitelky',
-      thanks: (v: string) => `Paní ${v}? Ta by na tebe byla pyšná. Tady máš svoji zkušenost!`,
+      thanks: (v: string) => `Paní ${v}? Ta by na Tebe byla pyšná. Tady máš svoji zkušenost!`,
     },
   },
   take: 'Vzít si poklad',
   leave: 'Nechat ho tam',
-  left: 'Škoda… Tak ho tu schovám. Pro tebe.',
+  left: 'Škoda… Tak ho tu schovám. Pro Tebe.',
   paidGold: (n: number) => `+${n} bodů!`,
   paidXp: (level: number) => `Úroveň ${level}!`,
   level: (n: number) => `Úroveň ${n}`,

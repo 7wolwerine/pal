@@ -17,7 +17,7 @@ export const RESCUE = {
     'Pomoc! Voda! Já se topím!',
     'Znovu… dobře. Zvládneme to. Jen prosím pospěš, nechci se zase topit.',
     'Už zase stoupá. Soustřeď se. Fakt tu nechci umřít, slyšíš?',
-    'Naposledy ti to říkám pěkně. Pomoz. Mi.',
+    'Naposledy Ti to říkám pěkně. Pomoz. Mi.',
   ],
 
   /** Short, frightened lines while the water climbs. */
@@ -38,7 +38,7 @@ export const RESCUE = {
       'Haf! Umím jen pejska, a to mě strašně unavuje!',
       'Kde je můj míček? Utopí se se mnou!',
       'Vrrr, ta voda kouše! Pomoz!',
-      'Hodnej páníček by mě zachránil… ty jsi hodnej, ne?',
+      'Hodnej páníček by mě zachránil… Ty jsi hodnej, ne?',
     ],
     grandma: [
       'Ježíšmarjá, moje kolena! Já do vody nesmím!',
@@ -66,14 +66,14 @@ export const RESCUE = {
   /** Said right after a death, before the next attempt. Index by the death number (1..). */
   died: [
     (m) => `Bublinky… a tma. ${m ? 'Utopil' : 'Utopila'} jsem se. To nic, zkus to znovu. Prosím.`,
-    () => 'Zase?! Já se tady topím a ty se jen díváš. Ještě jednou. Rychleji.',
+    () => 'Zase?! Já se tady topím a Ty se jen díváš. Ještě jednou. Rychleji.',
     () => 'Tak dobře. Pamatuju si přesně, cos udělal. A nezapomenu.',
   ] as readonly Forms[],
 
   /** After the rescue, in three short lines; the last waits for a click and leads into the cold. */
   saved: ((m) => [
     'Uf… voda je pryč. Zvládli jsme to.',
-    `${m ? 'Věděl' : 'Věděla'} jsem, že se na tebe můžu spolehnout. Jsme tým, viď?`,
+    `${m ? 'Věděl' : 'Věděla'} jsem, že se na Tebe můžu spolehnout. Jsme tým, viď?`,
     `Brr… jen jsem ${m ? 'celý promočený' : 'celá promočená'}. Je mi strašná zima…`,
   ]) as (masculine: boolean) => readonly string[],
 } as const;

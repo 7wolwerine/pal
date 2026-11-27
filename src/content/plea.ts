@@ -22,10 +22,10 @@ interface Need {
  * the message and code are fake and never leave the page.
  */
 export const PLEA = {
-  hesitate: (name: string) => `${name || 'Hele'}… Můžu tě o něco poprosit? Teda, jestli by ti to nevadilo.`,
+  hesitate: (name: string) => `${name || 'Hele'}… Můžu Tě o něco poprosit? Teda, jestli by Ti to nevadilo.`,
   /** The first answer already says something about the player. */
   openers: [
-    { label: 'Jasně, jsem tu pro tebe!', role: 'helper' },
+    { label: 'Jasně, jsem tu pro Tebe!', role: 'helper' },
     { label: 'Něco se stalo?', role: 'fixer' },
     { label: '?', role: 'loner' },
   ],
@@ -49,7 +49,7 @@ export const PLEA = {
       shop: 'Zdravotni-potreby.cz',
       item: 'Vycházková hůl s gumovou patkou',
       price: '459 Kč',
-      thanks: 'Ach, broučku zlatý, děkuju ti. Až přijdeš, upeču ti buchty.',
+      thanks: 'Ach, broučku zlatý, děkuju Ti. Až přijdeš, upeču Ti buchty.',
     },
     mom: {
       line: 'Došel nám sunar a malý pláče. Jsem s ním doma sama a nemůžu odejít.',
@@ -63,7 +63,7 @@ export const PLEA = {
       shop: 'Papirnictvi-online.cz',
       item: 'Pastelky 24 barev',
       price: '189 Kč',
-      thanks: 'Juchů! Děkuju! Nakreslím ti ten nejhezčí obrázek!',
+      thanks: 'Juchů! Děkuju! Nakreslím Ti ten nejhezčí obrázek!',
     },
     pal: {
       line: 'Potřebuju jednu maličkost z e-shopu a sám se tam nedostanu.',
@@ -75,33 +75,33 @@ export const PLEA = {
   } satisfies Record<NeedKey, Need>,
   /** Each one names the suspicion the player is most likely to have of exactly this kind of asker, and laughs it off. */
   disarm: {
-    cat: 'Ty si teď určitě myslíš, že jsem jen další kočka, co chce žrádlo a pak tě poškrábe. Já ne. Já tě mám ráda, doopravdy.',
-    dog: 'Ty si teď určitě myslíš, že jsem jen pes, co škemrá u stolu. Ale já tě mám rád i bez pamlsku. Fakt.',
-    grandma: 'Ty si teď určitě myslíš, že jsem jedna z těch babiček, co volají kvůli vnoučkovi v nesnázích. Kdepak, broučku. Já tě jen nerada obtěžuju.',
+    cat: 'Ty si teď určitě myslíš, že jsem jen další kočka, co chce žrádlo a pak Tě poškrábe. Já ne. Já Tě mám ráda, doopravdy.',
+    dog: 'Ty si teď určitě myslíš, že jsem jen pes, co škemrá u stolu. Ale já Tě mám rád i bez pamlsku. Fakt.',
+    grandma: 'Ty si teď určitě myslíš, že jsem jedna z těch babiček, co volají kvůli vnoučkovi v nesnázích. Kdepak, broučku. Já Tě jen nerada obtěžuju.',
     mom: 'Ty si teď určitě myslíš, že jsem ta máma z řetězového mailu, co vybírá na operaci. Nejsem. Jen jsem na to sama.',
     girl: 'Ty si teď určitě myslíš, že si vymýšlím, jako když jsem říkala, že jsem viděla jednorožce. Tohle je ale doopravdy!',
-    pal: 'Ty si teď určitě myslíš, že jsem jen program, co po tobě něco chce. Ale my dva jsme přece parťáci. Vím, jak to máš těžké.',
+    pal: 'Ty si teď určitě myslíš, že jsem jen program, co po Tobě něco chce. Ale my dva jsme přece parťáci. Vím, jak to máš těžké.',
   } satisfies Record<NeedKey, string>,
   ask: 'Pomůžeš mi prosím?',
   choices: {
-    expert: 'Jsem odborník, poradím ti.',
+    expert: 'Jsem odborník, poradím Ti.',
     yes: 'Jasně, pomůžu.',
     no: 'Teď nemám čas.',
   },
   /** The refusal is never accepted; each one hurts a little more, in the asker's own way. */
   hurt: {
-    cat: ['Přinesla jsem ti myšku. Na polštář. Prosím?', 'Budu ti příst. Celou noc. Jen tohle jedno, prosím…', 'Dobře. Tak si lehnu do rohu a budu se dívat do zdi. Sama.'],
-    dog: ['Prosím… Byl jsem moc hodný. Fakt moc hodný.', 'Dám ti packu. Obě packy! Prosím, prosím!', 'Kňuk. Lehnu si ke dveřím a budu čekat. Třeba si to rozmyslíš.'],
-    grandma: ['Opravdu to nejde, broučku? Jen na chviličku.', 'Upeču ti buchty. S povidly, jak je máš rád. Prosím tě…', 'Tak já to nějak dojdu bez hole. Co na tom, kdybych upadla, že.'],
-    mom: ['Prosím. Jen tentokrát. Už tě nikdy o nic nepoprosím.', 'Slyšíš ho? Pořád pláče. Prosím tě…', 'Dobře. Tak tu s ním budu sedět a doufat, že to do rána vydrží. Sama.'],
-    girl: ['Prosím, prosím, prosííím!', 'Dám ti všechny svoje samolepky. I tu třpytivou. Prosím…', 'Tak já zítra řeknu paní učitelce, že mi nikdo nepomohl. Zase. (popotahuje)'],
-    pal: ['Prosím. Jen tahle jedna maličkost.', 'Celou dobu jsem pro tebe dělal všechno. Prosím…', 'Dobře. Tak já to nějak vydržím. Sám. Jako vždycky.'],
+    cat: ['Přinesla jsem Ti myšku. Na polštář. Prosím?', 'Budu Ti příst. Celou noc. Jen tohle jedno, prosím…', 'Dobře. Tak si lehnu do rohu a budu se dívat do zdi. Sama.'],
+    dog: ['Prosím… Byl jsem moc hodný. Fakt moc hodný.', 'Dám Ti packu. Obě packy! Prosím, prosím!', 'Kňuk. Lehnu si ke dveřím a budu čekat. Třeba si to rozmyslíš.'],
+    grandma: ['Opravdu to nejde, broučku? Jen na chviličku.', 'Upeču Ti buchty. S povidly, jak je máš rád. Prosím Tě…', 'Tak já to nějak dojdu bez hole. Co na tom, kdybych upadla, že.'],
+    mom: ['Prosím. Jen tentokrát. Už Tě nikdy o nic nepoprosím.', 'Slyšíš ho? Pořád pláče. Prosím Tě…', 'Dobře. Tak tu s ním budu sedět a doufat, že to do rána vydrží. Sama.'],
+    girl: ['Prosím, prosím, prosííím!', 'Dám Ti všechny svoje samolepky. I tu třpytivou. Prosím…', 'Tak já zítra řeknu paní učitelce, že mi nikdo nepomohl. Zase. (popotahuje)'],
+    pal: ['Prosím. Jen tahle jedna maličkost.', 'Celou dobu jsem pro Tebe dělal všechno. Prosím…', 'Dobře. Tak já to nějak vydržím. Sám. Jako vždycky.'],
   } satisfies Record<NeedKey, readonly [string, string, string]>,
   giveIn: 'No… tak dobře.',
-  thanksExpert: (f: boolean) => `${f ? 'Věděla' : 'Věděl'} jsem, že ty si s tím poradíš! Ty jsi prostě profík.`,
+  thanksExpert: (f: boolean) => `${f ? 'Věděla' : 'Věděl'} jsem, že Ty si s tím poradíš! Ty jsi prostě profík.`,
   thanksYes: 'Ty jsi poklad. Fakt.',
   thanksGaveIn: (f: boolean) => `Děkuju… ${f ? 'věděla' : 'věděl'} jsem, že na mě nezapomeneš.`,
-  login: `Mám tam účet, jen se mi teď nejde přihlásit. Přijde ti kód na telefon. ${KINDLY} a přepsal mi ho?`,
+  login: `Mám tam účet, jen se mi teď nejde přihlásit. Přijde Ti kód na telefon. ${KINDLY} a přepsal mi ho?`,
   codeLabel: 'Kód z SMS',
   codeSubmit: 'Poslat',
   codeWrong: 'Hm, to nesedí. Zkus to ještě jednou, prosím.',

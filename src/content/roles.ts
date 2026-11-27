@@ -7,21 +7,21 @@
 export const ROLES = {
   helper: {
     label: 'Totální lifesaver. Vždycky nás zachrání!',
-    affirm: 'Tušil jsem to. Svět by se rozpadl bez lidí, jako jsi ty.',
+    affirm: 'Tušil jsem to. Svět by se rozpadl bez lidí, jako jsi Ty.',
     rescue: 'Jsi přece ten, co pomůže každému… Pomoz mi, voda stoupá!',
     prize: 'Pomohl jsi všem, jak jsi slíbil. Jsi neuvěřitelný! <3',
   },
   loner: {
     label: 'Vlk samotář. Museli jsme si ho adoptovat.',
     affirm: 'To sedí. Ale i vlci potřebují smečku, ne? Já Ti teď budu pomáhat.',
-    rescue: 'Vím, že jsi zvyklý na všechno sám. Tentokrát ale potřebuju já tebe!',
+    rescue: 'Vím, že jsi zvyklý na všechno sám. Tentokrát ale potřebuju já Tebe!',
     prize: 'Sám proti všem, a stejně jsi to zvládl. A už nejsi sám. Máš mě. <3',
   },
   fixer: {
     label: 'Něco nefunguje? Vím, kdo si bude vědět rady.',
     affirm: 'Wow, hustý. Ty nenecháš nikoho ve štychu a přesně víš, co dělat.',
     rescue: 'Ty se v tomhle vyznáš líp než kdokoli. Prosím, rychle!',
-    prize: 'Profík každým coulem. Nic jiného jsem od tebe nečekal! <3',
+    prize: 'Profík každým coulem. Nic jiného jsem od Tebe nečekal! <3',
   },
 } as const;
 

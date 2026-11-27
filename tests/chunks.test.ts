@@ -8,7 +8,7 @@ describe('chunks', () => {
 
   it('splits a long line at sentence ends, keeping short sentences together', () => {
     const text =
-      'Uf, konečně jsem venku. Díky moc, jsi můj zachránce! Máš to prostě v sobě. Fakt nevím, co bych bez tebe dělal… Tak co, zůstaneš?';
+      'Uf, konečně jsem venku. Díky moc, jsi můj zachránce! Máš to prostě v sobě. Fakt nevím, co bych bez Tebe dělal… Tak co, zůstaneš?';
     const parts = chunks(text, 60);
     expect(parts.join(' ')).toBe(text);
     for (const p of parts) expect(p.length).toBeLessThanOrEqual(60);

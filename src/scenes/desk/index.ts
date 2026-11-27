@@ -598,7 +598,8 @@ export const desk: GameScene = {
             icon: bearCanvas('sysdlg__icon'),
             choices: [
               { label: DESK.check.inHand, action: 'in-hand' },
-              { label: DESK.check.notInHand, action: 'not-in-hand', quiet: true },
+              // Each time the answer is no, it comes out shorter and more fed up.
+              { label: DESK.check.notInHand[Math.min(flow.notInHand, DESK.check.notInHand.length - 1)] ?? '', action: 'not-in-hand', quiet: true },
             ],
           });
         case 'push': {

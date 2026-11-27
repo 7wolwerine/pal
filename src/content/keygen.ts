@@ -32,6 +32,6 @@ export const KEYGEN = {
   eggsAuto: '(viděl jsem, žes ho našel)',
   eggsScore: (n: number, of: number) => `Našel jsi ${n} z ${of}.`,
   greetz:
-    'greetz: BUG ★ všem, co čtou podmínky ★ všem, co se zeptali „odkud to ví?“ ★ všem, co zavěsili ★ a tobě, žes to dohrál ★ kromě certifikátu nic neopustilo tvůj počítač ★',
+    'greetz: BUG ★ všem, co čtou podmínky ★ všem, co se zeptali „odkud to ví?“ ★ všem, co zavěsili ★ a Tobě, žes to dohrál ★ kromě certifikátu nic neopustilo Tvůj počítač ★',
   close: 'Zavřít',
 } as const;

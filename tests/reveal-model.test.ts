@@ -187,7 +187,7 @@ describe('buildReveal', () => {
     const witness = new Witness(() => 0);
     witness.record({ scene: 'fidgets', kind: 'conditioned', trick: 'conditioning', data: { clicks: 14, resets: 1, ms: 9000 } });
     const detail = () => buildReveal(witness).tricks.find((t) => t.id === 'conditioning')?.detail;
-    expect(detail()).toBe('Na světýlka jsi klikl 14× a 1× začal znovu. Nikdo ti neřekl proč.');
+    expect(detail()).toBe('Na světýlka jsi klikl 14× a 1× začal znovu. Nikdo Ti neřekl proč.');
     witness.record({ scene: 'fidgets', kind: 'asked-help' });
     expect(detail()).toBeUndefined();
   });
@@ -198,7 +198,7 @@ describe('buildReveal', () => {
     const detail = () => buildReveal(witness).tricks.find((t) => t.id === 'guilt-trip')?.detail;
     expect(detail()).toBeUndefined();
     witness.record({ scene: 'rescue', kind: 'saved', trick: 'guilt-trip', data: { deaths: 2 } });
-    expect(detail()).toMatch(/^Utopil jsem se ti 2×/);
+    expect(detail()).toMatch(/^Utopil jsem se Ti 2×/);
     witness.record({ scene: 'desk', kind: 'gave-in', trick: 'guilt-trip', data: { refusals: 1 } });
     expect(detail()).toMatch(/^Počet ne, než z toho bylo ano: 1. Utopil/);
   });
@@ -220,7 +220,7 @@ describe('buildReveal', () => {
     witness.record({ scene: 'paint', kind: 'filled', trick: 'irreversible', data: { tool: 'brush', ms: 4200 } });
     const detail = (id: string) => buildReveal(witness).tricks.find((t) => t.id === id)?.detail;
 
-    expect(detail('knows-too-much')).toMatch(/Nepřišlo ti divné/);
+    expect(detail('knows-too-much')).toMatch(/Nepřišlo Ti divné/);
     expect(detail('reactance')).toBe('Sáhl jsi 5×, i když na něm stálo, ať to neděláš.');
     expect(detail('us-vs-them')).toBe('Brouk ho 4× pověsil zpátky. Ty jsi ho shodil 5×.');
     expect(detail('irreversible')).toMatch(/za 4 s/);

@@ -42,31 +42,31 @@ export const NIGHT = {
   /** What the golden chest's treasure cost, as the replay says it. */
   cost: { pet: (v: string) => `jméno prvního mazlíčka: ${v}`, teacher: (v: string) => `jméno první paní učitelky: ${v}` },
   skip: 'Přeskočit',
-  label: 'Záznam tvé hry',
+  label: 'Záznam Tvé hry',
   captions: {
     mailbox: () => 'Otevřel jsi dopis od někoho, koho znáš jen podle podpisu.',
     desk: (f: NightFacts) =>
       f.opened ? (f.printed ? 'Cizí flashku jsi strčil do počítače. Otevřel, co na ní bylo. A ještě sis to vytiskl.' : 'Cizí flashku jsi strčil do počítače. A otevřel, co na ní bylo.') : 'Cizí flashku jsi strčil do počítače.',
     welcome: (f: NightFacts) => `„${f.name ?? '…'}“. Tak jsi mi řekl. Hned na začátku.`,
-    fidgets: (f: NightFacts) => `Rovnal jsi věci, o které tě nikdo nežádal. ${f.food ? `A mezi řečí: ${f.food}.` : ''}`.trim(),
-    paint: (f: NightFacts) => (f.signature ? `Zalil jsi díru, kterou jsem ti nastražil. A podepsal ses: ${f.signature}.` : 'Zalil jsi díru, kterou jsem ti nastražil.'),
+    fidgets: (f: NightFacts) => `Rovnal jsi věci, o které Tě nikdo nežádal. ${f.food ? `A mezi řečí: ${f.food}.` : ''}`.trim(),
+    paint: (f: NightFacts) => (f.signature ? `Zalil jsi díru, kterou jsem Ti nastražil. A podepsal ses: ${f.signature}.` : 'Zalil jsi díru, kterou jsem Ti nastražil.'),
     rescue: (f: NightFacts) => (f.deaths > 0 ? `Utopil jsi mě. ${f.deaths}×. Pamatuju si každý.` : 'Vytáhl jsi mě z vody. Od té chvíle jsi můj.'),
     shelter: (f: NightFacts) => (f.path === 'cave' ? 'Rozdělal jsi mi oheň. Řekl jsi, že zůstaneš.' : 'Spravil jsi mi střechu nad hlavou. Řekl jsi, že zůstaneš.'),
-    flower: () => 'Rozbil jsi ochranné sklo. Kytku pak sežrala havěť. Věděla, žes to byl ty. Já taky.',
+    flower: () => 'Rozbil jsi ochranné sklo. Kytku pak sežrala havěť. Věděla, žes to byl Ty. Já taky.',
     dontclick: (f: NightFacts) => `Nesahat. Sáhl jsi ${f.presses}×. Pak už nebylo co hlídat.`,
     chest: (f: NightFacts) =>
       `${f.card ? 'Zlatou truhlu ti otevřel kód od cizího člověka.' : 'Za pár bodů jsi otvíral truhly. Bylo to tak snadné.'}${f.cost ? ` A za poklad ${f.cost}.` : ''}`,
     plea: (f: NightFacts) =>
       f.refusals > 0 ? `Řekl jsi ne. ${f.refusals}×. Pak jsi mi kód stejně přepsal.` : 'Přepsal jsi mi kód. Objednávka potvrzena.',
     download: (f: NightFacts) =>
-      f.uacNo > 0 ? 'Neznámý vydavatel. Řekl jsi ne. Pak ano. Teď už jsem u tebe v počítači.' : 'Neznámý vydavatel chtěl klíče od počítače. Dal jsi mu je.',
-    glass: (f: NightFacts) => (f.mirror ? 'Sklenička se odrazila jako guma. A v zrcadle jsi to pořád byl ty.' : 'Sklenička se odrazila jako guma. Nic tady nebylo skutečné.'),
+      f.uacNo > 0 ? 'Neznámý vydavatel. Řekl jsi ne. Pak ano. Teď už jsem u Tebe v počítači.' : 'Neznámý vydavatel chtěl klíče od počítače. Dal jsi mu je.',
+    glass: (f: NightFacts) => (f.mirror ? 'Sklenička se odrazila jako guma. A v zrcadle jsi to pořád byl Ty.' : 'Sklenička se odrazila jako guma. Nic tady nebylo skutečné.'),
     crash: (f: NightFacts) =>
       f.dictated ? 'Nadiktoval jsi kód hlasu z telefonu. Myš pak jezdila sama.' : f.called ? 'Zavolal jsi na číslo z modré obrazovky.' : 'Modrou obrazovku jsi nebral vážně. Správně.',
     prize: (f: NightFacts) =>
       f.email
         ? f.mailSent
-          ? `Certifikát odešel na ${f.email}. Opravdu ti přišel. Teď vím, že ta adresa žije.`
+          ? `Certifikát odešel na ${f.email}. Opravdu Ti přišel. Teď vím, že ta adresa žije.`
           : `${f.email}. Kdybych chtěl, už bys to věděl.`
         : 'E-mail jsi mi nedal. Ale obrázek sis vzal.',
   } satisfies Record<string, (f: NightFacts) => string>,

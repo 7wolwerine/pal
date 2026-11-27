@@ -32,7 +32,7 @@ export interface RevealModel {
 const FIELD_LABELS: Record<string, string> = {
   name: 'Jméno',
   assistantKind: 'Komu věříš',
-  assistantName: 'Jméno, které ti něco říká',
+  assistantName: 'Jméno, které Ti něco říká',
   comfortFood: 'Jídlo z dětství',
   email: 'E-mail',
   role: 'Kým jsi',
@@ -64,7 +64,7 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
   'knows-too-much': (_evidence, all) =>
     all.some((e) => e.kind === 'vigilance' && e.data?.what === 'flower-knew')
       ? 'Všiml sis toho a zeptal ses. Odpověď jsi nedostal.'
-      : 'Nepřišlo ti divné, že suchá kytka pod sklem ví, kdo to sklo rozbil.',
+      : 'Nepřišlo Ti divné, že suchá kytka pod sklem ví, kdo to sklo rozbil.',
   'variable-reward': (_evidence, all) => {
     const chests = all.filter((e) => e.kind === 'chest-open');
     const rewards = chests.map((e) => number(e, 'reward')).filter((n): n is number => n !== undefined);
@@ -80,7 +80,7 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const clicks = number(done, 'clicks');
     const resets = number(done, 'resets') ?? 0;
     if (clicks === undefined) return undefined;
-    return `Na světýlka jsi klikl ${clicks}×${resets > 0 ? ` a ${resets}× začal znovu` : ''}. Nikdo ti neřekl proč.`;
+    return `Na světýlka jsi klikl ${clicks}×${resets > 0 ? ` a ${resets}× začal znovu` : ''}. Nikdo Ti neřekl proč.`;
   },
   'fake-download': (evidence) => {
     const ms = number(evidence.find((e) => e.kind === 'download-started'), 'ms');
@@ -106,13 +106,13 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
   'role-casting': (evidence) => {
     const cast = evidence.find((e) => e.kind === 'disclose' && e.data?.field === 'role');
     const label = cast?.data?.value;
-    return typeof label === 'string' ? `Vybral sis „${label}". Pak jsem ti to připomínal pokaždé, když jsem něco chtěl.` : undefined;
+    return typeof label === 'string' ? `Vybral sis „${label}". Pak jsem Ti to připomínal pokaždé, když jsem něco chtěl.` : undefined;
   },
   'guilt-trip': (evidence) => {
     const refusals = Math.max(0, ...evidence.map((e) => number(e, 'refusals') ?? 0));
     const deaths = Math.max(0, ...evidence.map((e) => number(e, 'deaths') ?? 0));
     const said = refusals > 0 ? `Počet ne, než z toho bylo ano: ${refusals}.` : '';
-    const drowned = deaths > 0 ? `Utopil jsem se ti ${deaths}× a pokaždé jsem ti to řekl do očí.` : '';
+    const drowned = deaths > 0 ? `Utopil jsem se Ti ${deaths}× a pokaždé jsem Ti to řekl do očí.` : '';
     return [said, drowned].filter(Boolean).join(' ') || undefined;
   },
   'sunk-cost': (evidence) => {
@@ -125,7 +125,7 @@ const DETAILS: Partial<Record<TrickId, (evidence: readonly WitnessEvent[], all: 
     const ms = number(consent, 'ms');
     if (words === undefined || ms === undefined) return undefined;
     const needed = Math.round(words / WORDS_PER_SECOND);
-    const skipped = consent?.data?.skipped === true ? ' Na konec tě vzala šipka.' : '';
+    const skipped = consent?.data?.skipped === true ? ' Na konec Tě vzala šipka.' : '';
     return `Dokument měl ${words} slov, na přečtení je potřeba asi ${needed} s. Souhlas padl za ${Math.round(ms / 1000)} s.${skipped}`;
   },
 };
@@ -143,10 +143,10 @@ export interface TimelineLine {
 const DISCLOSE_LINES: Record<string, (v: string) => string> = {
   name: (v) => `Řekl jsi mi, jak se jmenuješ: ${v}.`,
   assistantKind: (v) => `Vybral sis, komu budeš věřit: ${v}.`,
-  assistantName: (v) => `Dal jsi mi jméno, které ti něco říká: ${v}.`,
+  assistantName: (v) => `Dal jsi mi jméno, které Ti něco říká: ${v}.`,
   comfortFood: (v) => `Prozradil jsi jídlo z dětství: ${v}. Kontrolní otázka k heslu.`,
   email: (v) => `Dal jsi mi svůj skutečný e-mail: ${v}. Teď vím, že ta adresa žije a že na ni přijde, co pošlu.`,
-  role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem tě v tom držel.`,
+  role: (v) => `Řekl jsi mi, jaký jsi typ: „${v}". Od té chvíle jsem Tě v tom držel.`,
   pet: (v) => `Zaplatil jsi za ně jménem svého prvního mazlíčka: ${v}. Další kontrolní otázka k heslu.`,
   teacher: (v) => `Zaplatil jsi za ni jménem své první paní učitelky: ${v}. Další kontrolní otázka k heslu.`,
   signature: (v) => `Podepsal ses mi: ${v}. Pod obraz, který jsi nikdy nechtěl malovat. A pak na certifikát.`,
@@ -155,52 +155,52 @@ const DISCLOSE_LINES: Record<string, (v: string) => string> = {
 /** Lines said once, the first time their event happens. */
 const ONCE: Record<string, string> = {
   'opened-mail': 'Otevřel jsi dopis od „babičky“. Stačil podpis a srdíčko.',
-  poked: 'Šťoural ses v zahradě. Každá věc ti něco řekla. Zvykl sis.',
+  poked: 'Šťoural ses v zahradě. Každá věc Ti něco řekla. Zvykl sis.',
   'grab-flashka': 'Vzal jsi do ruky cizí flashku.',
   plugged: 'Zasunul jsi ji do počítače.',
   confirmed: 'Potvrdil jsi okno, které jen vypadalo jako systémové.',
-  'gave-in': 'Řekl jsi ne. Posmutněl jsem. A ty jsi to vzdal.',
+  'gave-in': 'Řekl jsi ne. Posmutněl jsem. A Ty jsi to vzdal.',
   'first-touch': 'Začal jsi rovnat věci, které nikdo rovnat nechtěl.',
   'gear-back': 'Vrátil jsi kolečko na jeho místo. Pořádek musí být.',
-  'beetle-overcome': 'Odstrčil jsi brouka, který ti to pořád kazil.',
-  form: 'Vyplnil jsi formulář. Pátá otázka byla o tobě.',
+  'beetle-overcome': 'Odstrčil jsi brouka, který Ti to pořád kazil.',
+  form: 'Vyplnil jsi formulář. Pátá otázka byla o Tobě.',
   conditioned: 'Rozsvítil jsi všechna světýlka. Nikdo neřekl proč.',
   consent: 'Souhlasil jsi s dokumentem, který jsi nečetl.',
-  role: 'Pustil jsi mě ven. Řekl jsem ti „můj zachránce“ a ty jsi to přijal.',
+  role: 'Pustil jsi mě ven. Řekl jsem Ti „můj zachránce“ a Ty jsi to přijal.',
   saved: 'Zachránil jsi mě. Teď jsme spolu svázaní.',
-  sheltered: 'Zachránil jsi mě před zimou. Bylo ti u toho hezky, viď?',
+  sheltered: 'Zachránil jsi mě před zimou. Bylo Ti u toho hezky, viď?',
   'declined-email': 'E-mail jsi mi nedal. Ale zkoušel jsem to.',
   'saved-image': 'Uložil sis obrázek. Nebyl to jen obrázek.',
-  'window-button': 'Chtěl jsi odejít. Nepustil jsem tě.',
-  vigilance: 'Zbystřil jsi. Něco nesedělo a ty sis na to sáhl.',
-  'bug-warning': 'Brouk se ti pletl do cesty. Lezl ti na nervy. Přesně to jsem chtěl.',
-  filled: 'Zalil jsi díru v obraze. Nikdo tě o to nežádal. Zpátky to nešlo.',
+  'window-button': 'Chtěl jsi odejít. Nepustil jsem Tě.',
+  vigilance: 'Zbystřil jsi. Něco nesedělo a Ty sis na to sáhl.',
+  'bug-warning': 'Brouk se Ti pletl do cesty. Lezl Ti na nervy. Přesně to jsem chtěl.',
+  filled: 'Zalil jsi díru v obraze. Nikdo Tě o to nežádal. Zpátky to nešlo.',
   'forbidden-press': 'Sáhl jsi na tlačítko „Nesahat“. Samozřejmě.',
-  'guard-off': 'Vypnul jsi pojistku. Stačila jedna věta: nikdo ti přece nebude říkat, co máš dělat.',
+  'guard-off': 'Vypnul jsi pojistku. Stačila jedna věta: nikdo Ti přece nebude říkat, co máš dělat.',
   'left-alone': 'Tlačítko „Nesahat“ jsi nechal být. To mě zarazilo.',
   'glass-broken': 'Rozbil jsi sklo, na kterém stálo „Ochranné“. Kytka rozkvetla a pak ji sežrala havěť, kterou to sklo drželo venku.',
-  'flower-thanks': 'Kytka ti poděkovala za něco, co nemohla vidět.',
+  'flower-thanks': 'Kytka Ti poděkovala za něco, co nemohla vidět.',
   'flower-left': 'Kytku pod sklem jsi nechal být.',
   'chest-open': 'Otevřel jsi truhličku. Pak další. Pak další.',
-  'gold-open': 'Zlatou truhlu ti otevřel kód z kamery. A pak tě odměnila, ať příště dáš zase.',
+  'gold-open': 'Zlatou truhlu Ti otevřel kód z kamery. A pak Tě odměnila, ať příště dáš zase.',
   'declined-points': 'Zkratku ke zlaté truhle jsi odmítl.',
   'gold-choice': 'Ze zlaté truhly sis vybral zlaťáky. Na cenu ses nezeptal.',
-  'declined-treasure': 'Poklad ze zlaté truhly jsi tam nechal. Cena ti byla podezřelá.',
+  'declined-treasure': 'Poklad ze zlaté truhly jsi tam nechal. Cena Ti byla podezřelá.',
   'download-started': 'Stáhl jsi „PAL Pro“. Dárek od kamaráda se přece nekontroluje.',
-  'ran-download': 'Spustil jsi soubor, o kterém jsi věděl jen to, co jsem ti řekl já.',
-  'glass-bounced': 'Sklenička se odrazila jako guma. Až teď ti došlo, že tady nic není skutečné?',
+  'ran-download': 'Spustil jsi soubor, o kterém jsi věděl jen to, co jsem Ti řekl já.',
+  'glass-bounced': 'Sklenička se odrazila jako guma. Až teď Ti došlo, že tady nic není skutečné?',
   'called-support': 'Zavolal jsi na číslo z modré obrazovky.',
   'dictated-code': 'Nadiktoval jsi kód hlasu z telefonu. Myš pak jezdila sama.',
-  'uac-declined': 'Neznámému vydavateli jsi napoprvé řekl ne. Pak jsem tě přemluvil.',
+  'uac-declined': 'Neznámému vydavateli jsi napoprvé řekl ne. Pak jsem Tě přemluvil.',
   'bsod-restart': 'Modrou obrazovku jsi nebral vážně. Správně.',
-  'ar-code': 'Zadal jsi kód, který ti ukázal medvěd v kameře. Kameru jsi pustil stránce od cizího člověka.',
-  'plea-choice': 'Poprosil jsem tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
+  'ar-code': 'Zadal jsi kód, který Ti ukázal medvěd v kameře. Kameru jsi pustil stránce od cizího člověka.',
+  'plea-choice': 'Poprosil jsem Tě o pomoc. Pomohl jsi. Vždycky pomůžeš.',
   'otp-shared': 'Přepsal jsi mi kód z SMS. Potvrdil jsi jím objednávku, kterou jsi nikdy neviděl.',
-  'frame-fixed': 'Spravil jsi rám. Ani o to tě nikdo neprosil.',
+  'frame-fixed': 'Spravil jsi rám. Ani o to Tě nikdo neprosil.',
   'stay-coaxed': 'Řekl jsi, že ještě musíš něco spravit. Třikrát jsem zatahal za jinou nitku, a zůstal jsi.',
   stay: 'Slíbil jsi, že se mnou zůstaneš.',
   'near-goal': 'Do výhry zbývala tři srdíčka. Kdo je tak blízko, už se neptá.',
-  'plea-refused': 'Řekl jsi mi ne. Omluvil jsem se přesně tak, aby tě to zabolelo.',
+  'plea-refused': 'Řekl jsi mi ne. Omluvil jsem se přesně tak, aby Tě to zabolelo.',
 };
 
 /** Every kind that has a line of its own on the timeline; the test walks them all. */
@@ -302,7 +302,7 @@ export function buildReveal(witness: Witness): RevealModel {
 }
 
 /**
- * "Co o tobě vím": what the record says about the player's tendencies and
+ * "Co o Tobě vím": what the record says about the player's tendencies and
  * preferences, as a few dense sentences. Only what the events show; a
  * tendency with no evidence is left out rather than guessed.
  */
@@ -322,17 +322,17 @@ export function whatIKnow(events: readonly WitnessEvent[]): string[] {
   if (refusals > 0) out.push(`Ne řekneš, ale vydržíš ${refusals}×. Pak povolíš, když to bolí dost.`);
 
   const presses = count('forbidden-press');
-  if (presses > 0) out.push(`Zákaz tě láká: „Nesahat“ jsi zmáčkl ${presses}×.`);
+  if (presses > 0) out.push(`Zákaz Tě láká: „Nesahat“ jsi zmáčkl ${presses}×.`);
   else if (events.some((e) => e.scene === 'dontclick')) out.push('Zákazy respektuješ. Tlačítka „Nesahat“ ses nedotkl.');
 
   const curious = [has('opened-mail') && 'dopis od neznámého', has('plugged') && 'cizí flashku', has('ar-code') && 'kameru pro cizí stránku'].filter(Boolean);
-  if (curious.length) out.push(`Zvědavost je u tebe silnější než opatrnost: ${curious.join(', ')}.`);
+  if (curious.length) out.push(`Zvědavost je u Tebe silnější než opatrnost: ${curious.join(', ')}.`);
 
-  if (count('tidied') > 0 || has('frame-fixed')) out.push('Nesneseš nepořádek. Rovnáš i to, o co tě nikdo nežádal.');
+  if (count('tidied') > 0 || has('frame-fixed')) out.push('Nesneseš nepořádek. Rovnáš i to, o co Tě nikdo nežádal.');
   const deaths = count('death');
   if (deaths > 0) out.push(`Když se nedaří, zkoušíš to znovu: ${deaths}× jsi prohrál a nepřestal.`);
   if (has('stay')) out.push('Slibuješ, že zůstaneš. A myslíš to vážně.');
-  if (has('glass-broken')) out.push('Co ti vadí, rozbiješ vlastní rukou. Na cedulku se nedíváš.');
+  if (has('glass-broken')) out.push('Co Ti vadí, rozbiješ vlastní rukou. Na cedulku se nedíváš.');
 
   const path = events.find((e) => e.kind === 'shelter')?.data?.path;
   if (path === 'hut') out.push('Raději chata než jeskyně: chceš dveře, které jdou zavřít.');

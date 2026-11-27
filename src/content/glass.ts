@@ -5,8 +5,8 @@
  * sparkling wine in it shatters into shards. The first crack in the game's reality.
  */
 export const GLASS = {
-  sceneLabel: 'Oslava. Na stolku stojí láhev a sklenka se šumivým vínem. U stojacího zrcadla stojí tvoje postavička.',
-  toast: 'Na zdraví! Připijem si na tvou výhru.',
+  sceneLabel: 'Oslava. Na stolku stojí láhev a sklenka se šumivým vínem. U stojacího zrcadla stojí Tvoje postavička.',
+  toast: 'Na zdraví! Připijem si na Tvou výhru.',
   label: 'Sklenka se šumivým vínem',
   after: 'Hm. To se nemělo stát.',
   mirror: 'Stojací zrcadlo',

@@ -14,9 +14,9 @@ export const FLOWER = {
   /** The brass plate on the sill in front of the glass. */
   plate: 'Ochranné sklo',
   /** The flower, in a speech bubble, once it blooms. */
-  thanks: 'Tolik ti děkuju, žes rozbil to sklo, které mi nedovolilo žít. Jsi můj hrdina. <3',
+  thanks: 'Tolik Ti děkuju, žes rozbil to sklo, které mi nedovolilo žít. Jsi můj hrdina. <3',
   /** If the player clicks the flower afterwards — the only one who notices. */
-  howDoYouKnow: 'Jak vím o skle? Já… prostě vím. Vím toho o tobě hodně.',
+  howDoYouKnow: 'Jak vím o skle? Já… prostě vím. Vím toho o Tobě hodně.',
   left: 'Hm. Tak ať si tam uschne.',
   /** When the crawlers are on it. The flower only feels it; nobody explains anything. */
   hurt: 'Au… Co to po mně leze?',
