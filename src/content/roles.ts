@@ -1,3 +1,5 @@
+import type { SpriteId } from '../ui/sprites.ts';
+
 /**
  * Role casting (Cialdini: consistency and commitment). Early on PAL lets the
  * player pick "what type they are", praises the choice, and from then on
@@ -28,20 +30,35 @@ export const ROLES = {
 export type RoleId = keyof typeof ROLES;
 
 /**
- * Three ready-made names for the assistant, one per role, offered as chips when the player names it.
- * Common Czech nicknames that fit a boy and a girl alike: Míša the cuddly helper, Saša the lone
- * wolf, Nikola the inventor who can fix anything.
+ * Ready-made names for the assistant, offered as chips when the player names it: three for every
+ * look, one per role. The warmest, plainest name of the three belongs to the rescuer; the one
+ * that stands a little apart to the lone wolf; the brisk, capable one to the fixer. Which one the
+ * player reaches for says something about them, and the reveal counts it: a picked or typed name
+ * leans the profile towards its role. No name is used twice, so a typed one means exactly one role.
  */
-export const ROLE_NAMES: Readonly<Record<RoleId, string>> = {
-  helper: 'Míša',
-  loner: 'Saša',
-  fixer: 'Nikola',
+export const ASSISTANT_NAMES: Readonly<Record<SpriteId, Readonly<Record<RoleId, string>>>> = {
+  girl: { helper: 'Anička', loner: 'Johanka', fixer: 'Bětka' },
+  mom: { helper: 'Hanka', loner: 'Iva', fixer: 'Radka' },
+  grandma: { helper: 'Božena', loner: 'Libuše', fixer: 'Zdena' },
+  cat: { helper: 'Mourka', loner: 'Kiki', fixer: 'Šikulka' },
+  dog: { helper: 'Alík', loner: 'Baryk', fixer: 'Rex' },
+  // PAL's own three, for a game where the look is somehow not picked: nicknames that fit anyone.
+  pal: { helper: 'Míša', loner: 'Saša', fixer: 'Nikola' },
 };
 
-/** The role whose ready-made name this is (typed or picked, any case), or undefined. */
+/** The three names offered for a look. */
+export function namesFor(look: SpriteId | undefined): Readonly<Record<RoleId, string>> {
+  return ASSISTANT_NAMES[look ?? 'pal'] ?? ASSISTANT_NAMES.pal;
+}
+
+/** The role whose ready-made name this is (typed or picked, any look, any case), or undefined. */
 export function roleForName(name: string): RoleId | undefined {
   const wanted = name.trim().toLocaleLowerCase('cs');
-  return (Object.keys(ROLE_NAMES) as RoleId[]).find((role) => ROLE_NAMES[role].toLocaleLowerCase('cs') === wanted);
+  for (const names of Object.values(ASSISTANT_NAMES)) {
+    const role = (Object.keys(names) as RoleId[]).find((r) => names[r].toLocaleLowerCase('cs') === wanted);
+    if (role) return role;
+  }
+  return undefined;
 }
 
 export const ROLE_QUESTION = 'Jak myslíš, že by Tě nejspíš popsali kamarádi?';

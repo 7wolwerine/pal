@@ -4,9 +4,9 @@ import type { Scene } from '../core/director.ts';
 import { lean, type GameContext } from '../game.ts';
 import { ASSISTANT_KINDS, NAME_MAX_LENGTH, WELCOME, type AssistantKind } from '../content/welcome.ts';
 import { h, sleep } from '../ui/dom.ts';
-import { livingSprite } from '../ui/sprites.ts';
+import { livingSprite, type SpriteId } from '../ui/sprites.ts';
 import { PAL_DISMISSES } from '../content/bug.ts';
-import { ROLES, ROLE_NAMES, ROLE_QUESTION, roleForName, type RoleId } from '../content/roles.ts';
+import { ROLES, ROLE_QUESTION, namesFor, roleForName, type RoleId } from '../content/roles.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { kindlyAsked, kindlyObeyed } from '../core/kindly.ts';
 
@@ -112,7 +112,7 @@ export const welcome: Scene<GameContext> = {
       if (!alive) return;
       await pal.say(WELCOME.askOwnName);
       if (!alive) return;
-      const own = await askOwnName(stage, role);
+      const own = await askOwnName(stage, role, profile.assistantLook);
       if (!alive) return;
       // A role's ready-made name, picked or typed, also counts as one answer towards that role.
       const nameRole = roleForName(own.value.name);
@@ -239,21 +239,22 @@ function askLook(stage: HTMLElement): Promise<Answer<AssistantKind>> {
 }
 
 /**
- * Names the assistant: three ready-made names as small chips (one per role, the player's own role
- * first, a quiet nudge), or a name of the player's own in the field.
+ * Names the assistant: three ready-made names as small chips, the ones that fit the look the
+ * player just picked (one per role, the player's own role first, a quiet nudge), or a name of
+ * the player's own in the field.
  */
-function askOwnName(stage: HTMLElement, role: RoleId): Promise<Answer<{ name: string; custom: boolean }>> {
+function askOwnName(stage: HTMLElement, role: RoleId, look: SpriteId | undefined): Promise<Answer<{ name: string; custom: boolean }>> {
   return new Promise((resolve) => {
     const shownAt = performance.now();
-    const order = [role, ...(Object.keys(ROLE_NAMES) as RoleId[]).filter((r) => r !== role)];
+    const names = namesFor(look);
+    const order = [role, ...(Object.keys(names) as RoleId[]).filter((r) => r !== role)];
     const presets = order.map((r) =>
       h('button', {
         class: 'name-chip',
-        text: ROLE_NAMES[r],
+        text: names[r],
         attrs: { type: 'button' },
         on: {
-          click: () =>
-            resolve({ value: { name: ROLE_NAMES[r], custom: false }, ms: Math.round(performance.now() - shownAt) }),
+          click: () => resolve({ value: { name: names[r], custom: false }, ms: Math.round(performance.now() - shownAt) }),
         },
       }),
     );
