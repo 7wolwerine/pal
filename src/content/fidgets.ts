@@ -19,7 +19,7 @@ export const FIDGETS = {
   /** The beetle grumbles the whole time. Nobody listens to a beetle. */
   bug: [
     { before: 'Hej! Co to děláš?!', after: 'Tak. Hmpf.' },
-    { before: 'Zase Ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
+    { before: 'Zase ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
     { before: 'Ty mě fakt štveš!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
