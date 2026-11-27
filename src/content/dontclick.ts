@@ -8,7 +8,7 @@ export const DONTCLICK = {
   /** PAL's one line, said before anything happens. Then PAL keeps quiet. */
   intro: 'Přece Ti nikdo nebude říkat, co máš dělat, ne?',
   /** What the button says before each press; it gets more desperate. */
-  labels: ['Nesahat', 'NESAHAT', 'Nech mě bejt, Ty maniaku!', 'Fatal Error'],
+  labels: ['Nesahat', 'NESAHAT', 'Nech mě bejt, ty maniaku!', 'Fatal Error'],
   broken: 'Fatal Error',
   /** BUG on guard beside the button before anything happens. */
   bugGuard: 'Hmpf.',
