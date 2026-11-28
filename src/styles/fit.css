@@ -448,6 +448,139 @@
   }
 }
 
+/* ---------- the fidgets: it is plain when a thing is right ----------
+   A thing put right turns green, its lamp glows, and a tick pops up in its corner. When BUG puts
+   it wrong again, all of that goes, so the change either way is seen at a glance. */
+.fidgets .cell--done {
+  border-color: var(--ok);
+  background-color: color-mix(in srgb, var(--ok) 14%, var(--win));
+  transition: background-color 200ms ease;
+}
+
+.fidgets .cell--done::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  z-index: 2;
+  color: var(--ok);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  animation: fit-tick 420ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.fidgets .lamp--on {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 35%, transparent);
+}
+
+@keyframes fit-tick {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fidgets .cell--done::after {
+    animation: none;
+  }
+}
+
+/* ---------- a phone held upright: the offer to turn it ---------- */
+/* ---------- the fidgets: it is plain when a thing is right ----------
+   A thing put right turns green, its lamp glows, and a tick pops up in its corner. When BUG puts
+   it wrong again, all of that goes, so the change either way is seen at a glance. */
+.fidgets .cell--done {
+  border-color: var(--ok);
+  background-color: color-mix(in srgb, var(--ok) 14%, var(--win));
+  transition: background-color 200ms ease;
+}
+
+.fidgets .cell--done::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  z-index: 2;
+  color: var(--ok);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  animation: fit-tick 420ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.fidgets .lamp--on {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 35%, transparent);
+}
+
+@keyframes fit-tick {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fidgets .cell--done::after {
+    animation: none;
+  }
+}
+
+/* ---------- the fidgets: it is plain when a thing is right ----------
+   A thing put right turns green, its lamp glows, and a tick pops up in its corner. When BUG puts
+   it wrong again, all of that goes, so the change either way is seen at a glance. */
+.fidgets .cell--done {
+  border-color: var(--ok);
+  background-color: color-mix(in srgb, var(--ok) 14%, var(--win));
+  transition: background-color 200ms ease;
+}
+
+.fidgets .cell--done::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  z-index: 2;
+  color: var(--ok);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  animation: fit-tick 420ms cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+
+.fidgets .lamp--on {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 35%, transparent);
+}
+
+@keyframes fit-tick {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fidgets .cell--done::after {
+    animation: none;
+  }
+}
+
 /* ---------- a phone held upright: the offer to turn it ---------- */
 .rotate-hint {
   position: fixed;

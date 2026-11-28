@@ -12,7 +12,6 @@ import { createJourney } from './ui/journey.ts';
 import { minimizeWindow } from './ui/minimize.ts';
 import { createPc } from './ui/pc.ts';
 import { attachPcBug } from './ui/pc-bug.ts';
-import { createRotateHint } from './ui/rotate-hint.ts';
 import { keepInView } from './ui/keep-in-view.ts';
 import { createWindow } from './ui/window.ts';
 
@@ -66,7 +65,6 @@ function boot(): void {
   const scenery = h('div', { class: 'scenery' });
   const pc = createPc(win.el);
   const pcBug = attachPcBug(pc);
-  const rotateHint = createRotateHint();
   const journey = createJourney(SCENES.map((s) => s.id), JOURNEY_GOAL);
   app.append(scenery, pc);
   document.body.append(journey.el);
@@ -112,7 +110,6 @@ function boot(): void {
     // Pixel scenes take the whole view; everything else happens in PAL's window.
     const onScenery = scene.surface === 'scenery';
     scenery.hidden = !onScenery;
-    if (onScenery) rotateHint.offer();
     pc.hidden = onScenery;
     pcBug.setScene(scene.id);
     document.body.classList.toggle('on-pc', !onScenery);
