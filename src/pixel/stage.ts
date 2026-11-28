@@ -51,14 +51,43 @@ export class PixelStage {
   run(draw: Draw): void {
     this.stop();
     let painted = -Infinity;
+    let told = false;
     const tick = (now: number): void => {
       this.#frame = requestAnimationFrame(tick);
       this.#startedAt ??= now;
       if (now - painted < FRAME_MS) return;
       painted = now;
       draw(this.#g, now - this.#startedAt);
+      if (!told) {
+        told = true;
+        this.#tellTheirColour();
+      }
     };
     this.#frame = requestAnimationFrame(tick);
+  }
+
+  /**
+   * Tells the page the colour along the picture's top edge and along its bottom one. A phone's
+   * screen is never exactly the shape of a picture, so there is room left over above and below
+   * it; painted in the picture's own colours, the sky goes on being sky and the ground ground,
+   * and there is nothing to see there.
+   */
+  #tellTheirColour(): void {
+    const root = document.documentElement.style;
+    const edge = (y: number): string | undefined => {
+      let pixel: Uint8ClampedArray;
+      try {
+        pixel = this.#g.getImageData(0, y, 1, 1).data;
+      } catch {
+        return undefined; // A canvas the browser will not read back from.
+      }
+      const [r, g, b, a] = pixel;
+      return a ? `rgb(${r} ${g} ${b})` : undefined;
+    };
+    const top = edge(0);
+    const bottom = edge(this.height - 1);
+    if (top) root.setProperty('--scene-bg-top', top);
+    if (bottom) root.setProperty('--scene-bg-bottom', bottom);
   }
 
   stop(): void {
