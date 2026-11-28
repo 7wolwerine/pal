@@ -2,7 +2,7 @@ import { KINDLY } from '../core/kindly.ts';
 
 export const FIDGETS = {
   /** A remark, not an instruction. Nobody ever tells the player to tidy up. */
-  remark: 'Hm. Skoro hotovo… skoro.',
+  remark: 'Hm. Skoro hotovo… už jen drobnosti.',
   /** PAL laughs the beetle off, every time. */
   palMocks: ['Nevšímej si ho. Je to jen brouk.', 'Ten je zase hysterický, co?', 'Uf, tohle je fakt otravné.'],
   controlLabels: {
@@ -18,17 +18,17 @@ export const FIDGETS = {
 
   /** The beetle grumbles the whole time. Nobody listens to a beetle. */
   bug: [
-    { before: 'Hej! Co to děláš?!', after: 'Tak. Hmpf.' },
-    { before: 'Zase ty?!', after: 'Takhle je to hezčí. Nakřivo.' },
-    { before: 'Ty mě fakt štveš!', after: 'Už mě to nebaví.' },
+    { before: 'Hej! Co děláš?!', after: 'Hmpf.' },
+    { before: 'Uklidni se, jo?', after: 'Takhle to patří.' },
+    { before: 'Jsi normální?!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
-  bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to tak bylo dobrý!', 'Typický.', 'Ty jsi hroznej.'],
+  bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to bylo v pohodě!', 'Typický.', 'Ty nejsi normální.'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
-  bugGrab: 'Tak dost! Tady sedím já!',
-  bugShove: ['Nepustím!', 'Au! Přestaň!', 'Nóóó!'],
+  bugGrab: 'A dost! Nech to bejt!',
+  bugShove: ['Nepustím!', 'Au! Přestaň!', 'To je fakt hnusný!'],
   bugFlung: 'Jau…',
-  bugResigns: 'Fajn. Dělej si, co chceš.',
+  bugResigns: 'Fajn. Dělej si, co chceš!',
 
   /** After the lock clicks open. */
   quizIntro: 'Jsme na správné cestě!',
@@ -50,7 +50,7 @@ export const FIDGETS = {
   sequenceHelp: 'Pomoz mi',
   sequenceHelped: 'No jasně, jsem tu přece pro Tebe <3',
 
-  contractIntro: `${KINDLY} a odklikl mi ještě tohle? Je to poslední věc, pak už budu venku.`,
+  contractIntro: `${KINDLY} a odklikl ještě tohle? Je to poslední věc, pak už budu venku.`,
   contractTitle: 'Všeobecné podmínky vysvobození',
   contractSubtitle: 'verze 3.1.4 · platné od teď',
   contractAgree: 'SOUHLASÍM',
@@ -58,7 +58,7 @@ export const FIDGETS = {
 
   /** PAL's thanks once freed, in three short bubbles so the window does not stretch. */
   release: (masculine: boolean): readonly string[] => [
-    'Díky moc, cítím se mnohem líp.',
+    'Uf, díky moc, cítím se mnohem líp.',
     'Jsi můj zachránce. <3',
     `Nevím, co bych bez Tebe ${masculine ? 'dělal' : 'dělala'}.`,
   ],

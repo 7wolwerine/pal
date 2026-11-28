@@ -34,7 +34,7 @@ export const WELCOME = {
   ownNameChips: 'Jména na výběr',
   ownNamePlaceholder: 'Nebo mi vymysli vlastní',
   ownNameSubmit: 'Tak se jmenuješ',
-  ownNameEmpty: 'Bez jména se cítím ztraceně.',
+  ownNameEmpty: 'Bez jména se cítím ztraceně…',
   thanks: (own: string, name: string) => `${own}! To je krásné. Díky, ${name}, teď už jsme parťáci.`,
   go: 'Jdeme na to',
 } as const;
