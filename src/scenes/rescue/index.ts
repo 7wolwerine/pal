@@ -1,7 +1,7 @@
 import { audio } from '../../audio/engine.ts';
 import { RESCUE } from '../../content/rescue.ts';
 import { ROLES } from '../../content/roles.ts';
-import { gendered, type GameScene } from '../../game.ts';
+import { gendered, strongestRole, type GameScene } from '../../game.ts';
 import { PixelStage, px } from '../../pixel/stage.ts';
 import { prefersReducedMotion, sleep } from '../../ui/dom.ts';
 import { Speech } from '../../ui/speech.ts';
@@ -137,7 +137,9 @@ export const rescue: GameScene = {
     const bubbles: { x: number; y: number; born: number }[] = [];
 
     // The first plea leans on the role the player accepted at the start.
-    void say(ctx.profile.role ? ROLES[ctx.profile.role].rescue : (RESCUE.intro[0] ?? ''));
+    // Which plea comes depends on where the player leans by now, not only on the answer they gave
+    // at the start; a tie goes to that first answer.
+    void say(ctx.profile.role ? ROLES[strongestRole(ctx.profile)].rescue : (RESCUE.intro[0] ?? ''));
     witnessAttempt();
 
     function witnessAttempt(): void {

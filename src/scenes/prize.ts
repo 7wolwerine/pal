@@ -58,7 +58,8 @@ export const prize: GameScene = {
 
     async function run(): Promise<void> {
       if (scoreValue) void countUp(scoreValue, facts.score);
-      await pal.say(profile.role ? ROLES[profile.role].prize : PRIZE.cheer);
+      // The same rule as the title above it: where the player leans by now, not only their first answer.
+      await pal.say(profile.role ? ROLES[strongestRole(profile)].prize : PRIZE.cheer);
       if (!alive) return;
       await pal.tapToContinue();
       if (!alive) return;

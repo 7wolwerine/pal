@@ -23,12 +23,12 @@ export const FIDGETS = {
     { before: 'Jsi normální?!', after: 'Už mě to nebaví.' },
   ],
   /** Desperate pleas when the player fixes something right in front of it. */
-  bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to bylo v pohodě!', 'Typický.', 'Ty nejsi normální.'],
+  bugPlead: ['Pfff!', 'Proč to děláš?!', 'Vždyť to bylo v pohodě!', 'Stálo ti to za to?', 'Ty nejsi normální.'],
   /** The beetle's last stand: it sits on a control and the player clicks it off. */
-  bugGrab: 'A dost! Nech to bejt!',
-  bugShove: ['Nepustím!', 'Au! Přestaň!', 'To je fakt hnusný!'],
+  bugGrab: 'Nepustím!',
+  bugShove: ['Dost! Nech to bejt!', 'Au! Přestaň!', 'To je fakt hnusný!'],
   bugFlung: 'Jau…',
-  bugResigns: 'Fajn. Dělej si, co chceš!',
+  bugResigns: 'Fajn. Tak si dělej, co chceš!',
 
   /** After the lock clicks open. */
   quizIntro: 'Jsme na správné cestě!',
@@ -41,7 +41,7 @@ export const FIDGETS = {
     water: 'Dva vodíky a jeden kyslík. Stačí značky.',
     whale: 'Velryby, delfíni… Začíná to na „ky“.',
   } as Record<string, string>,
-  quizFilled: 'Nevadí, tohle Ti napíšu já. Od toho tu přece jsem.',
+  quizFilled: 'Nevadí, napíšu Ti to tam. Nemusíš se s tím párat.',
   foodPraise: (food: string) => `Tak Ty máš nejradši ${food}? Skvělá volba!`,
 
   sequenceIntro: 'Co je tohle? Dává Ti to smysl?',
@@ -65,8 +65,8 @@ export const FIDGETS = {
   /** Each answer leans towards one of the roles. */
   releaseChoices: [
     { label: 'Rádo se stalo!', role: 'helper' },
-    { label: 'Jasně, žádný problém.', role: 'fixer' },
-    { label: 'Nic to nebylo.', role: 'loner' },
+    { label: 'To nestojí za řeč.', role: 'fixer' },
+    { label: 'Maličkost.', role: 'loner' },
   ],
 } as const;
 
