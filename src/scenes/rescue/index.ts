@@ -29,7 +29,7 @@ interface Geometry {
 }
 
 const WIDE: Geometry = { STAGE_W: 164, STAGE_H: 104, CELL: 20, GRID_X: 72, GRID_Y: 12, FLOOR_Y: 92, TANK: { x: 6, y: 16, w: 54, h: 76 }, upright: false };
-const UPRIGHT: Geometry = { STAGE_W: 96, STAGE_H: 160, CELL: 20, GRID_X: 13, GRID_Y: 70, FLOOR_Y: 152, TANK: { x: 24, y: 14, w: 54, h: 48 }, upright: true };
+const UPRIGHT: Geometry = { STAGE_W: 96, STAGE_H: 204, CELL: 20, GRID_X: 8, GRID_Y: 110, FLOOR_Y: 196, TANK: { x: 20, y: 12, w: 56, h: 88 }, upright: true };
 
 function geometry(): Geometry {
   return isUpright() ? UPRIGHT : WIDE;
