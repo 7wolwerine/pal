@@ -59,6 +59,9 @@ for (const needed of ['ar/pal-marker.png', 'ar/pal-marker-screen.png', 'kindly.w
 }
 const assetBlocks = assets.map((path) => `<script type="application/octet-stream" data-asset="${path}">${readFileSync(join(dist, path)).toString('base64')}</script>`).join('\n');
 
+// The manifest is for a page served from a site; one file on a disk cannot be installed.
+html = html.replace(/\s*<link rel="manifest" href="\.\/[^"]+"\s*\/?>/, '');
+
 // The tab icons: each <link> gets its file as a data: URL.
 html = html.replace(/(<link rel="(?:icon|apple-touch-icon)" href=")\.\/([^"]+)"/g, (_, start, path) => {
   const mime = MIME[path.slice(path.lastIndexOf('.') + 1)];

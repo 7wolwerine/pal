@@ -3333,5 +3333,8 @@ body {
 .scenery > .scene {
   width: min(100%, calc((100vh - 88px) * var(--scene-ar, 1.6)));
   width: min(100%, calc((100dvh - 88px) * var(--scene-ar, 1.6)));
+  /* The small viewport: the height with the browser's bars showing. It does not change as they
+     slide away, so the picture does not resize under the player's finger while scrolling. */
+  width: min(100%, calc((100svh - 88px) * var(--scene-ar, 1.6)));
   margin-inline: auto;
 }
