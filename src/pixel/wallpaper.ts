@@ -48,13 +48,14 @@ export type WallpaperHit =
   | 'folder'
   | 'bin'
   | 'drive'
+  | 'pal'
   | 'switch'
   | 'start'
   | 'clock'
   | RetroIcon
   | null;
 
-type IconId = 'folder' | 'bin' | 'drive' | RetroIcon;
+type IconId = 'folder' | 'bin' | 'drive' | 'pal' | RetroIcon;
 
 /** A moment something happened at a spot of the picture (fractions of the area). */
 interface Mark {
@@ -84,6 +85,8 @@ export interface WallpaperLive {
   leavesAt: number | undefined;
   flowers: Flower[];
   icon: { readonly id: IconId; readonly at: number } | undefined;
+  /** PAL Pro put itself on the desktop; from the install on, its icon is there. */
+  installed: boolean;
   startAt: number | undefined;
   clockAt: number | undefined;
   switchAt: number | undefined;
@@ -103,6 +106,7 @@ function createWallpaperLive(): WallpaperLive {
     leavesAt: undefined,
     flowers: [],
     icon: undefined,
+    installed: false,
     startAt: undefined,
     clockAt: undefined,
     switchAt: undefined,
@@ -184,6 +188,10 @@ const ICONS: Record<IconId, { readonly rows: readonly string[]; readonly palette
   drive: {
     rows: ['..mmm..', '..mMm..', '.ooooo.', 'oPwPwPo', 'oPwwwPo', 'oPPwPPo', '.ooooo.'],
     palette: { m: '#8e8e9a', M: '#d5d5dd', o: '#b84a72', P: '#ed93b1', w: '#ffffff' },
+  },
+  pal: {
+    rows: ['ooooooo', 'oPPPPPo', 'okPPPko', 'oPPPPPo', 'oPmmmPo', 'oPPPPPo', 'ooooooo'],
+    palette: { o: '#993556', P: '#f4a6c6', k: '#53304a', m: '#c05a86' },
   },
   'retro-vlak': {
     rows: ['KKKKKKK', 'KwKKKKK', 'KKyKccK', 'KKyKccK', 'KyyyyyK', 'KmKmKmK', 'KKKKKKK'],
@@ -300,6 +308,8 @@ const ICON_SLOTS: readonly { readonly id: IconId; readonly col: number; readonly
   { id: 'retro-vlak', col: 1, row: 0 },
   { id: 'retro-bat', col: 1, row: 1 },
   { id: 'retro-disk', col: 1, row: 2 },
+  // PAL Pro installs itself under the drive it came on.
+  { id: 'pal', col: 0, row: 3 },
 ];
 
 function iconRect(L: Layout, col: number, row: number): Rect {
@@ -356,6 +366,7 @@ export function pokeWallpaper(live: WallpaperLive, fx: number, fy: number, t: nu
 
   for (const slot of ICON_SLOTS) {
     if (slot.id === 'drive' && !drive) continue;
+    if (slot.id === 'pal' && !live.installed) continue;
     if (!inside(iconRect(L, slot.col, slot.row), x, y, L.u)) continue;
     live.icon = { id: slot.id, at: t };
     return slot.id;
@@ -703,6 +714,7 @@ function paintInside(g: G, x: number, y: number, w: number, h: number, look: Wal
   const iconAge = age(poked?.at, ICON_MS);
   for (const slot of ICON_SLOTS) {
     if (slot.id === 'drive' && !drive) continue;
+    if (slot.id === 'pal' && !live?.installed) continue;
     const r = iconRect(L, slot.col, slot.row);
     const ix = x + r.x;
     const iy = y + r.y;

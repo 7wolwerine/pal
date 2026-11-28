@@ -52,13 +52,17 @@ const C = {
   waterLo: '#2468b5',
   waterHi: '#8cc8f7',
   pipe: '#a9b4bf',
-  pipeHi: '#d7dee5',
-  pipeLo: '#6c7783',
+  pipeHi: '#e4eaef',
+  pipeMid: '#c6ced6',
+  pipeLo: '#808b97',
+  pipeDark: '#5d6773',
   pipeOut: '#3b4552',
   rust: '#8a5a3a',
   rustHi: '#b07a52',
   rustLo: '#5e3b25',
   socket: '#26344a',
+  cell: '#1b2a40',
+  cellLo: '#17243a',
   grate: '#11192a',
   danger: '#ff6b6b',
 } as const;
@@ -291,7 +295,7 @@ export const rescue: GameScene = {
       // The trapped assistant floats on the surface, panicking as it nears the lid.
       const panic = phase === 'play' && water > 0.55;
       const bob = motion ? Math.round(Math.sin(t / (panic ? 110 : 320)) * (panic ? 2 : 1)) : 0;
-      const size = 30;
+      const size = 26;
       const ax = TANK.x + TANK.w / 2 - size / 2 + 4;
       const sink = phase === 'dead' ? Math.min(1, (t - diedAt) / 1400) : 0;
       const floatY = Math.max(TANK.y + 1, Math.min(TANK.y + TANK.h - size, surface - size + 10));
@@ -302,12 +306,13 @@ export const rescue: GameScene = {
       g.globalAlpha = 1;
       if (sink >= 1) {
         // two little crosses for eyes
-        for (const ex of [ax + 9, ax + 19]) {
-          px(g, '#1a0f0c', ex, ay + 11, 1, 1);
-          px(g, '#1a0f0c', ex + 2, ay + 11, 1, 1);
-          px(g, '#1a0f0c', ex + 1, ay + 12, 1, 1);
-          px(g, '#1a0f0c', ex, ay + 13, 1, 1);
-          px(g, '#1a0f0c', ex + 2, ay + 13, 1, 1);
+        const eyeY = ay + Math.round(size * 0.37);
+        for (const ex of [ax + Math.round(size * 0.3), ax + Math.round(size * 0.63)]) {
+          px(g, '#1a0f0c', ex, eyeY, 1, 1);
+          px(g, '#1a0f0c', ex + 2, eyeY, 1, 1);
+          px(g, '#1a0f0c', ex + 1, eyeY + 1, 1, 1);
+          px(g, '#1a0f0c', ex, eyeY + 2, 1, 1);
+          px(g, '#1a0f0c', ex + 2, eyeY + 2, 1, 1);
         }
       }
       if (panic) {
@@ -360,13 +365,16 @@ export const rescue: GameScene = {
         px(g, C.rust, TANK.x + TANK.w + 3, OUTLET_Y - 5, 3, 10); // flange
       }
 
-      // The grid of pipes.
-      px(g, C.socket, GRID_X - 1, GRID_Y - 1, 4 * CELL + 2, 4 * CELL + 2);
+      // The grid of pipes, sunk into the wall behind a frame.
+      px(g, C.socket, GRID_X - 2, GRID_Y - 2, 4 * CELL + 4, 4 * CELL + 4);
+      px(g, C.grate, GRID_X - 1, GRID_Y - 1, 4 * CELL + 2, 1);
+      px(g, C.grate, GRID_X - 1, GRID_Y - 1, 1, 4 * CELL + 2);
       const wetAt = new Map(wet.map((p, i) => [p.id, i] as const));
       for (const piece of layout.pieces) {
         const cx = GRID_X + piece.col * CELL + CELL / 2;
         const cy = GRID_Y + piece.row * CELL + CELL / 2;
-        px(g, (piece.col + piece.row) % 2 ? C.room : C.roomLo, cx - CELL / 2, cy - CELL / 2, CELL, CELL);
+        const back = (piece.col + piece.row) % 2 ? C.cell : C.cellLo;
+        px(g, back, cx - CELL / 2, cy - CELL / 2, CELL, CELL);
         if (piece.fixed) {
           drawRust(g, cx, cy);
           continue;
@@ -378,7 +386,7 @@ export const rescue: GameScene = {
         g.save();
         g.translate(cx, cy);
         if (motion && turn < 1) g.rotate(-(1 - turn) * (Math.PI / 2));
-        drawPiece(g, piece.openings, isWet, flowing, t);
+        drawPiece(g, piece.openings, isWet, flowing, t, back);
         g.restore();
       }
 
@@ -410,19 +418,45 @@ export const rescue: GameScene = {
       }
     }
 
-    /** A straight bit of fixed pipe, horizontal or vertical, with water inside when it carries any. */
+    /**
+     * A length of pipe, horizontal or vertical, with water inside when it carries any. It is
+     * shaded like a tube: a bright line along the top (or the left), the body, then a dark line
+     * along the bottom (or the right), inside a dark outline.
+     */
     function drawRun(g: CanvasRenderingContext2D, x: number, y: number, len: number, horizontal: boolean, hasWater: boolean, flowing: boolean, t: number): void {
       if (horizontal) {
-        px(g, C.pipeOut, x, y - 4, len, 8);
-        px(g, C.pipe, x, y - 3, len, 6);
-        px(g, C.pipeHi, x, y - 3, len, 1);
+        tube(g, x, y - 4, len, true);
         if (hasWater) waterCore(g, x, y - 1, len, 2, flowing, t, true);
       } else {
-        px(g, C.pipeOut, x - 4, y, 8, len);
-        px(g, C.pipe, x - 3, y, 6, len);
-        px(g, C.pipeHi, x - 3, y, 1, len);
+        tube(g, x - 4, y, len, false);
         if (hasWater) waterCore(g, x - 1, y, 2, len, flowing, t, false);
       }
+    }
+
+    /**
+     * Eight pixels of tube across, shaded like something round: the light falls on the top (or
+     * the left), and it darkens all the way to the far side. `x`,`y` is the near corner, `len`
+     * how far the tube runs.
+     */
+    const SKIN = [C.pipeOut, C.pipeHi, C.pipeMid, C.pipe, C.pipe, C.pipeLo, C.pipeDark, C.pipeOut] as const;
+
+    function tube(g: CanvasRenderingContext2D, x: number, y: number, len: number, horizontal: boolean): void {
+      if (len <= 0) return;
+      for (let i = 0; i < SKIN.length; i++) {
+        const colour = SKIN[i] ?? C.pipe;
+        if (horizontal) px(g, colour, x, y + i, len, 1);
+        else px(g, colour, x + i, y, 1, len);
+      }
+    }
+
+    /**
+     * The dark seam at the outer end of an arm, where one length of pipe is joined to the next.
+     * Two neighbours put one each side of the cell edge, so a row of cells reads as pipework
+     * bolted together rather than as one long grey ribbon.
+     */
+    function drawSeam(g: CanvasRenderingContext2D, dir: Dir, half: number): void {
+      if (dir === E || dir === W) px(g, C.pipeDark, dir === E ? half - 1 : -half, -3, 1, 6);
+      else px(g, C.pipeDark, -3, dir === S ? half - 1 : -half, 6, 1);
     }
 
     function waterCore(g: CanvasRenderingContext2D, x: number, y: number, w: number, hh: number, flowing: boolean, t: number, horizontal: boolean): void {
@@ -434,22 +468,35 @@ export const rescue: GameScene = {
       else for (let i = phaseOff; i < hh; i += 6) px(g, C.waterHi, x, y + i, 1, 1);
     }
 
-    function drawPiece(g: CanvasRenderingContext2D, openings: number, isWet: boolean, flowing: boolean, t: number): void {
+    /**
+     * One turnable piece, drawn around its own centre. Each arm is a shaded tube ending in a
+     * collar at the edge of the cell, so neighbouring pieces meet collar to collar; the middle
+     * is a bend with its corners cut away, so an elbow looks turned rather than snapped.
+     */
+    function drawPiece(g: CanvasRenderingContext2D, openings: number, isWet: boolean, flowing: boolean, t: number, back: string): void {
       const half = CELL / 2;
-      for (const dir of DIRS) {
-        if (!(openings & dir)) continue;
-        const [ox, oy, w, hh] = arm(dir, half, 4);
-        px(g, C.pipeOut, ox, oy, w, hh);
+      const across = Boolean(openings & (E | W));
+      const straight = openings === (E | W) || openings === (N | S);
+      if (straight) {
+        // One unbroken length of pipe from edge to edge: nothing in the middle to break it up.
+        if (across) tube(g, -half, -4, CELL, true);
+        else tube(g, -4, -half, CELL, false);
+      } else {
+        for (const dir of DIRS) {
+          if (!(openings & dir)) continue;
+          const [ox, oy, w, hh] = arm(dir, half, 4);
+          tube(g, ox, oy, dir === E || dir === W ? w : hh, dir === E || dir === W);
+        }
+        // The bend in the middle, shaded the same way as the arm that leaves it, so the light
+        // runs on along the top of the pipe. Its corners are cut away: a turned elbow should not
+        // look snapped off square.
+        tube(g, -4, -4, 8, across);
+        for (const [bx, by] of [[-4, -4], [3, -4], [-4, 3], [3, 3]] as const) px(g, back, bx, by, 1, 1);
       }
       for (const dir of DIRS) {
         if (!(openings & dir)) continue;
-        const [ox, oy, w, hh] = arm(dir, half, 3);
-        px(g, C.pipe, ox, oy, w, hh);
-        if (dir === E || dir === W) px(g, C.pipeHi, ox, oy, w, 1);
-        else px(g, C.pipeHi, ox, oy, 1, hh);
+        drawSeam(g, dir, half);
       }
-      px(g, C.pipeLo, -4, -4, 8, 8);
-      px(g, C.pipe, -3, -3, 6, 6);
       if (isWet) {
         for (const dir of DIRS) {
           if (!(openings & dir)) continue;
@@ -460,12 +507,30 @@ export const rescue: GameScene = {
       }
     }
 
+    /**
+     * A cell no pipe will ever cross: the cellar wall itself, bricked up where a pipe used to
+     * run, with the rusted stub of the old one still bolted to it. Wall, so that nobody waits
+     * for it to turn.
+     */
     function drawRust(g: CanvasRenderingContext2D, cx: number, cy: number): void {
-      px(g, C.rustLo, cx - 8, cy - 8, 16, 16);
-      px(g, C.rust, cx - 7, cy - 7, 14, 14);
-      px(g, C.rustHi, cx - 7, cy - 7, 14, 1);
-      px(g, C.rustLo, cx - 7, cy, 14, 1);
-      for (const [rx, ry] of [[-5, -5], [4, -5], [-5, 3], [4, 3]] as const) px(g, C.rustHi, cx + rx, cy + ry, 1, 1);
+      const x = cx - CELL / 2;
+      const y = cy - CELL / 2;
+      px(g, C.brick, x, y, CELL, CELL);
+      // Courses of brick, offset row by row.
+      for (let row = 0; row < CELL; row += 5) {
+        px(g, C.roomLo, x, y + row, CELL, 1);
+        const joint = row % 10 === 0 ? 5 : 12;
+        px(g, C.roomLo, x + joint, y + row, 1, 5);
+      }
+      // Shut in on every side, so it reads as a hole in the wall that was filled, not as a gap.
+      px(g, C.socket, x, y, CELL, 1);
+      px(g, C.socket, x, y, 1, CELL);
+      px(g, C.socket, x, y + CELL - 1, CELL, 1);
+      px(g, C.socket, x + CELL - 1, y, 1, CELL);
+      // A rust stain weeping down the bricks where a pipe used to come through.
+      px(g, C.rustLo, x + 7, y + 7, 1, 5);
+      px(g, C.rust, x + 11, y + 5, 1, 4);
+      px(g, C.rustLo, x + 13, y + 10, 1, 3);
     }
 
     /** Which pipe on the way out is still turned wrong, said the way a panicking person would. */

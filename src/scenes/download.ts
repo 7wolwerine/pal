@@ -1,6 +1,7 @@
 import { audio } from '../audio/engine.ts';
 import { DOWNLOAD } from '../content/download.ts';
 import type { GameScene } from '../game.ts';
+import { desktop } from '../pixel/wallpaper.ts';
 import { bugWarns } from '../ui/bug-cameo.ts';
 import { h, prefersReducedMotion, sleep } from '../ui/dom.ts';
 import { sprite } from '../ui/sprites.ts';
@@ -121,6 +122,8 @@ export const download: GameScene = {
       const steps = DOWNLOAD.steps;
       if (!(await fill(inst.bar, inst.label, (pct) => steps[Math.min(steps.length - 1, Math.floor((pct / 100) * steps.length))] ?? '', motion ? 4200 : 200))) return;
       inst.label.textContent = DOWNLOAD.installed;
+      // PAL Pro puts itself on the desktop: from here on its icon is there, under the drive's.
+      desktop.installed = true;
       audio.treasure();
       await pal.say(DOWNLOAD.palRan);
       if (!alive) return;

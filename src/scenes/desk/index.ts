@@ -230,6 +230,9 @@ export const desk: GameScene = {
         case 'drive':
           audio.click(91, 0.3);
           return muse('drive', lines.drive);
+        case 'pal':
+          audio.click(84, 0.3);
+          return muse('pal', lines.pal);
         case 'switch':
           audio.click(live.night ? 67 : 79, 0.35);
           return think(DESK.thoughts.night[live.night ? 0 : 1], at);

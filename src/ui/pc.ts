@@ -194,6 +194,9 @@ export function createPc(win: HTMLElement): HTMLElement {
       case 'drive':
         audio.click(91, 0.3);
         return muse('drive', lines.drive);
+      case 'pal':
+        audio.click(84, 0.3);
+        return muse('pal', lines.pal);
       case 'switch':
         audio.click(desktop.night ? 67 : 79, 0.35);
         return think(DESK.thoughts.night[desktop.night ? 0 : 1], at);

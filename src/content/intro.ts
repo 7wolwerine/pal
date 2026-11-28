@@ -89,6 +89,7 @@ export const DESK = {
       folder: ['„Nová složka (7)“.', 'Prázdná. Jako vždycky.'],
       bin: ['Koš vrací úder.', 'Vysypat. Někdy.'],
       drive: ['PAL <3 (E:)'],
+      pal: ['PAL Pro. Teď už i bez internetu.', 'Tuhle ikonu jsem tam nedával.'],
       start: ['Nic to nenastartovalo.'],
       clock: ['Už tolik?', 'Jde přesně.'],
     },
